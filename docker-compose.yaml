@@ -1,0 +1,86 @@
+version: '1.0'
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: nhimc_chat-db
+    restart: always
+    volumes:
+      - app-db-data:/var/lib/postgresql/data/pgdata
+      - ./script/initdb:/docker-entrypoint-initdb.d
+    env_file: 
+      - Prod.env
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+    ports:
+      - "5432:5432"
+    networks:
+      - nhimcchat-public
+
+  backend:
+    container_name: backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: 
+      - Prod.env
+    environment:
+      TZ: "Asia/Seoul"  # timezone 설정 부분
+    ports:
+      - 8000:8000
+    volumes:
+      - ./backend/app/:/app/app
+      - ./frontend/nginx/certbot/conf:/etc/letsencrypt
+      - ./backend/logs:/logs
+    networks:
+      - nhimcchat-public
+    depends_on:
+      - db
+
+  frontend:
+    container_name: frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    environment:
+      TZ: "Asia/Seoul"  # timezone 설정 부분
+    env_file: 
+      - Prod.env
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./frontend/nginx/logs:/var/log/nginx
+      - ./frontend/nginx/certbot/conf:/etc/letsencrypt
+      - ./frontend/nginx/certbot/www:/var/www/certbot
+      - ./frontend/nginx/Nginx/tmp:/tmp
+      - ./frontend/build:/usr/share/nginx/html
+    command: /bin/sh -c "/conf.sh && nginx -g 'daemon off;'"
+    networks:
+      - nhimcchat-public
+    depends_on:
+      - backend
+
+  certbot:
+    container_name: certbot
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    volumes:
+    - ./frontend/nginx/logs/letsencrypt:/var/log/letsencrypt
+    - ./frontend/nginx/certbot/conf:/etc/letsencrypt
+    - ./frontend/nginx/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - nhimcchat-public
+    depends_on:
+      - frontend
+volumes:
+  app-db-data:
+
+networks:
+  nhimcchat-public:
+    # Allow setting it to false for testing
+    #external: true
