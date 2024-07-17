@@ -27,8 +27,6 @@
     }
   
   </script>
-  <div>
-  </div>
   <div class="form-container">
       <h5 class="form-title">로그인</h5>
       <form method="post" class="form-layout" on:submit|preventDefault={() => {handleSubmit();}}>
@@ -43,4 +41,7 @@
         <button type="submit" class="form-button">로그인</button>
         <Error error={error} />
       </form>
+  </div>
+  <div class="container mx-auto p-4 max-w-md">
+    <button class="form-button" on:click={() => {goto('/user');}}>회원가입</button>
   </div>

@@ -15,7 +15,7 @@
 
 <div class="h-screen w-64 bg-gray-800 text-white flex flex-col">
     
-    <img src="/logo.png" alt="Logo" class="w-60 h-20 mx-auto mt-4 mb-8"/>
+    <img src="/logo.png" alt="Logo" class="w-60 h-20 mx-auto mt-4 mb-8 rounded-md"/>
     <!--
     <div class="p-4 border-t border-gray-700">
         <button class="form-button">New Chat</button>

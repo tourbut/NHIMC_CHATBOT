@@ -4,11 +4,11 @@
 
 <main>
     <Sidebar />
-    <div class="w-1/5"></div>
+    <div class="w-1/6"></div>
     <div class="flex-1">
         <slot></slot>
     </div>
-    <div class="w-1/5"></div>
+    <div class="w-1/6"></div>
 </main>
 
 <style>

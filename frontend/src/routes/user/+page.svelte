@@ -39,7 +39,7 @@
     <h5 class="form-title">회원 가입</h5>
     <form method="post" class="form-layout" on:submit|preventDefault={() => {handleSubmit();}}>
       <div>
-        <label for="username" class="form-label">사용자 이름</label>
+        <label for="username" class="form-label">사번</label>
         <input type="text" class="form-input" id="username" bind:value={username}>
       </div>
       <div>
