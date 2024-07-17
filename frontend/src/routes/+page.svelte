@@ -8,7 +8,7 @@
     let password = ''
   
     const handleSubmit = async () => {
-  
+      
       let params = {
           username: username,
           password: password
@@ -22,7 +22,8 @@
               error = json_error
           }
   
-      await post_user(params, success_callback, failure_callback);
+      //await login(params, success_callback, failure_callback);
+      success_callback()
     }
   
   </script>
