@@ -56,9 +56,22 @@ class Settings(BaseSettings):
 
     @computed_field  # type: ignore[misc]
     @property
+    def SQLALCHEMY_DATABASE_URI_ASYNC(self) -> PostgresDsn:
+        print(f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}")
+        
+        return MultiHostUrl.build(
+            scheme="postgresql+asyncpg",
+            username=self.POSTGRES_USER,
+            password=self.POSTGRES_PASSWORD,
+            host=self.POSTGRES_SERVER,
+            port=self.POSTGRES_PORT,
+            path=self.POSTGRES_DB,
+        )
+        
+    @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
         return MultiHostUrl.build(
-            scheme="postgresql+psycopg",
+            scheme="postgresql",
             username=self.POSTGRES_USER,
             password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_SERVER,
@@ -116,6 +129,18 @@ class Settings(BaseSettings):
         )
 
         return self
-
+    
+    #Crawler 관련 설정
+    SSL_VERIFY: bool = True
+    
+    REDIS_SERVER: str
+    REDIS_PORT: str = "6379"
+    REDIS_USER: str = "default"
+    REDIS_PASSWORD: str = ""
+    @property
+    def REDIS_URL(self) -> str:
+        return f"redis://{self.REDIS_USER}:{self.REDIS_PASSWORD}@{self.REDIS_SERVER}:{self.REDIS_PORT}"
+    
+    FILE_UPLOAD_DIR: str = "./files"
 
 settings = Settings()  # type: ignore

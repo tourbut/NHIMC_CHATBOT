@@ -1,0 +1,38 @@
+from sqlmodel import SQLModel
+import uuid
+from typing import List
+
+class Usage(SQLModel):
+    user_llm_id: uuid.UUID  
+    input_token:int 
+    output_token:int
+    
+class GetUserLLM(SQLModel):
+    id: uuid.UUID 
+    source: str
+    name: str
+    api_key: str
+    llm_id: uuid.UUID
+
+class DeleteFile(SQLModel):
+    id: uuid.UUID
+
+class FileUpload(SQLModel):
+    file_name:str
+    file_path:str
+    file_size:int
+    file_type:str
+    file_ext:str
+    file_desc:str | None = None
+    embedding_yn:bool = False
+    embedding_model_id:uuid.UUID | None = None
+    collection_id:uuid.UUID | None = None
+    
+class ResponseFile(SQLModel):
+    id: uuid.UUID
+    file_name:str
+    file_size:int
+    file_ext:str
+    file_desc:str | None = None
+    contents:List[str] = []
+     

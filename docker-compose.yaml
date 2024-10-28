@@ -9,7 +9,7 @@ services:
       - app-db-data:/var/lib/postgresql/data/pgdata
       - ./script/initdb:/docker-entrypoint-initdb.d
     env_file: 
-      - Prod.env
+      - .env
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
@@ -26,7 +26,7 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     env_file: 
-      - Prod.env
+      - .env
     environment:
       TZ: "Asia/Seoul"  # timezone 설정 부분
     ports:
@@ -48,7 +48,7 @@ services:
     environment:
       TZ: "Asia/Seoul"  # timezone 설정 부분
     env_file: 
-      - Prod.env
+      - .env
     ports:
       - 80:80
       - 443:443
@@ -64,19 +64,6 @@ services:
     depends_on:
       - backend
 
-  certbot:
-    container_name: certbot
-    image: certbot/certbot:latest
-    restart: unless-stopped
-    volumes:
-    - ./frontend/nginx/logs/letsencrypt:/var/log/letsencrypt
-    - ./frontend/nginx/certbot/conf:/etc/letsencrypt
-    - ./frontend/nginx/certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-    networks:
-      - nhimcchat-public
-    depends_on:
-      - frontend
 volumes:
   app-db-data:
 
