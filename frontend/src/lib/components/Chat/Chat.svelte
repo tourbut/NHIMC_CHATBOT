@@ -1,66 +1,153 @@
 <script>
-    import Message from "./Messages/Message.svelte";
-    let messages = [
-        { id: 1, text: "안녕하세요~! **무엇이든** 물어보세요.", sender: 'bot' },
-        { id: 2, text: '전자결재가 완료된 문서를 수정할 수 있나요?', sender: 'me' },
-        { id: 3, text: '**아니요.** \n\n 전자결재가 완료된 문서는 원칙상 수정이 불가하며, 수정한 내용의 문서를 재작성하여 결재를 받아야 합니다.\n\n (의료정보기획부_FAQ)', sender: 'bot' },
-        // Add more messages as needed
-    ];
-    let newMessage = '';
+    import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Dropdown, DropdownItem, DropdownDivider } from 'flowbite-svelte';
+    import { ChevronDownOutline } from 'flowbite-svelte-icons';
 
-    function sendMessage() {
-        if (newMessage.trim() !== '') {
-            messages.push({ id: messages.length + 1, text: newMessage, sender: 'me' });
-            newMessage = '';
+    import MessageInput from "./MessageInput.svelte";
+    import Message from "./Message.svelte";
+    import { send_message, get_messages } from "$lib/apis/chat";
+    import { addToast } from '$lib/common';
+
+    import { username } from '$lib/stores';
+    import { get } from "svelte/store";
+
+    export let userllm_list = []
+    export let userdocument_list = []
+    export let chat_id = ''
+    export let selected_userllm={value:0,name:"모델선택"}
+    export let selected_userdocument={value:0,name:"문서선택"}
+    
+    let message_list= []
+    let user_msg = '';
+    
+    const sendMessage = async () => {
+        if (user_msg == '') {
+            return;
         }
+
+        if (selected_userllm.value == 0) {
+            addToast('error','모델을 선택해주세요.')
+            return;
+        }
+
+        let message = {
+            name: get(username),
+            msg: user_msg,
+            time: new Date().toLocaleString(),
+            is_user: true
+        }
+
+        let res_msg= {
+            name: 'Knowslog Bot',
+            msg: '',
+            addtional_info: '',
+            time: new Date().toLocaleString(),
+            is_user: false
+        }
+
+        message_list = [...message_list, message];
+        message_list = [...message_list, res_msg];
+
+        let params = {
+            chat_id: chat_id,
+            user_llm_id: selected_userllm.value,
+            document_id: selected_userdocument.value == 0 ? null : selected_userdocument.value,
+            input: user_msg,
+        }
+
+        let success_callback = (json) => {
+            console.log(json)
+        }
+
+        let failure_callback = (json_error) => {
+            addToast('error',json_error.detail)
+        }
+
+        let streamCallback = (json) => {
+            if (json.is_done){
+                message_list[message_list.length-1].addtional_info = json.thought
+                message_list[message_list.length-1].msg = json.content
+            }
+            else{
+                message_list[message_list.length-1].addtional_info = json.thought
+                message_list[message_list.length-1].msg = json.content
+                message_list[message_list.length-1].time = json.create_date
+            }
+        }
+        await send_message(params, success_callback, failure_callback,streamCallback);
     }
 
-    function handleKeyPress(event) {
-        if (event.key === 'Enter' && event.shiftKey === false) {
-            sendMessage();
+    async function get_data()
+    {        
+        let params = {
+            chat_id: chat_id
         }
+
+        let success_callback = (json) => {
+            message_list = json.map(item => {return {
+                name:item.name,
+                msg:item.content,
+                time:item.create_date,
+                is_user:item.is_user}})
+        }
+
+        let failure_callback = (json_error) => {
+            addToast('error',json_error.detail)
+        }
+        await get_messages(params, success_callback, failure_callback);
     }
+
+    let messageListElement;
+    
+    $: if (chat_id) {
+            get_data();
+        }
+
+    $ : if (message_list.length > 0) {
+            messageListElement.scrollTop = messageListElement.scrollHeight;
+        }
+
 </script>
-
-<div class="h-screen flex flex-col">
-    <div class="flex-1 overflow-y-auto p-4 space-y-4">
-        {#each messages as message}
-            <Message {message} />
+<div >
+    <Navbar rounded color="form">
+        <NavHamburger />
+        <NavUl >
+          <NavLi class="cursor-pointer">
+            {selected_userllm.name}
+            <ChevronDownOutline class="w-6 h-6 ms-2 text-primary-800 dark:text-white inline" />
+          </NavLi>
+          <Dropdown class="w-44 z-20">
+            {#each userllm_list as userllm}
+                <DropdownItem on:click={()=>{selected_userllm=userllm}}>{userllm.name}</DropdownItem>
+            {/each}
+          </Dropdown>  
+          <NavLi class="cursor-pointer">
+            {selected_userdocument.name}
+            <ChevronDownOutline class="w-6 h-6 ms-2 text-primary-800 dark:text-white inline" />
+          </NavLi>
+          <Dropdown class="w-50 z-20">
+            {#each userdocument_list as document}
+                <DropdownItem on:click={()=>{selected_userdocument=document}}>{document.name}</DropdownItem>
+            {/each}
+          </Dropdown>
+        </NavUl>
+      </Navbar>
+</div>
+<div class="flex flex-col gap-4">
+    <div class="message-container" bind:this={messageListElement}>
+        {#each message_list as message}
+            <Message bind:message={message}/>
         {/each}
-    </div>
-    <div class="p-4 border-t border-gray-300 flex items-center">
-        <input
-            type="text"
-            bind:value={newMessage}
-            class="flex-1 p-2 border border-gray-300 rounded-l-lg focus:outline-none"
-            placeholder="Type your message..."
-            on:keypress={handleKeyPress}
-        />
-        <button
-            class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-r-lg"
-            on:click={sendMessage}
-        >
-            Send
-        </button>
-    </div>
+    </div>  
+    <MessageInput bind:message={user_msg} sendMessage={sendMessage}/>
 </div>
 
 <style>
-    /* Custom scrollbar styling */
-    .flex-1::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .flex-1::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-
-    .flex-1::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 4px;
-    }
-
-    .flex-1::-webkit-scrollbar-thumb:hover {
-        background: #555;
+    .message-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;                /* Tailwind의 gap-4 */
+        min-height: 70vh;         /* 최소 높이 설정 (필요에 따라 조정 가능) */
+        max-height: 70vh;         /* 최대 높이 설정 (필요에 따라 조정 가능) */
+        overflow-y: auto;         /* 내용이 넘칠 경우 수직 스크롤바 표시 */
     }
 </style>
