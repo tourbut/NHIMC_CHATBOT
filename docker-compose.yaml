@@ -4,7 +4,6 @@ services:
   db:
     image: pgvector/pgvector:pg16
     container_name: nhimc_chat-db
-    restart: always
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
       - ./script/initdb:/docker-entrypoint-initdb.d
@@ -16,7 +15,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
     ports:
-      - "5432:5432"
+      - 5432:5432
     networks:
       - nhimcchat-public
 
@@ -51,7 +50,6 @@ services:
       - .env
     ports:
       - 80:80
-      - 443:443
     volumes:
       - ./frontend/nginx/logs:/var/log/nginx
       - ./frontend/nginx/certbot/conf:/etc/letsencrypt
