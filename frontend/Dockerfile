@@ -9,7 +9,6 @@ RUN npm install
 COPY ./frontend ./
 RUN npm run build
 
-
 # Stage 2: Serve the app from Nginx
 FROM nginx:latest
 
