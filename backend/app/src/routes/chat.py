@@ -1,4 +1,5 @@
 import uuid
+import json
 from typing import Any,List
 
 from fastapi import APIRouter, HTTPException
@@ -26,7 +27,6 @@ from langchain_core.messages import (
     BaseMessage,
     HumanMessage,
 )
-
 from langchain_community.callbacks import get_openai_callback
 
 router = APIRouter()
@@ -51,7 +51,8 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                        search_kwargs={"k": 1})
     retriever = None
     if chat_in.document_id is not None:
-        collection = await pgvector_crud.get_collection(session=session,collection_id=chat_in.document_id)
+        document = await chat_crud.get_document(session=session,user_file_id=chat_in.document_id)
+        collection = await pgvector_crud.get_collection(session=session,collection_id=document.collection_id)
         retriever = pg_vetorstore(connection=engine,
                                     collection_name=collection.name,
                                     api_key=userllm.api_key,
@@ -96,7 +97,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                 chunks.append(answer)
                 yield chat_schema.OutMessage(content=answer.content,
                                             thought=thought['thought'],
-                                            tools = {"retriever": thought['context']},
+                                            tools = {'retriever': thought['context']},
                                             input_token=answer.usage_metadata['input_tokens'] if answer.usage_metadata is not None else None,
                                             output_token=answer.usage_metadata['output_tokens'] if answer.usage_metadata is not None else None,
                                             is_done=False).model_dump_json()
@@ -110,8 +111,10 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
         
         bot_message = chat_schema.CreateMessage(user_id=current_user.id,
                         chat_id=chat_in.chat_id,
-                        name="Knowslog Bot",
+                        name="바르미",
                         content=response.content,
+                        thought=thought['thought'],
+                        tools=json.dumps({'retriever': thought['context']}, ensure_ascii=False),
                         is_user=False)
         
         messages.append(bot_message)
@@ -129,10 +132,13 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                                       "name":user_message.name,
                                                       "create_date":user_message.create_date.strftime("%Y-%m-%d %H:%M:%S")
                                                       }),])
+        
         await history.aadd_messages([AIMessage(content=str(bot_message.content),
                                                additional_kwargs={
                                                    "user_id":str(bot_message.user_id),
                                                    "name":bot_message.name,
+                                                   "thought":bot_message.thought,
+                                                   "tools" : json.loads(bot_message.tools),
                                                    "create_date":bot_message.create_date.strftime("%Y-%m-%d %H:%M:%S")
                                                    })])
         
@@ -146,18 +152,21 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
             )
         
         yield chat_schema.OutMessage(content=bot_message.content,
-                                     thought=thought['thought'],
-                                     tools = {"retriever": thought['context']},
-                                    input_token=input_token,
-                                    output_token=output_token,
-                                    create_date=bot_message.create_date.strftime("%Y-%m-%d %H:%M:%S"),
-                                    is_done=True).model_dump_json()
+                                     thought=bot_message.thought,
+                                     tools = json.loads(bot_message.tools),
+                                     input_token=input_token,
+                                     output_token=output_token,
+                                     create_date=bot_message.create_date.strftime("%Y-%m-%d %H:%M:%S"),
+                                     is_done=True).model_dump_json()
         
     return StreamingResponse(chain_astream(chat_in.input),media_type='text/event-stream')
 
 @router.post("/create_chat",response_model=chat_schema.ResponseChat)
 async def create_chat(*, session: SessionDep_async, current_user: CurrentUser,chat_in: chat_schema.CreateChat):
-    chat = await chat_crud.create_chat(session=session,current_user=current_user,title=chat_in.title,user_llm_id=chat_in.user_llm_id)
+    chat = await chat_crud.create_chat(session=session,current_user=current_user,
+                                       title=chat_in.title,
+                                       user_llm_id=chat_in.user_llm_id,
+                                       user_file_id=chat_in.userdocument_id)
     return chat
 
 @router.get("/get_chat_list",response_model=List[chat_schema.GetChat])
@@ -177,11 +186,34 @@ async def get_messages(*, session: SessionDep_async, current_user: CurrentUser, 
                 chat_id=chat_id,
                 name=message.additional_kwargs["name"],
                 content=message.content,
+                thought=message.additional_kwargs["thought"] if "thought" in message.additional_kwargs else None,
+                tools=message.additional_kwargs["tools"] if "tools" in message.additional_kwargs else None,
                 is_user=message.type == "human",
                 create_date=datetime.strptime(message.additional_kwargs["create_date"],"%Y-%m-%d %H:%M:%S")
             )
             messages.append(msg)
-           
+        
+        if len(history.messages)==0:
+            messages = await chat_crud.get_messages(session=session,current_user=current_user,chat_id=chat_id)
+                    # Add messages to chat history
+            for message in messages:
+                if message.is_user:
+                    await history.aadd_messages([HumanMessage(content=message.content,
+                                                        additional_kwargs={
+                                                            "user_id":str(message.user_id),
+                                                            "name":message.name,
+                                                            "create_date":message.create_date.strftime("%Y-%m-%d %H:%M:%S")
+                                                            }),])
+                else:
+                    await history.aadd_messages([AIMessage(content=str(message.content),
+                                                        additional_kwargs={
+                                                            "user_id":str(message.user_id),
+                                                            "name":message.name,
+                                                            "thought":message.thought,
+                                                            "tools" : json.loads(message.tools),
+                                                            "create_date":message.create_date.strftime("%Y-%m-%d %H:%M:%S")
+                                                            })])
+            
     except Exception as e:
         print(e)
         messages = await chat_crud.get_messages(session=session,current_user=current_user,chat_id=chat_id)
@@ -191,11 +223,19 @@ async def get_messages(*, session: SessionDep_async, current_user: CurrentUser, 
 @router.get("/get_userllm",response_model=List[chat_schema.GetUserLLM])
 async def get_userllm(*, session: SessionDep_async, current_user: CurrentUser):
     userllm = await chat_crud.get_userllm(session=session,user_id=current_user.id)
+    
+    if userllm is None:
+        return HTTPException(status_code=404,detail="User LLM not found")
+    
     return userllm
 
 @router.get("/get_documents",response_model=List[chat_schema.GetDocument])
 async def get_documents(*, session: SessionDep_async, current_user: CurrentUser):
     documents = await chat_crud.get_documents(session=session,current_user=current_user)
+    
+    if documents is None:
+        return HTTPException(status_code=404,detail="Document not found")
+    
     return documents
 
 @router.put("/delete_chat")
@@ -210,4 +250,8 @@ async def delete_chat(*, session: SessionDep_async, current_user: CurrentUser,ch
 @router.get("/get_chat",response_model=chat_schema.GetChat)
 async def get_chat(*, session: SessionDep_async, current_user: CurrentUser,chat_id:uuid.UUID):
     chat = await chat_crud.get_chat(session=session,chat_id=chat_id)
+    
+    if chat is None:
+        return HTTPException(status_code=404,detail="Chat not found")
+    
     return chat

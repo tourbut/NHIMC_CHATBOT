@@ -58,11 +58,13 @@ async def create_usage(*,session: AsyncSession, usage: chat_schema.Usage) -> Use
         await session.rollback()
         raise e
     
-async def create_chat(*, session: AsyncSession, current_user: User,title:str,user_llm_id:uuid.UUID) -> Chats:
+async def create_chat(*, session: AsyncSession, current_user: User,title:str,user_llm_id:uuid.UUID,user_file_id:uuid.UUID) -> Chats:
     try:
         chat = Chats(user_id=current_user.id,
                     title=title,
-                    user_llm_id=user_llm_id)
+                    user_llm_id=user_llm_id,
+                    user_file_id=user_file_id
+                    )
         
         session.add(chat)
         await session.commit()
@@ -157,21 +159,28 @@ async def update_chat(*,session: AsyncSession, chat: chat_schema.Update_Chat) ->
         raise e
 
 async def get_documents(*, session: AsyncSession, current_user: User) -> List[chat_schema.GetDocument]:
-    try:
-        archive_statement = select(Archive.title.label("title"),
-                                   Archive.collection_id).where(Archive.user_id == current_user.id,
-                                                               Archive.delete_yn == False,
-                                                               Archive.embedding_yn == True)
-                                   
-        userfiles_statement = select(UserFiles.file_name.label("title"),
-                                     UserFiles.collection_id).where(UserFiles.user_id == current_user.id,
+    try:                       
+        statement = select(UserFiles.file_name.label("title"),
+                           UserFiles.collection_id,
+                           UserFiles.id.label("user_file_id")).where(UserFiles.user_id == current_user.id,
                                                                UserFiles.delete_yn == False,
                                                                UserFiles.embedding_yn == True)
                                      
-        statement = union_all(archive_statement, userfiles_statement)
-        
         documents = await session.exec(statement)
         return documents.all()
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+
+
+async def get_document(*, session: AsyncSession,user_file_id: uuid.UUID) -> chat_schema.GetDocument:
+    try:                       
+        statement = select(UserFiles.file_name.label("title"),
+                           UserFiles.collection_id,
+                           UserFiles.id.label("user_file_id")).where(UserFiles.id == user_file_id)
+        documents = await session.exec(statement)
+        return documents.first()
     except Exception as e:
         print(e)
         await session.rollback()

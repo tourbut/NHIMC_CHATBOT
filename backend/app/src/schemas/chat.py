@@ -31,6 +31,7 @@ class GetUserLLM(SQLModel):
 class CreateChat(SQLModel):
     title: str
     user_llm_id: uuid.UUID
+    userdocument_id: uuid.UUID
 
 class ResponseChat(SQLModel):
     id: uuid.UUID
@@ -42,6 +43,7 @@ class GetChat(SQLModel):
     id: uuid.UUID
     title: str
     user_llm_id: uuid.UUID
+    user_file_id: uuid.UUID
 
 class GetMessages(SQLModel):
     chat_id: str
@@ -49,7 +51,9 @@ class GetMessages(SQLModel):
 class ReponseMessages(SQLModel):
     chat_id: uuid.UUID
     name:str
-    content: str
+    content: str|None
+    thought : str|None = None
+    tools : str|None = None
     is_user: bool
     create_date: datetime
 
@@ -58,6 +62,8 @@ class CreateMessage(SQLModel):
     user_id: uuid.UUID 
     name: str 
     content: str
+    thought : str = None
+    tools : str = None
     is_user: bool
     create_date: datetime= datetime.now()
     
@@ -84,3 +90,4 @@ class Usage(SQLModel):
 class GetDocument(SQLModel):
     title: str
     collection_id: uuid.UUID
+    user_file_id:uuid.UUID

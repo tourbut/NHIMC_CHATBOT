@@ -13,7 +13,7 @@
 <Navbar {fluid} class="text-black" rounded color="form" let:NavContainer>
     <NavContainer class="mb-px mt-px px-1" {fluid}>
     <NavBrand href="/">
-        <img src="/logo.png" class="me-3 h-6 sm:h-9" alt="국민건강보험 일산병원" />
+        <img src="/logo.png" class="me-3" alt="국민건강보험 일산병원" />
         <span class="self-center whitespace-nowrap text-xl font-semibold dark:text-white">{$APP_NAME}</span>
     </NavBrand>
     <NavHamburger  />
@@ -25,7 +25,7 @@
             Settings<ChevronDownOutline class="w-6 h-6 ms-2 text-primary-800 dark:text-white inline" />
         </NavLi>    
         <Dropdown class="w-44 z-20">
-            <DropdownItem href="/detail">개인정보</DropdownItem>
+            <!-- <DropdownItem href="/detail">개인정보</DropdownItem> -->
             <DropdownItem href="/llms">LLM설정</DropdownItem>
             <DropdownItem href="/usage">사용량조회</DropdownItem>
             <DropdownDivider />

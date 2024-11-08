@@ -40,7 +40,9 @@
                     </div>
                     <Tooltip target={item.id} placement="bottom">
                         <P color="text-white-700" size="sm" weight="black">{item.label}</P>
+                        {#if item.caption}
                         <P color="text-white-700" size="xs">({item.caption})</P>
+                        {/if}
                     </Tooltip>
                     {/each}
                 {/each}

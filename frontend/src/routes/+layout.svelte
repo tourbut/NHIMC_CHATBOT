@@ -64,7 +64,7 @@
 <style>
 .container {
   display: flex;
-  min-height: 60vh; /* 브라우저 높이와 동일하게 설정 */
+  min-height: 80vh; /* 브라우저 높이와 동일하게 설정 */
 }
 .content {
   flex: 1; /* 남은 공간을 차지하도록 설정 */

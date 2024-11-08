@@ -29,10 +29,10 @@
 
     const btn_create_chat = async () => {
         showModal = false;
-
         let params = {
             title:form_data['title'],
-            user_llm_id:form_data['userllm_id']
+            user_llm_id:form_data['userllm_id'],
+            userdocument_id:form_data['userdocument_id']
         }
         
         let success_callback = (json) => {
@@ -125,8 +125,7 @@
         }
 
         let documents_success_callback = (json) => {
-            userdocument_list= json.map(item => {return {value:item.collection_id,name:item.title}}) 
-            console.log(userdocument_list)
+            userdocument_list= json.map(item => {return {value:item.user_file_id,name:item.title}}) 
             table_head[1].combo=userdocument_list
         }
 
@@ -143,7 +142,7 @@
     
 </script>
 
-<div class="flex h-screen overflow-hidden">
+<div class="flex h-[80vh] overflow-hidden">
     <div class="w-64 flex-shrink-0">
         {#if dataLoaded}
             <Sidebar btn_item_more_click={closeChat} btn_add_button={createChat} bind:side_menus={chat_list} btn_click={onclick}/>
@@ -167,8 +166,6 @@
         margin-left: auto;           /* 좌우 중앙 정렬 */
         margin-right: auto;          /* 좌우 중앙 정렬 */
         padding: 1rem;               /* padding: 1rem (Tailwind의 p-4에 해당) */
-        min-height: 85vh;           /* 브라우저 높이와 동일하게 설정 */
-        max-height: 85vh;           /* 브라우저 높이와 동일하게 설정 */
         max-width: 64rem;            /* 최대 너비 64rem (Tailwind의 max-w-5xl에 해당) */
     }
 </style>

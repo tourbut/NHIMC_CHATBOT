@@ -1,6 +1,7 @@
 <script>
     import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Dropdown, DropdownItem, DropdownDivider } from 'flowbite-svelte';
     import { ChevronDownOutline } from 'flowbite-svelte-icons';
+    import { v4 as uuidv4 } from 'uuid';
 
     import MessageInput from "./MessageInput.svelte";
     import Message from "./Message.svelte";
@@ -30,6 +31,7 @@
         }
 
         let message = {
+            id: uuidv4(),
             name: get(username),
             msg: user_msg,
             time: new Date().toLocaleString(),
@@ -37,9 +39,11 @@
         }
 
         let res_msg= {
-            name: 'Knowslog Bot',
+            id: uuidv4(),
+            name: '바르미',
             msg: '',
-            addtional_info: '',
+            thought: '',
+            tools: '',
             time: new Date().toLocaleString(),
             is_user: false
         }
@@ -64,11 +68,13 @@
 
         let streamCallback = (json) => {
             if (json.is_done){
-                message_list[message_list.length-1].addtional_info = json.thought
+                message_list[message_list.length-1].thought = json.thought
+                message_list[message_list.length-1].tools = json.tools['retriever']
                 message_list[message_list.length-1].msg = json.content
             }
             else{
-                message_list[message_list.length-1].addtional_info = json.thought
+                message_list[message_list.length-1].thought = json.thought
+                message_list[message_list.length-1].tools = json.tools['retriever']
                 message_list[message_list.length-1].msg = json.content
                 message_list[message_list.length-1].time = json.create_date
             }
@@ -83,9 +89,13 @@
         }
 
         let success_callback = (json) => {
+            console.log(json)
             message_list = json.map(item => {return {
+                id: uuidv4(),
                 name:item.name,
                 msg:item.content,
+                thought:item.thought,
+                tools:item.tools,
                 time:item.create_date,
                 is_user:item.is_user}})
         }
@@ -138,7 +148,9 @@
             <Message bind:message={message}/>
         {/each}
     </div>  
-    <MessageInput bind:message={user_msg} sendMessage={sendMessage}/>
+    <div class="">
+        <MessageInput bind:message={user_msg} sendMessage={sendMessage}/>
+    </div>
 </div>
 
 <style>
@@ -146,8 +158,8 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;                /* Tailwind의 gap-4 */
-        min-height: 70vh;         /* 최소 높이 설정 (필요에 따라 조정 가능) */
-        max-height: 70vh;         /* 최대 높이 설정 (필요에 따라 조정 가능) */
+        min-height: 63vh;         /* 최소 높이 설정 (필요에 따라 조정 가능) */
+        max-height: 63vh;         /* 최대 높이 설정 (필요에 따라 조정 가능) */
         overflow-y: auto;         /* 내용이 넘칠 경우 수직 스크롤바 표시 */
     }
 </style>

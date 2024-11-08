@@ -73,20 +73,13 @@
       <Input type="text" id="name" placeholder="홍길동" required bind:value={name}/>
     </div>
     <div>
-      <Label for="age" class="mb-2">나이</Label>
-      <Input type="number" id="age" placeholder=0 required bind:value={age}/>
-    </div>
-  </div>
-  <div class="grid gap-6 mb-6 md:grid-cols-2">
-    <div>
-      <Toggle bind:checked={discord_yn}>Discord 수신여부</Toggle>
+      <Label for="age" class="mb-2">사번</Label>
+      <Input type="text" id="empl_no" placeholder=0 required bind:value={age}/>
     </div>
     <div>
-      <Toggle bind:checked={email_yn}>Email 수신여부</Toggle>
+      <Label for="age" class="mb-2">부서</Label>
+      <Input type="text" id="dept_nm" placeholder=0 required bind:value={age}/>
     </div>
-  </div>
-  <div>
-    <InterestsInput bind:interests={interests} />
   </div>
 
   <Button on:click={handleSubmit}>수정</Button>
