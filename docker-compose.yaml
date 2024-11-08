@@ -18,6 +18,15 @@ services:
       - 5432:5432
     networks:
       - nhimcchat-public
+  
+  cache_db:
+    image: redis/redis-stack
+    container_name: nhimc_chat-cache-db
+    ports:
+      - 6379:6379
+    networks:
+      - nhimcchat-public
+
 
   backend:
     container_name: backend
