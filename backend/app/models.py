@@ -106,3 +106,5 @@ class Messages(CommonBase,table=True):
     name:str = Field(nullable=False, description="이름")
     content: str = Field(nullable=False, description="내용")
     is_user: bool = Field(nullable=False, description="유저여부")
+    thought: str | None = Field(nullable=True, description="생각")
+    tools: str | None = Field(nullable=True, description="도구사용내용")
