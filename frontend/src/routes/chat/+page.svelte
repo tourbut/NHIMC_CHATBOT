@@ -8,6 +8,7 @@
 
     let chat_list = []
     let chat_id = ''
+    let chat_title=''
     let showModal = false;
     let dataLoaded = false;
     let userllm_list = []
@@ -56,13 +57,18 @@
 
     const onclick = async (id) => {
         chat_id = id
-
+        chat_title = chat_list.find(item => item.items.find(item => item.id == id)).items.find(item => item.id == id).label
+        console.log(chat_title)
         let params = {
             chat_id:id
         }
 
         let success_callback = (json) => {
             selected_userllm = userllm_list.find(item => item.value == json.user_llm_id)
+            //console.log(json.user_file_id)
+            selected_userdocument = userdocument_list.find(item => item.value == json.user_file_id)
+            
+            
         }
         let failure_callback = (json_error) => {
             addToast('error',json_error.detail)
@@ -154,7 +160,8 @@
                   bind:userllm_list={userllm_list}
                   bind:userdocument_list={userdocument_list} 
                   bind:selected_userllm={selected_userllm}
-                  bind:selected_userdocument={selected_userdocument} />
+                  bind:selected_userdocument={selected_userdocument} 
+                  bind:chat_title={chat_title}/>
         {/if}
     </div>
 </div>

@@ -1,5 +1,5 @@
 <script>
-    import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Dropdown, DropdownItem, DropdownDivider } from 'flowbite-svelte';
+    import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Dropdown, DropdownItem, DropdownDivider, P } from 'flowbite-svelte';
     import { ChevronDownOutline } from 'flowbite-svelte-icons';
     import { v4 as uuidv4 } from 'uuid';
 
@@ -16,7 +16,8 @@
     export let chat_id = ''
     export let selected_userllm={value:0,name:"모델선택"}
     export let selected_userdocument={value:0,name:"문서선택"}
-    
+    export let chat_title = ''
+
     let message_list= []
     let user_msg = '';
     
@@ -89,7 +90,6 @@
         }
 
         let success_callback = (json) => {
-            console.log(json)
             message_list = json.map(item => {return {
                 id: uuidv4(),
                 name:item.name,
@@ -120,25 +120,14 @@
 <div >
     <Navbar rounded color="form">
         <NavHamburger />
+        <NavBrand>{chat_title}</NavBrand>
         <NavUl >
           <NavLi class="cursor-pointer">
-            {selected_userllm.name}
-            <ChevronDownOutline class="w-6 h-6 ms-2 text-primary-800 dark:text-white inline" />
-          </NavLi>
-          <Dropdown class="w-44 z-20">
-            {#each userllm_list as userllm}
-                <DropdownItem on:click={()=>{selected_userllm=userllm}}>{userllm.name}</DropdownItem>
-            {/each}
-          </Dropdown>  
+            Model : {selected_userllm.name}
+          </NavLi>  
           <NavLi class="cursor-pointer">
-            {selected_userdocument.name}
-            <ChevronDownOutline class="w-6 h-6 ms-2 text-primary-800 dark:text-white inline" />
+            File : {selected_userdocument.name}
           </NavLi>
-          <Dropdown class="w-50 z-20">
-            {#each userdocument_list as document}
-                <DropdownItem on:click={()=>{selected_userdocument=document}}>{document.name}</DropdownItem>
-            {/each}
-          </Dropdown>
         </NavUl>
       </Navbar>
 </div>
