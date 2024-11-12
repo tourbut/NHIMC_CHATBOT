@@ -11,8 +11,6 @@
     import { username } from '$lib/stores';
     import { get } from "svelte/store";
 
-    export let userllm_list = []
-    export let userdocument_list = []
     export let chat_id = ''
     export let selected_userllm={value:0,name:"모델선택"}
     export let selected_userdocument={value:0,name:"문서선택"}

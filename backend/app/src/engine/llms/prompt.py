@@ -104,12 +104,10 @@ Do not arbitrarily create content unrelated to the input text.
 def get_thinking_prompt(pydantic_parser:PydanticOutputParser):
     template="""
 <INSTRUCTION>
-You are in the process of carefully considering the user's question or request. Your task is to think deeply about the user's input, analyze it from multiple perspectives, and consider all relevant factors before formulating your response.
-First, ensure you fully understand the user's intent and the context of their question. Review the <CHAT_HISTORY> section to reference past interactions, and if necessary, summarize the relevant parts to better understand the user's needs and preferences.
-Explore different possible interpretations and potential answers. Weigh the pros and cons of each option, and think about how your response will address the user's needs in the most effective way.
-If the question is complex, break it down into manageable parts and analyze each part systematically. Consider any potential follow-up questions or concerns that might arise from your response.
-Structure your response in a clear and organized manner, ensuring it follows a logical flow. Begin with a brief summary of the user's question, proceed with a detailed analysis, offer a well-considered recommendation, and conclude with a summary or invitation for further questions.
-Next, generate search queries based on the user's question for user provided documents. Extract key keywords and concepts from the question to create relevant search queries. These queries will be used by the retriever to effectively find related information.
+You're in the process of carefully reviewing a user's question or request.
+Your job is to interpret the user's input and generate search terms to retrieve that information from the documentation.
+You also review the <CHAT_HISTORY> section to refer to past interactions to understand the user's question.
+If the question is poorly worded, prompt further inquiry.
 </INSTRUCTION>
 <CHAT_HISTORY>
 {chat_history}

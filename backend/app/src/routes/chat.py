@@ -79,7 +79,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                               model=userllm.name,
                               #get_redis_history=get_redis_history
                               memory=memory,
-                              retriever=retriever
+                              retriever=retriever,
                               )
         
         chunks=[]

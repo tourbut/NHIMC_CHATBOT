@@ -37,6 +37,7 @@ class ResponseChat(SQLModel):
     id: uuid.UUID
     title: str
     user_llm_id: uuid.UUID
+    user_file_id: uuid.UUID
     
 class GetChat(SQLModel):
     category: str = "chat"

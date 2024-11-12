@@ -1,6 +1,6 @@
 <script>
     import { marked } from 'marked'
-    import { Popover, P, A } from 'flowbite-svelte';
+    import { Popover, P, A, Avatar } from 'flowbite-svelte';
     import { LightbulbOutline, ClipboardOutline, FileOutline } from 'flowbite-svelte-icons';
     
     export let message = {
@@ -35,7 +35,7 @@
 </div>
 {:else}
 <div class="flex items-start gap-2.5">
-    <img class="w-8 h-8 rounded-full" src="/바르미_상반신.png" alt="Knowslog">
+    <Avatar src="/바르미_상반신.png" size="sm"/>
     <div class="min-w-30 relative flex flex-col w-auto max-w-half leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700">
         <div class="flex items-center space-x-2 rtl:space-x-reverse relative">
             <span class="text-sm font-semibold text-gray-900 dark:text-white">{message.name}</span>

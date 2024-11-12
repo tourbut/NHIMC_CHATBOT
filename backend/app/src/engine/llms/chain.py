@@ -119,7 +119,7 @@ def thinking_chatbot_chain(api_key:str,
                            temperature:float=0.7,
                            callback_manager=None,
                            memory=None,
-                           retriever=None
+                           retriever=None,
                            ):
     
     callback_manager = CallbackManager([StdOutCallbackHandler()])

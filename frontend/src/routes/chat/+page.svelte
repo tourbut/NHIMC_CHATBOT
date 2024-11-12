@@ -37,16 +37,13 @@
         }
         
         let success_callback = (json) => {
-
             addToast('info','생성 완료')
             selected_userllm = userllm_list.find(item => item.value == json.user_llm_id)
+            selected_userdocument = userdocument_list.find(item => item.value == json.user_file_id)
+
+            chat_title=json.title
             chat_id = json.id
-            chat_list[0].items.push({
-                id: json.id,
-                label: json.title,  // title이 없을 경우 'Untitled'로 설정
-                herf: '',            // id 기반 URL 설정
-                caption: ''
-            });
+            chat_list[0].items = [...chat_list[0].items, {id: json.id, label: json.title, herf: '', caption: selected_userdocument.name}];
         }
         let failure_callback = (json_error) => {
             addToast('error',json_error.detail)
@@ -58,17 +55,13 @@
     const onclick = async (id) => {
         chat_id = id
         chat_title = chat_list.find(item => item.items.find(item => item.id == id)).items.find(item => item.id == id).label
-        console.log(chat_title)
         let params = {
             chat_id:id
         }
 
         let success_callback = (json) => {
             selected_userllm = userllm_list.find(item => item.value == json.user_llm_id)
-            //console.log(json.user_file_id)
             selected_userdocument = userdocument_list.find(item => item.value == json.user_file_id)
-            
-            
         }
         let failure_callback = (json_error) => {
             addToast('error',json_error.detail)
@@ -83,9 +76,7 @@
         }
         let success_callback = (json) => {
             addToast('info','삭제 완료')
-            chat_list.forEach(item => {
-            item.items = item.items.filter(item => item.id != id)
-            });
+            chat_list[0].items = chat_list[0].items.filter(item => item.id != id)
         }
         let failure_callback = (json_error) => {
             addToast('error',json_error.detail)
@@ -108,13 +99,13 @@
                     categoryGroup = { category: item.category, items: [] };
                     chat_list.push(categoryGroup);
                 };
-
                 // 아이템 추가
+                selected_userdocument = userdocument_list.find(item_ => item_.value == item.user_file_id)
                 categoryGroup.items.push({
                   id: item.id,
                   label: item.title || 'Untitled',  // title이 없을 경우 'Untitled'로 설정
                   herf: '',            // id 기반 URL 설정
-                  caption: item.url
+                  caption: selected_userdocument.name
                 });
             });
             dataLoaded=true
@@ -124,7 +115,6 @@
             addToast('error',json_error.detail)
         }
 
-        
         let userllm_success_callback = (json) => {
             userllm_list= json.map(item => {return {value:item.id,name:item.name}})
             table_head[0].combo=userllm_list
@@ -135,16 +125,20 @@
             table_head[1].combo=userdocument_list
         }
 
+        await get_documents(params,documents_success_callback,failure_callback);
+
         await get_userllm(params, userllm_success_callback, failure_callback);
 
         await get_chat_list(params, success_callback, failure_callback);
 
-        await get_documents(params,documents_success_callback,failure_callback)
     }   
     
     onMount(async () => {
       await get_data()
     })
+
+
+   
     
 </script>
 
@@ -157,15 +151,13 @@
     <div class="chat-container">
         {#if chat_id}
             <Chat bind:chat_id={chat_id} 
-                  bind:userllm_list={userllm_list}
-                  bind:userdocument_list={userdocument_list} 
                   bind:selected_userllm={selected_userllm}
                   bind:selected_userdocument={selected_userdocument} 
                   bind:chat_title={chat_title}/>
         {/if}
     </div>
 </div>
-<ComboModal header={"채팅방생성"} bind:table_head={table_head} formModal={showModal} bind:form_data={form_data} btn_click={btn_create_chat} > </ComboModal>
+<ComboModal header={"채팅방 생성"} bind:table_head={table_head} formModal={showModal} bind:form_data={form_data} btn_click={btn_create_chat} > </ComboModal>
 
 <style>
    .chat-container {
