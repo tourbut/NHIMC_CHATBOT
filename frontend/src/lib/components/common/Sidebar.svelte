@@ -16,8 +16,6 @@
     export let btn_click;
     export let btn_item_more_click;
     export let btn_add_button;
-
-    $: console.log(side_menus);
     
 </script>
 <div class="relative">

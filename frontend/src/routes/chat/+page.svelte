@@ -6,11 +6,10 @@
     import { create_chat, get_userllm, get_chat_list, delete_chat, get_chat, get_documents} from "$lib/apis/chat";
     import { addToast } from '$lib/common';
 
-    let chat_list = []
+    let chat_list = [{category: 'chat', items: []}];
     let chat_id = ''
     let chat_title=''
     let showModal = false;
-    let dataLoaded = false;
     let userllm_list = []
     let userdocument_list = []
     let selected_userllm={value:0,name:"모델선택"}
@@ -91,24 +90,11 @@
 
         let success_callback = (json) => {
         json.forEach(item => {
-                // 카테고리로 그룹화된 객체를 찾음
-                let categoryGroup = chat_list.find(group => group.category === item.category);
-
-                // 해당 카테고리가 없으면 새로 추가
-                if (!categoryGroup) {
-                    categoryGroup = { category: item.category, items: [] };
-                    chat_list.push(categoryGroup);
-                };
-                // 아이템 추가
-                selected_userdocument = userdocument_list.find(item_ => item_.value == item.user_file_id)
-                categoryGroup.items.push({
-                  id: item.id,
-                  label: item.title || 'Untitled',  // title이 없을 경우 'Untitled'로 설정
-                  herf: '',            // id 기반 URL 설정
-                  caption: selected_userdocument.name
-                });
+            // 아이템 추가
+            selected_userdocument = userdocument_list.find(item_ => item_.value == item.user_file_id)
+            chat_list[0].items = [...chat_list[0].items, {id: item.id, label: item.title, herf: '', caption: selected_userdocument.name}];
+            
             });
-            dataLoaded=true
         }
 
         let failure_callback = (json_error) => {
@@ -144,9 +130,7 @@
 
 <div class="flex h-[80vh] overflow-hidden">
     <div class="w-64 flex-shrink-0">
-        {#if dataLoaded}
-            <Sidebar btn_item_more_click={closeChat} btn_add_button={createChat} bind:side_menus={chat_list} btn_click={onclick}/>
-        {/if}
+        <Sidebar btn_item_more_click={closeChat} btn_add_button={createChat} bind:side_menus={chat_list} btn_click={onclick}/>
     </div> 
     <div class="chat-container">
         {#if chat_id}
