@@ -42,6 +42,7 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,f
         
         # Save file and load and split
         path,userdir_path = await save_file(file.file,user_id=current_user.id)
+        
         file_meta = archive_schema.FileUpload(file_name=file.filename,
                                               file_path=path,
                                               file_size=os.path.getsize(path),
@@ -49,7 +50,9 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,f
                                               file_ext=file.filename.split(".")[-1])
         
         db_obj = await archive_crud.create_file(session=session,file=file_meta,user_id=current_user.id)
+        
         docs = await load_and_split(file_ext=file.filename.split(".")[-1],file_path=path)
+
         
         # Embedding and store
         collection_metadata = {"file_name":file_meta.file_name,
@@ -94,7 +97,9 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,f
 
     except Exception as e:
         print(e)
-        raise HTTPException(status_code=404, detail=f"파일 업로드에 실패하였습니다.")
+        raise HTTPException(status_code=404, detail=f"""파일 업로드에 실패하였습니다.
+                            Error Msg:
+                            {e}""")
     
     return response
 

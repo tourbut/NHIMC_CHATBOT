@@ -8,6 +8,7 @@ from langchain.storage import LocalFileStore
 from langchain_community.document_loaders import TextLoader, PDFMinerLoader, UnstructuredExcelLoader
 from langchain_community.document_loaders.csv_loader import CSVLoader
 from sqlmodel import Session
+import chardet
 
 async def load_and_split(file_ext:str,file_path: str,
                          splitter_options:dict={"separator":"\n","chunk_size":600,"chunk_overlap":100}):
@@ -16,19 +17,27 @@ async def load_and_split(file_ext:str,file_path: str,
     chunk_size=splitter_options["chunk_size"],
     chunk_overlap=splitter_options["chunk_size"],
     )
+    try :
+        if file_ext in ['txt','md']:
+            def detect_encoding(file_path: str) -> str:
+                with open(file_path, 'rb') as f:
+                    result = chardet.detect(f.read())
+                return result['encoding']
+            loader = TextLoader(file_path,encoding=detect_encoding(file_path))
+        elif file_ext in ['pdf']:
+            loader = PDFMinerLoader(file_path)
+        elif file_ext in ['csv']:
+            loader = CSVLoader(file_path)
+        elif file_ext in ['xls','xlsx']:
+            loader = UnstructuredExcelLoader(file_path)
+        else:
+            raise ValueError("File extension not supported")
+
+        docs = loader.load_and_split(text_splitter=character_text_splitter)
+    except Exception as e:
+        print(e)
+        raise ValueError("Document loading failed")
     
-    if file_ext in ['txt','md']:
-        loader = TextLoader(file_path)
-    elif file_ext in ['pdf']:
-        loader = PDFMinerLoader(file_path)
-    elif file_ext in ['csv']:
-        loader = CSVLoader(file_path)
-    elif file_ext in ['xls','xlsx']:
-        loader = UnstructuredExcelLoader(file_path)
-    else:
-        raise ValueError("File extension not supported")
-        
-    docs = loader.load_and_split(text_splitter=character_text_splitter)
     return docs
 
 

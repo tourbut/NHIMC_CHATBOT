@@ -1,6 +1,7 @@
 .venv
 *.pyc
 .env
+prd.env
 .DS_Store
 test/*.md
 app/database/pgdata
