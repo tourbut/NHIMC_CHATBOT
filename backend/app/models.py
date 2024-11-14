@@ -16,10 +16,20 @@ class User(CommonBase, table=True):
     empl_no: str = Field(unique=True, nullable=False, description="사번")
     password: str = Field(nullable=False, description="비밀번호")
     name: str = Field(nullable=False,description="이름")
-    dept_cd: str = Field(nullable=False,description="부서코드")
     is_active: bool = Field(default=True,description="활성화여부")
     is_admin: bool = Field(default=False,description="관리자여부")
 
+class Dept(CommonBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
+    dept_cd: str = Field(nullable=False, description="부서코드")
+    dept_nm: str = Field(nullable=False, description="부서명")
+    is_active: bool = Field(default=True, description="활성화여부")
+
+class UserDept(CommonBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
+    user_id: uuid.UUID = Field(foreign_key="user.id")
+    dept_id: uuid.UUID = Field(foreign_key="dept.id")
+    is_active: bool = Field(default=True, description="활성화여부")
 
 class LLM(CommonBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")

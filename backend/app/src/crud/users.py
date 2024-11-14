@@ -18,15 +18,21 @@ async def authenticate(*, session: Session, empl_no: str, password: str) -> User
         if isis_user:
             user = user_schema.UserCreate(empl_no=isis_user[0],
                                         password=isis_user[1],
-                                        name=isis_user[2],
-                                        dept_cd=isis_user[3])
+                                        name=isis_user[2],)
             
             if await verify_password(password, user.password):
-                db_obj = User.model_validate(user)
-                session.add(db_obj)
+                db_user = User.model_validate(user)
+                session.add(db_user)
+                
+                statement = select(Dept).where(Dept.dept_cd == isis_user[3])
+                db_dept = await session.exec(statement)
+                dept = db_dept.first()
+                db_userdept = UserDept(user_id=db_user.id, dept_id=dept.id)
+                session.add(db_userdept)
+                            
                 await session.commit()
-                await session.refresh(db_obj)
-                return db_obj
+                await session.refresh(db_user)
+                return db_user
             else:
                 return None
         else:    

@@ -6,7 +6,6 @@ class UserCreate(SQLModel):
     empl_no: str
     password: str
     name: str 
-    dept_cd: str
 
 class UserDetail(SQLModel):
     name: str 

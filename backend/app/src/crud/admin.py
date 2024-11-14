@@ -2,7 +2,25 @@ from typing import List
 from app.models import *
 from app.src.schemas import admin as admin_schema
 from sqlmodel import Session, select
+from app.src.utils.fromOracle import get_isis_dept
 
+async def create_dept(*, session: Session) -> List[Dept]:
+    depts=await get_isis_dept()
+    
+    statement = select(Dept)
+    db_dept = await session.exec(statement)
+    rslt= db_dept.all()
+    if rslt:
+        return rslt
+    else:
+        for dept in depts:
+            obj = Dept(dept_cd=dept[0], dept_nm=dept[1])
+            db_obj = Dept.model_validate(obj)
+            session.add(db_obj)
+            await session.flush()
+    
+        await session.commit()
+        return db_obj
 
 async def create_llm(*, session: Session, llm_create: admin_schema.LLMCreate) -> LLM:
     db_obj = LLM.model_validate(llm_create)

@@ -21,3 +21,25 @@ async def get_isis_user(empl_no: str):
             result = await cursor.fetchone()
             
             return result
+        
+async def get_isis_dept():
+    
+    async with oracledb.connect_async(user=settings.ISIS_DB_USER,
+                                        password=settings.ISIS_DB_PASSWORD,
+                                        dsn=settings.ISIS_DB_DSN) as conn:
+    
+        async with conn.cursor() as cursor:
+            query = """-- 부서 조회
+                        SELECT 
+                            A1.DEPT_CD AS DEPT_CD
+                            ,A1.DEPT_NM AS DEPT_NM
+                        FROM AZCMMDEPT A1
+                        WHERE  1=1
+                        AND TO_CHAR (SYSDATE, 'YYYYMMDD') BETWEEN A1.DEPT_STR_DY AND A1.DEPT_END_DY
+                        AND DEPT_CD <>'%'
+                        ORDER BY A1.DEPT_CD, A1.DEPT_NM"""
+            await cursor.execute(query)
+            
+            result = await cursor.fetchall()
+            
+            return result

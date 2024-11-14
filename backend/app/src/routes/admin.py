@@ -44,3 +44,15 @@ async def update_llm(*, session: SessionDep_async, current_user: CurrentUser, ll
         raise HTTPException(status_code=400, detail="Not enough permissions")
     llm = await admin_crud.update_llm(session=session, llm_update=llm_update)
     return llm
+
+
+@router.post("/create_dept")
+async def create_dept(*, session: SessionDep_async, current_user: CurrentUser) -> Any:
+    """
+    Create Department
+    """
+    
+    if not current_user.is_admin:
+        raise HTTPException(status_code=400, detail="Not enough permissions")
+    
+    dept = await admin_crud.create_dept(session=session)
