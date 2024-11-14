@@ -142,5 +142,9 @@ class Settings(BaseSettings):
         return f"redis://{self.REDIS_USER}:{self.REDIS_PASSWORD}@{self.REDIS_SERVER}:{self.REDIS_PORT}"
     
     FILE_UPLOAD_DIR: str = "./files"
+    
+    ISIS_DB_DSN:str =''
+    ISIS_DB_USER:str =''
+    ISIS_DB_PASSWORD:str =''
 
 settings = Settings()  # type: ignore

@@ -2,7 +2,7 @@ from app.models import *
 from app.src.schemas import users as user_schema
 from sqlmodel import Session, select
 from app.src.utils.security import get_password_hash, verify_password
-
+from app.src.utils.fromOracle import get_isis_user
 
 async def get_user_by_empl_no(*, session: Session, empl_no: str) -> User | None:
     statement = select(User).where(User.empl_no == empl_no)
@@ -11,8 +11,26 @@ async def get_user_by_empl_no(*, session: Session, empl_no: str) -> User | None:
 
 async def authenticate(*, session: Session, empl_no: str, password: str) -> User | None:
     db_user = await get_user_by_empl_no(session=session, empl_no=empl_no)
+    
     if not db_user:
-        return None
+        isis_user = await get_isis_user(empl_no)
+        
+        if isis_user:
+            user = user_schema.UserCreate(empl_no=isis_user[0],
+                                        password=isis_user[1],
+                                        name=isis_user[2],
+                                        dept_cd=isis_user[3])
+            
+            if await verify_password(password, user.password):
+                db_obj = User.model_validate(user)
+                session.add(db_obj)
+                await session.commit()
+                await session.refresh(db_obj)
+                return db_obj
+            else:
+                return None
+        else:    
+            return None
     if not await verify_password(password, db_user.password):
         return None
     return db_user
