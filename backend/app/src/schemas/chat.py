@@ -27,7 +27,13 @@ class GetUserLLM(SQLModel):
     source: str
     name: str
     api_key: str
-    
+
+class GetDeptLLM(SQLModel):
+    id: uuid.UUID 
+    source: str
+    name: str
+    api_key: str
+
 class CreateChat(SQLModel):
     title: str
     user_llm_id: uuid.UUID

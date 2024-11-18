@@ -56,3 +56,36 @@ async def create_dept(*, session: SessionDep_async, current_user: CurrentUser) -
         raise HTTPException(status_code=400, detail="Not enough permissions")
     
     dept = await admin_crud.create_dept(session=session)
+    
+#부서별 api 등록 및 조회 기능
+
+
+@router.post("/create_apikey")
+async def create_apikey(*, session: SessionDep_async, apikey_in: admin_schema.Create_Apikey, current_user: CurrentUser) -> Any:
+    """
+    Create API Key
+    """
+    apikey = await admin_crud.create_apikey(session=session, apikey_in=apikey_in)
+    
+@router.get("/get_apikey", response_model=List[admin_schema.Get_Apikey])
+async def get_apikey(*, session: SessionDep_async, current_user: CurrentUser) -> Any:
+    """
+    Get API Key
+    """
+    apikey = await admin_crud.get_apikey(session=session)
+    return apikey
+
+@router.put("/update_apikey")
+async def update_apikey(*, session: SessionDep_async, apikey_update: admin_schema.Get_Apikey, current_user: CurrentUser) -> Any:
+    """
+    Update API Key
+    """
+    apikey = await admin_crud.update_apikey(session=session, apikey_update=apikey_update)
+    
+@router.get("/get_dept", response_model=List[admin_schema.Get_Dept])
+async def get_dept(*, session: SessionDep_async, current_user: CurrentUser) -> Any:
+    """
+    Get Department
+    """
+    dept = await admin_crud.get_dept(session=session)
+    return dept

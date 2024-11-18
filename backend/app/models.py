@@ -41,6 +41,20 @@ class LLM(CommonBase, table=True):
     output_price: float = Field(nullable=False)
     is_active: bool = Field(default=True)
 
+class DeptAPIKey(CommonBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
+    dept_id: uuid.UUID = Field(foreign_key="dept.id")
+    api_name:str = Field(nullable=False)
+    api_key:str = Field(nullable=False)
+    active_yn:bool = Field(default=True)
+
+class DeptLLM(CommonBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
+    dept_id: uuid.UUID = Field(foreign_key="dept.id")
+    llm_id: uuid.UUID = Field(foreign_key="llm.id")
+    api_id: uuid.UUID = Field(foreign_key="deptapikey.id")
+    active_yn:bool = Field(default=True)
+
 class UserAPIKey(CommonBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     user_id: uuid.UUID = Field(foreign_key="user.id")

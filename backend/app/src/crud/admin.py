@@ -52,3 +52,43 @@ async def get_llm(*, session: Session) -> List[LLM]| None:
         return None
     else:
         return llm.all()
+    
+async def create_apikey(*, session: Session, apikey_in: admin_schema.Create_Apikey) -> DeptAPIKey:
+    db_obj = DeptAPIKey.model_validate(apikey_in)
+    session.add(db_obj)
+    await session.commit()
+    await session.refresh(db_obj)
+    return db_obj
+
+async def get_apikey(*, session: Session) -> List[admin_schema.Get_Apikey]| None:
+    
+    statement = select(DeptAPIKey)
+    
+    apikey = await session.exec(statement)
+    if not apikey:
+        return None
+    else:
+        return apikey.all()
+
+async def update_apikey(*, session: Session, apikey_update: admin_schema.Get_Apikey) -> DeptAPIKey:
+    apikey = await session.get(DeptAPIKey, apikey_update.id)
+    
+    if not apikey:
+        return None
+    else:
+        update_dict = apikey_update.model_dump(exclude_unset=True)
+        apikey.sqlmodel_update(update_dict)
+        apikey.update_date = datetime.now()
+        session.add(apikey)
+        await session.commit()
+        await session.refresh(apikey)
+
+    return apikey
+
+async def get_dept(*, session: Session) -> List[Dept]| None:
+    statement = select(Dept).where(Dept.is_active == True)
+    dept = await session.exec(statement)
+    if not dept:
+        return None
+    else:
+        return dept.all()

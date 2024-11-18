@@ -44,7 +44,7 @@ class Update_UserLLM(SQLModel):
 
 class Delete_UserLLM(SQLModel):
     id:uuid.UUID 
-    
+
 class Get_UserUsage(SQLModel):
     source:str
     name:str

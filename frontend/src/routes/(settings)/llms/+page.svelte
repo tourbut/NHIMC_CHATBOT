@@ -101,7 +101,6 @@
                   api_id:params.api_key,
                   active_yn:params.active_yn
                 }
-          console.log(params)
           await update_userllm(params,success_callback, failure_callback)
         }
       }
