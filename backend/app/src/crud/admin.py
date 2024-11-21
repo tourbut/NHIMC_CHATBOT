@@ -1,7 +1,7 @@
 from typing import List
 from app.models import *
 from app.src.schemas import admin as admin_schema
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 from app.src.utils.fromOracle import get_isis_dept
 
 async def create_dept(*, session: Session) -> List[Dept]:
@@ -92,3 +92,63 @@ async def get_dept(*, session: Session) -> List[Dept]| None:
         return None
     else:
         return dept.all()
+    
+async def get_deptllm(*, session: Session) -> List[admin_schema.Get_DeptLLM]| None:
+    statement = select(DeptLLM.id,
+                       DeptLLM.dept_id,
+                       DeptLLM.api_id,
+                       DeptLLM.llm_id,
+                       LLM.source,
+                       LLM.name,
+                       DeptAPIKey.api_key,
+                       DeptLLM.active_yn).where(DeptLLM.llm_id == LLM.id,
+                                                DeptLLM.api_id ==DeptAPIKey.id,
+                                                )
+    deptllm = await session.exec(statement)
+    if not deptllm:
+        return None
+    else:
+        return deptllm.all()
+
+async def create_deptllm(*, session: Session, deptllm_in: admin_schema.Create_DeptLLM) -> DeptLLM:
+    db_obj = DeptLLM.model_validate(deptllm_in)
+    session.add(db_obj)
+    await session.commit()
+    await session.refresh(db_obj)
+    return db_obj
+
+async def update_deptllm(*, session: Session, deptllm_update: admin_schema.Update_DeptLLM) -> DeptLLM:
+    deptllm = await session.get(DeptLLM, deptllm_update.id)
+    
+    if not deptllm:
+        return None
+    else:
+        update_dict = deptllm_update.model_dump(exclude_unset=True)
+        deptllm.sqlmodel_update(update_dict)
+        deptllm.update_date = datetime.now()
+        session.add(deptllm)
+        await session.commit()
+        await session.refresh(deptllm)
+
+    return deptllm
+
+async def get_deptusage(*, session: Session,dept_id:uuid.UUID) -> List[admin_schema.Get_DeptUsage]| None:
+    statement = select(Dept.dept_nm,
+                       LLM.source,
+                       LLM.name,
+                       func.date(DeptUsage.usage_date).label("usage_date"),
+                       func.sum(DeptUsage.input_token).label("input_token"),
+                       func.sum(DeptUsage.output_token).label("output_token"),
+                       func.sum((DeptUsage.input_token / 1000000) * LLM.input_price + (UserUsage.output_token / 1000000) * LLM.output_price).label("cost") # 1M 토큰당 비용(1M = 1,000,000)
+                       ).where(DeptLLM.dept_id == dept_id,
+                                DeptLLM.llm_id == LLM.id,
+                                DeptLLM.api_id ==DeptAPIKey.id,
+                                DeptUsage.dept_llm_id == DeptLLM.id).group_by(Dept.dept_nm,
+                                                                              LLM.source,
+                                                                              LLM.name,
+                                                                              func.date(DeptUsage.usage_date)).order_by(func.date(DeptUsage.usage_date).desc())
+    deptusage = await session.exec(statement)
+    if not deptusage:
+        return None
+    else:
+        return deptusage.all()

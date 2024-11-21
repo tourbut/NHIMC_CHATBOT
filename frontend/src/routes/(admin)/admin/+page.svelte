@@ -2,7 +2,9 @@
     import Table from '$lib/components/common/Table.svelte';
     import { Tabs, TabItem } from 'flowbite-svelte';
 
-    import { get_llm, get_dept, get_apikey, create_llm,create_apikey, update_llm, update_apikey } from "$lib/apis/admin";
+    import { get_llm, get_dept, get_apikey,get_deptllm,get_deptusage,
+             create_llm,create_apikey,create_deptllm,
+             update_llm, update_apikey,update_deptllm } from "$lib/apis/admin";
     import { onMount } from 'svelte';
     import { addToast } from '$lib/common';
     let table_head=[
@@ -16,18 +18,28 @@
     ]
 
     let api_table_head=[
-      {id:0,name:"dept_id",type:"combo",desc:"부서명"},
+      {id:0,name:"dept_id",type:"combo",desc:"부서명",combo:[]},
       {id:1,name:"api_name",type:"string",desc:"API명"},
       {id:2,name:"api_key",type:"string",desc:"Key"},
       {id:3,name:"active_yn",type:"boolean",desc:"활성화여부"},
     ];
     
+    let llm_table_head=[
+      {id:0,name:"dept_id",type:"combo",desc:"부서명",combo:[]},
+      {id:1,name:"llm_id",type:"combo",desc:"모델",combo:[]},
+      {id:2,name:"api_id",type:"combo",desc:"Key",combo:[]},
+      {id:3,name:"active_yn",type:"boolean",desc:"활성화여부"},
+    ]
+
     let api_table_body=[];
+    let llm_table_body=[];
+
     let table_body=[]
     let form_data={}
     let formModal = false;
 
     let combo_dept = []
+    
     async function get_data()
     {
       let params = {}
@@ -53,6 +65,26 @@
           }
         }) 
       }
+
+      let deptllm_success_callback = (json) => {
+        
+        llm_table_head[0].combo=combo_dept
+        llm_table_head[1].combo=table_body.map(item => {return {value:item.id,name:item.name}})
+        llm_table_head[2].combo=api_table_body.filter(item => item.active_yn).map(item => {return {value:item.id,name:item.api_key,dept_id:item.dept_id}})
+
+        console.log(json)
+        llm_table_body = json.map(item => {
+          
+          return {
+            id:item.id,
+            dept_id:combo_dept.find(dept => dept.value==item.dept_id).name,
+            llm_id:table_body.find(llm => llm.id==item.llm_id).name,
+            api_id:api_table_body.find(api => api.id==item.api_id).api_key,
+            active_yn:item.active_yn
+          }
+        }) 
+      }
+
       let failure_callback = (json_error) => {
         addToast('error',json_error.detail)
       }
@@ -60,6 +92,7 @@
       await get_llm(params,success_callback, failure_callback)
       await get_dept(params,dept_success_callback, failure_callback)
       await get_apikey(params,api_success_callback, failure_callback)
+      await get_deptllm(params,deptllm_success_callback, failure_callback)
     }
     
     onMount(async () => {
@@ -107,10 +140,30 @@
         }
         else
         {
-          console.log(params)
           await update_apikey(params,success_callback, failure_callback)
         }
       }
+      else if (event.target.id == 2) //부서별 모델
+      {
+        if(event.target.name=="btn_new")
+        { 
+          console.log('create')
+          console.log(params)
+          await create_deptllm(params,success_callback, failure_callback)
+        }
+        else
+        {
+          console.log('update')
+          console.log(params)
+          await update_deptllm(params,success_callback, failure_callback)
+        }
+      }
+    }
+
+    //form_data의 dept_id가 변경될때 해당 되는 api_key만 재정렬
+    $: if (form_data.dept_id)
+    {
+      llm_table_head[2].combo=api_table_body.filter(item => item.dept_id==combo_dept.find(dept => dept.value==form_data.dept_id).name).map(item => {return {value:item.id,name:item.api_key,dept_id:item.dept_id}})
     }
 
 </script>
@@ -126,6 +179,10 @@
                bind:table_head={api_table_head} bind:table_body={api_table_body} 
                bind:form_data={form_data} bind:formModal={formModal}/>
       </TabItem>
+      <TabItem title="부서별 모델 설정">
+          <Table btn_id=2 btn_click={onsubmit} is_combo_modal={true} is_editable={true} 
+                 bind:table_head={llm_table_head} bind:table_body={llm_table_body} bind:form_data={form_data} bind:formModal={formModal}/>
+      </TabItem> 
     </Tabs>
     
 </div>

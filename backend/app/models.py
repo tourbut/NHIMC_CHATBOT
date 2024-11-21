@@ -76,6 +76,14 @@ class UserUsage(CommonBase, table=True):
     input_token:int = Field(nullable=False)
     output_token:int = Field(nullable=False)
 
+class DeptUsage(CommonBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
+    dept_llm_id: uuid.UUID = Field(foreign_key="deptllm.id")
+    user_id: uuid.UUID = Field(foreign_key="user.id")
+    usage_date:datetime = Field(default=datetime.now())
+    input_token:int = Field(nullable=False)
+    output_token:int = Field(nullable=False)
+
 class UserFiles(CommonBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     user_id: uuid.UUID = Field(foreign_key="user.id")

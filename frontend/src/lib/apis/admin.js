@@ -34,3 +34,23 @@ export async function update_apikey(params, success_callback, failure_callback) 
     let url = "/admin/update_apikey/"
     await fastapi('put', url, params,success_callback,failure_callback)
 }
+
+export async function get_deptllm(params, success_callback, failure_callback) {
+    let url = "/admin/get_deptllm/"
+    await fastapi('get', url, params,success_callback,failure_callback)
+}
+
+export async function create_deptllm(params, success_callback, failure_callback) {
+    let url = "/admin/create_deptllm/"
+    await fastapi('post', url, params,success_callback,failure_callback)
+}
+
+export async function update_deptllm(params, success_callback, failure_callback) {
+    let url = "/admin/update_deptllm/"
+    await fastapi('put', url, params,success_callback,failure_callback)
+}
+
+export async function get_deptusage(params, success_callback, failure_callback) {
+    let url = "/admin/get_deptusage/"
+    await fastapi('get', url, params,success_callback,failure_callback)
+}
