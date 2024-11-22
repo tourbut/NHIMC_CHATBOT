@@ -1,6 +1,6 @@
 <script>
     import { marked } from 'marked'
-    import { Popover, P, A, Avatar } from 'flowbite-svelte';
+    import { Popover, Avatar, P } from 'flowbite-svelte';
     import { LightbulbOutline, ClipboardOutline, FileOutline } from 'flowbite-svelte-icons';
     
     export let message = {
@@ -21,6 +21,7 @@
         console.error('Could not copy text: ', err);
     });
 }
+
 </script>
 
 {#if message.is_user}
@@ -43,13 +44,17 @@
             {#if message.thought}
             <div class="flex items-center text-sm font-light text-gray-500 dark:text-gray-400">
                 <LightbulbOutline id={'thought'+message.id} />
-                <Popover class="w-64 text-sm font-light" title="생각" triggeredBy={'#thought'+message.id} placement="bottom-start">{message.thought}</Popover>
+                <Popover class="w-64 text-sm font-light" title="생각" triggeredBy={'#thought'+message.id} placement="bottom-start">
+                    {@html message.thought.replace(/\n/g, '<br>')}
+                </Popover>
             </div>
             {/if}
             {#if message.tools}
             <div class="flex items-center text-sm font-light text-gray-500 dark:text-gray-400">
                 <FileOutline id={'tools'+message.id} />
-                <Popover class="w-64 text-sm font-light" title="도구" triggeredBy={'#tools'+message.id} placement="bottom-start">{message.tools}</Popover>
+                <Popover class="w-80 text-sm font-light" title="문서" triggeredBy={'#tools'+message.id} placement="bottom-start">
+                    {@html message.tools.replace(/\n/g, '<br>')}
+                </Popover>
             </div>
             {/if}
             {#if message.msg}
@@ -61,7 +66,7 @@
             </button>
             {/if}
         </div>
-        <p id={message.id} class="text-sm font-normal py-2.5 text-gray-900 dark:text-white prose" style="white-space: pre-wrap;">{@html marked(message.msg)}</p>
+        <P id={message.id} class="text-sm font-normal py-2.5 text-gray-900 dark:text-white prose" style="white-space: pre-wrap;">{@html marked(message.msg)}</P>
     </div>
 </div>
 {/if}

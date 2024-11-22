@@ -62,7 +62,7 @@ class ReponseMessages(SQLModel):
     name:str
     content: str|None
     thought : str|None = None
-    tools : str|None = None
+    tools : dict|None = None
     is_user: bool
     create_date: datetime
 

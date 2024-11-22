@@ -14,7 +14,7 @@ import chardet
 from ....core.config import settings
 
 async def load_and_split(file_ext:str,file_path: str,
-                         splitter_options:dict={"separator":"\n","chunk_size":600,"chunk_overlap":100}):
+                         splitter_options:dict={"separator":"\n","chunk_size":2000,"chunk_overlap":500}):
     character_text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
     separator=splitter_options["separator"],
     chunk_size=splitter_options["chunk_size"],

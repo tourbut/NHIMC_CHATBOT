@@ -102,14 +102,18 @@
         }
 
         let success_callback = (json) => {
-            message_list = json.map(item => {return {
-                id: uuidv4(),
-                name:item.name,
-                msg:item.content,
-                thought:item.thought,
-                tools:item.tools,
-                time:item.create_date,
-                is_user:item.is_user}})
+            message_list = json.map(item => {
+                return {
+                    id: uuidv4(),
+                    name: item.name,
+                    msg: item.content,
+                    thought: item.thought,
+                    tools: item.tools ? item.tools['retriever'] : null,
+                    time: item.create_date,
+                    is_user: item.is_user
+                }
+            })
+
         }
 
         let failure_callback = (json_error) => {

@@ -171,9 +171,10 @@ def thinking_chatbot_chain(api_key:str,
     def get_context(output):
         if retriever:
             docs = retriever.invoke(output["thought"].search_msg)
-            rtn = ""
-            for doc in docs:
-                rtn += doc.page_content + "\n\n"
+            rtn = "검색어 : "+output["thought"].search_msg
+            for i in range(len(docs)):
+                rtn = rtn + "\n\n-------- page : "+str(i)+" --------\n\n" + docs[i].page_content
+                
             return rtn
         else:
             return ""

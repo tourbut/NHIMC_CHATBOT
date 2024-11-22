@@ -11,10 +11,12 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 async def get_userllm(*, session: AsyncSession,user_id:uuid.UUID) -> List[chat_schema.GetUserLLM]| None:
     try:
-        statement = select(UserLLM.id,
-                        LLM.source,
-                        LLM.name,
-                        UserAPIKey.api_key).where(UserLLM.user_id == user_id,
+        statement = select(literal_column("'user'").label("gubun"),
+                           UserLLM.id,
+                           LLM.source,
+                           LLM.name,
+                           LLM.type,
+                           UserAPIKey.api_key).where(UserLLM.user_id == user_id,
                                                     UserLLM.llm_id == LLM.id,
                                                     UserLLM.api_id == UserAPIKey.id,
                                                     UserLLM.active_yn == True,
@@ -31,10 +33,12 @@ async def get_userllm(*, session: AsyncSession,user_id:uuid.UUID) -> List[chat_s
     
 async def get_deptllm(*, session: AsyncSession,user_id:uuid.UUID) -> List[chat_schema.GetDeptLLM]| None:
     try:
-        statement = select(DeptLLM.id,
-                        LLM.source,
-                        LLM.name,
-                        DeptAPIKey.api_key).where(UserDept.user_id==user_id,
+        statement = select(literal_column("'user'").label("gubun"),
+                           DeptLLM.id,
+                           LLM.source,
+                           LLM.name,
+                           LLM.type,
+                           DeptAPIKey.api_key).where(UserDept.user_id==user_id,
                                                   DeptLLM.dept_id == UserDept.dept_id,
                                                     DeptLLM.llm_id == LLM.id,
                                                     DeptLLM.api_id == DeptAPIKey.id,
