@@ -2,17 +2,14 @@ import uuid
 from sqlmodel import SQLModel
 from datetime import datetime
 
+
 class SendMessage(SQLModel):
     chat_id: uuid.UUID 
-    user_llm_id: uuid.UUID
+    user_llm_id: uuid.UUID | None = None
+    dept_llm_id: uuid.UUID | None = None
     document_id: uuid.UUID | None = None
     input: str
     
-class Usage(SQLModel):
-    user_llm_id: uuid.UUID  
-    input_token:int 
-    output_token:int
-
 class OutMessage(SQLModel):
     content: str
     thought : str = None
@@ -23,9 +20,11 @@ class OutMessage(SQLModel):
     is_done: bool = False
     
 class GetUserLLM(SQLModel):
+    gubun: str
     id: uuid.UUID 
     source: str
     name: str
+    type: str
     api_key: str
 
 class GetDeptLLM(SQLModel):
@@ -36,21 +35,24 @@ class GetDeptLLM(SQLModel):
 
 class CreateChat(SQLModel):
     title: str
-    user_llm_id: uuid.UUID
-    userdocument_id: uuid.UUID
+    user_llm_id: uuid.UUID | None = None
+    dept_llm_id: uuid.UUID | None  = None
+    user_file_id: uuid.UUID
 
 class ResponseChat(SQLModel):
     id: uuid.UUID
     title: str
-    user_llm_id: uuid.UUID
+    user_llm_id: uuid.UUID | None = None
+    dept_llm_id: uuid.UUID | None = None
     user_file_id: uuid.UUID
     
 class GetChat(SQLModel):
     category: str = "chat"
     id: uuid.UUID
     title: str
-    user_llm_id: uuid.UUID
-    user_file_id: uuid.UUID
+    user_llm_id: uuid.UUID | None = None
+    dept_llm_id: uuid.UUID | None = None
+    user_file_id: uuid.UUID | None = None
 
 class GetMessages(SQLModel):
     chat_id: str
@@ -90,7 +92,8 @@ class Update_Chat(SQLModel):
     delete_yn: bool|None = None
     
 class Usage(SQLModel):
-    user_llm_id: uuid.UUID  
+    user_llm_id: uuid.UUID | None = None
+    dept_llm_id: uuid.UUID | None = None
     input_token:int 
     output_token:int
 

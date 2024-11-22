@@ -1,5 +1,6 @@
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
+from langchain_ollama import ChatOllama
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough,RunnableParallel
 from langchain.callbacks import StdOutCallbackHandler
@@ -24,6 +25,8 @@ from langchain_community.cache import SQLiteCache, SQLAlchemyCache
 #set_llm_cache(SQLAlchemyCache(engine))
 
 import langchain
+
+from ....core.config import settings
 langchain.debug = True
 
 set_llm_cache(SQLiteCache(database_path=".cache.db"))
@@ -90,6 +93,11 @@ def chatbot_chain(api_key:str,
                             temperature=temperature,
                             api_key=api_key,
                             callback_manager=callback_manager)
+    elif model.startswith('ollama'):
+        llm = ChatOllama(model=model,
+                         base_url= settings.OLLAMA_URL,
+                         temperature=temperature,
+                         callback_manager=callback_manager)
     else:
         raise ValueError(f"Invalid model name: {model}")
     
@@ -115,6 +123,7 @@ def chatbot_chain(api_key:str,
         return chain
     
 def thinking_chatbot_chain(api_key:str,
+                           source:str,
                            model:str='gpt-4o-mini',
                            temperature:float=0.7,
                            callback_manager=None,
@@ -136,6 +145,11 @@ def thinking_chatbot_chain(api_key:str,
                             temperature=temperature,
                             api_key=api_key,
                             callback_manager=callback_manager)
+    elif source == 'ollama':
+        llm = ChatOllama(model=model,
+                         base_url= "http://192.168.1.73:11434",
+                         temperature=temperature,
+                         callback_manager=callback_manager)
     else:
         raise ValueError(f"Invalid model name: {model}")
     

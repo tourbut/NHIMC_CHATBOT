@@ -1,5 +1,8 @@
+from turtle import st
 from typing import List
 import uuid
+
+from sqlalchemy import literal_column
 from app.models import *
 from app.src.schemas import chat as chat_schema
 from sqlmodel import select, union_all
@@ -25,26 +28,67 @@ async def get_userllm(*, session: AsyncSession,user_id:uuid.UUID) -> List[chat_s
         print(e)
         await session.rollback()
         raise e
-        
-async def get_llm(*, session: AsyncSession,user_id:uuid.UUID,user_llm_id:uuid.UUID) -> chat_schema.GetUserLLM| None:
+    
+async def get_deptllm(*, session: AsyncSession,user_id:uuid.UUID) -> List[chat_schema.GetDeptLLM]| None:
     try:
-        statement = select(UserLLM.id,
+        statement = select(DeptLLM.id,
                         LLM.source,
                         LLM.name,
-                        UserAPIKey.api_key).where(UserLLM.user_id == user_id,
-                                                    UserLLM.llm_id == LLM.id,
-                                                    UserLLM.api_id ==UserAPIKey.id,
-                                                    UserLLM.active_yn == True,
-                                                    UserLLM.id == user_llm_id)
+                        DeptAPIKey.api_key).where(UserDept.user_id==user_id,
+                                                  DeptLLM.dept_id == UserDept.dept_id,
+                                                    DeptLLM.llm_id == LLM.id,
+                                                    DeptLLM.api_id == DeptAPIKey.id,
+                                                    DeptLLM.active_yn == True,
+                                                    LLM.type == "llm")
         userllm = await session.exec(statement)
         if not userllm:
             return None
         else:
-            return userllm.first()
+            return userllm.all()
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e    
+
+
+async def get_llm(*, session: AsyncSession,user_id:uuid.UUID,user_llm_id:uuid.UUID,dept_llm_id:uuid.UUID) -> List[chat_schema.GetUserLLM]| None:
+    try:
+        
+        statement1 = select(literal_column("'user'").label("gubun"),
+                            UserLLM.id.label("llm_id"),
+                            LLM.source,
+                            LLM.name,
+                            LLM.type,
+                            UserAPIKey.api_key.label("api_key")).where(UserLLM.user_id == user_id,
+                                                        UserLLM.llm_id == LLM.id,
+                                                        UserLLM.api_id ==UserAPIKey.id,
+                                                        UserLLM.active_yn == True)
+
+        statement2 = select(literal_column("'dept'").label("gubun"),
+                            DeptLLM.id.label("llm_id"),
+                            LLM.source,
+                            LLM.name,
+                            LLM.type,
+                            DeptAPIKey.api_key.label("api_key")).where(UserDept.user_id==user_id,
+                                                        DeptLLM.dept_id == UserDept.dept_id,
+                                                        DeptLLM.llm_id == LLM.id,
+                                                        DeptLLM.api_id ==DeptAPIKey.id,
+                                                        DeptLLM.active_yn == True)
+        
+        statement = union_all(statement1, statement2)
+                            
+        llm = await session.exec(statement)
+        
+        if not llm:
+            return None
+        else:
+            return llm.all()
     except Exception as e:
         print(e)
         await session.rollback()
         raise e
+
+
 
 async def create_usage(*,session: AsyncSession, usage: chat_schema.Usage) -> UserUsage| None:
     try:
@@ -58,14 +102,9 @@ async def create_usage(*,session: AsyncSession, usage: chat_schema.Usage) -> Use
         await session.rollback()
         raise e
     
-async def create_chat(*, session: AsyncSession, current_user: User,title:str,user_llm_id:uuid.UUID,user_file_id:uuid.UUID) -> Chats:
+async def create_chat(*, session: AsyncSession, current_user: User,chat_in: chat_schema.CreateChat) -> Chats:
     try:
-        chat = Chats(user_id=current_user.id,
-                    title=title,
-                    user_llm_id=user_llm_id,
-                    user_file_id=user_file_id
-                    )
-        
+        chat = Chats.model_validate(chat_in,update={"user_id":current_user.id})
         session.add(chat)
         await session.commit()
         await session.refresh(chat)

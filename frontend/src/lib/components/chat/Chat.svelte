@@ -12,7 +12,7 @@
     import { get } from "svelte/store";
 
     export let chat_id = ''
-    export let selected_userllm={value:0,name:"모델선택"}
+    export let selected_llm={value:0,name:"모델선택",is_userllm:true}
     export let selected_userdocument={value:0,name:"문서선택"}
     export let chat_title = ''
 
@@ -24,7 +24,7 @@
             return;
         }
 
-        if (selected_userllm.value == 0) {
+        if (selected_llm.value == 0) {
             addToast('error','모델을 선택해주세요.')
             return;
         }
@@ -49,12 +49,26 @@
 
         message_list = [...message_list, message];
         message_list = [...message_list, res_msg];
+        
+        let params
 
-        let params = {
+        if (selected_llm.is_userllm==true)
+        {
+            params = {
             chat_id: chat_id,
-            user_llm_id: selected_userllm.value,
+            user_llm_id: selected_llm.value,
             document_id: selected_userdocument.value == 0 ? null : selected_userdocument.value,
             input: user_msg,
+            }
+        }
+        else
+        {
+            params = {
+            chat_id: chat_id,
+            dept_llm_id: selected_llm.value,
+            document_id: selected_userdocument.value == 0 ? null : selected_userdocument.value,
+            input: user_msg,
+            }
         }
 
         let success_callback = (json) => {
@@ -121,7 +135,7 @@
         <NavBrand>{chat_title}</NavBrand>
         <NavUl >
           <NavLi class="cursor-pointer">
-            Model : {selected_userllm.name}
+            Model : {selected_llm.name}
           </NavLi>  
           <NavLi class="cursor-pointer">
             File : {selected_userdocument.name}

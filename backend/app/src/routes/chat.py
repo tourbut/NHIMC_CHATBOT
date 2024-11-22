@@ -41,26 +41,40 @@ def get_redis_history(session_id: str) -> BaseChatMessageHistory:
 async def send_message(*, session: SessionDep_async, current_user: CurrentUser,chat_in: chat_schema.SendMessage):
     
     # Get userllm
-    userllm = await chat_crud.get_llm(session=session,user_id=current_user.id,user_llm_id=chat_in.user_llm_id)
+    llm_with_embbeding = await chat_crud.get_llm(session=session,user_id=current_user.id,
+                                  user_llm_id=chat_in.user_llm_id,
+                                  dept_llm_id=chat_in.dept_llm_id)
+    llm = None
+    embedding = None
     
+    for item in llm_with_embbeding:
+        if item.llm_id in [chat_in.user_llm_id,chat_in.dept_llm_id] and item.type == "llm":
+            llm = item
+        elif chat_in.user_llm_id is not None and item.gubun == 'user' and item.type == "embedding":
+            embedding = item
+        elif chat_in.dept_llm_id is not None and item.gubun == 'dept' and item.type == "embedding":
+            embedding = item
+            
     # Get a postgres vectorstore with memory
     memory = pg_vetorstore_with_memory(connection=engine,
                                        collection_name=chat_in.chat_id.hex,
-                                       api_key=userllm.api_key,
-                                       model="text-embedding-3-large",
-                                       search_kwargs={"k": 1})
+                                       api_key=embedding.api_key,
+                                       source=embedding.source,
+                                       model=embedding.name,
+                                       search_kwargs={"k": 3})
+    
     retriever = None
+    chat_in.document_id = None
     if chat_in.document_id is not None:
         document = await chat_crud.get_document(session=session,user_file_id=chat_in.document_id)
         collection = await pgvector_crud.get_collection(session=session,collection_id=document.collection_id)
         retriever = pg_vetorstore(connection=engine,
                                     collection_name=collection.name,
-                                    api_key=userllm.api_key,
-                                    model="text-embedding-3-large",
+                                    api_key=embedding.api_key,
+                                    source=embedding.source,
+                                    model=embedding.name,
                                     async_mode=False
                                     ).as_retriever()
-    
-
     
     # Get or create a RedisChatMessageHistory instance
     history = get_redis_history(chat_in.chat_id.hex)
@@ -75,11 +89,12 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
     
     async def chain_astream(input):
     
-        chain = thinking_chatbot_chain(api_key=userllm.api_key,
-                              model=userllm.name,
+        chain = thinking_chatbot_chain(api_key=llm.api_key,
+                                       source=llm.source,
+                                       model=llm.name,
+                                       memory=memory,
+                                       retriever=retriever,
                               #get_redis_history=get_redis_history
-                              memory=memory,
-                              retriever=retriever,
                               )
         
         chunks=[]
@@ -120,6 +135,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
         messages.append(bot_message)
 
         usage = chat_schema.Usage(user_llm_id=chat_in.user_llm_id,
+                                  dept_llm_id=chat_in.dept_llm_id,
                                   input_token=input_token,
                                   output_token=output_token)
         
@@ -163,10 +179,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
 
 @router.post("/create_chat",response_model=chat_schema.ResponseChat)
 async def create_chat(*, session: SessionDep_async, current_user: CurrentUser,chat_in: chat_schema.CreateChat):
-    chat = await chat_crud.create_chat(session=session,current_user=current_user,
-                                       title=chat_in.title,
-                                       user_llm_id=chat_in.user_llm_id,
-                                       user_file_id=chat_in.userdocument_id)
+    chat = await chat_crud.create_chat(session=session,current_user=current_user,chat_in=chat_in)
     return chat
 
 @router.get("/get_chat_list",response_model=List[chat_schema.GetChat])
@@ -223,6 +236,15 @@ async def get_messages(*, session: SessionDep_async, current_user: CurrentUser, 
 @router.get("/get_userllm",response_model=List[chat_schema.GetUserLLM])
 async def get_userllm(*, session: SessionDep_async, current_user: CurrentUser):
     userllm = await chat_crud.get_userllm(session=session,user_id=current_user.id)
+    
+    if userllm is None:
+        return HTTPException(status_code=404,detail="User LLM not found")
+    
+    return userllm
+
+@router.get("/get_deptllm",response_model=List[chat_schema.GetDeptLLM])
+async def get_deptllm(*, session: SessionDep_async, current_user: CurrentUser):
+    userllm = await chat_crud.get_deptllm(session=session,user_id=current_user.id)
     
     if userllm is None:
         return HTTPException(status_code=404,detail="User LLM not found")

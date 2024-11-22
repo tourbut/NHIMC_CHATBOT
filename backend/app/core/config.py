@@ -146,5 +146,7 @@ class Settings(BaseSettings):
     ISIS_DB_DSN:str =''
     ISIS_DB_USER:str =''
     ISIS_DB_PASSWORD:str =''
+    
+    OLLAMA_URL:str =''
 
 settings = Settings()  # type: ignore

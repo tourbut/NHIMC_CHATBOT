@@ -39,3 +39,8 @@ export async function get_documents(params, success_callback, failure_callback) 
     let url = "/chat/get_documents/"
     await fastapi('get', url, params,success_callback,failure_callback)
 }
+
+export async function get_deptllm(params, success_callback, failure_callback) {
+    let url = "/chat/get_deptllm/"
+    await fastapi('get', url, params,success_callback,failure_callback)
+}

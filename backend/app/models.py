@@ -71,15 +71,8 @@ class UserLLM(CommonBase, table=True):
 
 class UserUsage(CommonBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
-    user_llm_id: uuid.UUID = Field(foreign_key="userllm.id")
-    usage_date:datetime = Field(default=datetime.now())
-    input_token:int = Field(nullable=False)
-    output_token:int = Field(nullable=False)
-
-class DeptUsage(CommonBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
-    dept_llm_id: uuid.UUID = Field(foreign_key="deptllm.id")
-    user_id: uuid.UUID = Field(foreign_key="user.id")
+    user_llm_id: uuid.UUID | None = Field(foreign_key="userllm.id",nullable=True, description="유저LLMID")
+    dept_llm_id: uuid.UUID | None = Field(foreign_key="deptllm.id",nullable=True, description="부서LLMID")
     usage_date:datetime = Field(default=datetime.now())
     input_token:int = Field(nullable=False)
     output_token:int = Field(nullable=False)
@@ -128,8 +121,9 @@ class Chats(CommonBase,table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     user_id: uuid.UUID  = Field(foreign_key="user.id", description="유저ID")
     title: str = Field(nullable=False, description="채팅명")
-    user_llm_id: uuid.UUID  = Field(foreign_key="userllm.id", description="유저LLMID")
-    user_file_id: uuid.UUID  = Field(foreign_key="userfiles.id", description="유저파일ID")
+    user_llm_id: uuid.UUID | None = Field(foreign_key="userllm.id",nullable=True, description="유저LLMID")
+    dept_llm_id: uuid.UUID | None = Field(foreign_key="deptllm.id",nullable=True, description="부서LLMID")
+    user_file_id: uuid.UUID  = Field(foreign_key="userfiles.id",nullable=False, description="유저파일ID")
 
 class Messages(CommonBase,table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")

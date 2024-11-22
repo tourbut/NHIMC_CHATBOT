@@ -3,7 +3,7 @@
     import Sidebar from '$lib/components/common/Sidebar.svelte';
     import { onMount } from 'svelte';
     import ComboModal from "$lib/components/common/Combo_Modal.svelte";
-    import { create_chat, get_userllm, get_chat_list, delete_chat, get_chat, get_documents} from "$lib/apis/chat";
+    import { create_chat, get_userllm,get_deptllm, get_chat_list, delete_chat, get_chat, get_documents} from "$lib/apis/chat";
     import { addToast } from '$lib/common';
 
     let chat_list = [{category: 'chat', items: []}];
@@ -11,13 +11,15 @@
     let chat_title=''
     let showModal = false;
     let userllm_list = []
+    let deptllm_list = []
     let userdocument_list = []
-    let selected_userllm={value:0,name:"모델선택"}
+    let selected_llm={value:0,name:"모델선택",is_userllm:true}
     let selected_userdocument={value:0,name:"문서선택"}
     let table_head=[
-        {id:0,name:"userllm_id",type:"combo",desc:"모델선택",combo:userllm_list},
-        {id:1,name:"userdocument_id",type:"combo",desc:"파일선택",combo:userdocument_list},
-        {id:2,name:"title",type:"text",desc:"채팅방명"}
+        {id:0,name:"title",type:"text",desc:"채팅방명"},
+        {id:1,name:"userllm_id",type:"combo",desc:"유저_모델선택",combo:userllm_list},
+        {id:2,name:"deptllm_id",type:"combo",desc:"부서_모델선택",combo:deptllm_list},
+        {id:3,name:"userdocument_id",type:"combo",desc:"파일선택",combo:userdocument_list}
     ];
 
 
@@ -29,15 +31,37 @@
 
     const btn_create_chat = async () => {
         showModal = false;
-        let params = {
+        let params;
+        if (form_data['title'] == '') {
+            addToast('error','채팅방명을 입력해주세요.')
+            return;
+        }
+
+        if (form_data['userllm_id'] == 0) {
+            params = {
+            title:form_data['title'],
+            dept_llm_id:form_data['deptllm_id'],
+            user_file_id:form_data['userdocument_id']
+            }
+        } else {
+            params = {
             title:form_data['title'],
             user_llm_id:form_data['userllm_id'],
-            userdocument_id:form_data['userdocument_id']
+            user_file_id:form_data['userdocument_id']
+            }
         }
+
         
         let success_callback = (json) => {
             addToast('info','생성 완료')
-            selected_userllm = userllm_list.find(item => item.value == json.user_llm_id)
+            if (json.user_llm_id == null) {
+                selected_llm = deptllm_list.find(item => item.value == json.dept_llm_id)
+                selected_llm.is_userllm = false
+            } else {
+                selected_llm = userllm_list.find(item => item.value == json.user_llm_id)
+                selected_llm.is_userllm = true
+            }
+            
             selected_userdocument = userdocument_list.find(item => item.value == json.user_file_id)
 
             chat_title=json.title
@@ -59,7 +83,14 @@
         }
 
         let success_callback = (json) => {
-            selected_userllm = userllm_list.find(item => item.value == json.user_llm_id)
+            if (json.user_llm_id == null) {
+                selected_llm = deptllm_list.find(item => item.value == json.dept_llm_id)
+                selected_llm.is_userllm = false
+            } else {
+                selected_llm = userllm_list.find(item => item.value == json.user_llm_id)
+                selected_llm.is_userllm = true
+            }
+
             selected_userdocument = userdocument_list.find(item => item.value == json.user_file_id)
         }
         let failure_callback = (json_error) => {
@@ -103,17 +134,23 @@
 
         let userllm_success_callback = (json) => {
             userllm_list= json.map(item => {return {value:item.id,name:item.name}})
-            table_head[0].combo=userllm_list
+            table_head[1].combo=userllm_list
         }
 
+        let deptllm_success_callback = (json) => {
+            deptllm_list= json.map(item => {return {value:item.id,name:item.name}})
+            table_head[2].combo=deptllm_list
+        }
         let documents_success_callback = (json) => {
             userdocument_list= json.map(item => {return {value:item.user_file_id,name:item.title}}) 
-            table_head[1].combo=userdocument_list
+            table_head[3].combo=userdocument_list
         }
 
         await get_documents(params,documents_success_callback,failure_callback);
 
         await get_userllm(params, userllm_success_callback, failure_callback);
+
+        await get_deptllm(params, deptllm_success_callback, failure_callback);
 
         await get_chat_list(params, success_callback, failure_callback);
 
@@ -124,24 +161,26 @@
     })
 
 
-   
-    
 </script>
 
 <div class="flex h-[80vh] overflow-hidden">
     <div class="w-64 flex-shrink-0">
-        <Sidebar btn_item_more_click={closeChat} btn_add_button={createChat} bind:side_menus={chat_list} btn_click={onclick}/>
+        <Sidebar btn_item_more_click={closeChat} btn_add_button={createChat} btn_click={onclick}
+                 bind:side_menus={chat_list}/>
     </div> 
     <div class="chat-container">
         {#if chat_id}
             <Chat bind:chat_id={chat_id} 
-                  bind:selected_userllm={selected_userllm}
+                  bind:selected_llm={selected_llm}
                   bind:selected_userdocument={selected_userdocument} 
                   bind:chat_title={chat_title}/>
         {/if}
     </div>
 </div>
-<ComboModal header={"채팅방 생성"} bind:table_head={table_head} formModal={showModal} bind:form_data={form_data} btn_click={btn_create_chat} > </ComboModal>
+
+<ComboModal header={"채팅방 생성"} formModal={showModal} btn_click={btn_create_chat}
+            bind:table_head={table_head}
+            bind:form_data={form_data}> </ComboModal>
 
 <style>
    .chat-container {
