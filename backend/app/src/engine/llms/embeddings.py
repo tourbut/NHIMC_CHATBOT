@@ -1,6 +1,7 @@
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import CacheBackedEmbeddings
 from langchain_openai import OpenAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
 from langchain_postgres.vectorstores import PGVector
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -9,6 +10,8 @@ from langchain_community.document_loaders import TextLoader, PDFMinerLoader, Uns
 from langchain_community.document_loaders.csv_loader import CSVLoader
 from sqlmodel import Session
 import chardet
+
+from ....core.config import settings
 
 async def load_and_split(file_ext:str,file_path: str,
                          splitter_options:dict={"separator":"\n","chunk_size":600,"chunk_overlap":100}):
@@ -44,6 +47,7 @@ async def load_and_split(file_ext:str,file_path: str,
 async def embedding_and_store(docs, connection, 
                         collection_name:str, 
                         api_key:str, 
+                        source:str='openai',
                         model:str='text-embedding-3-large',
                         cache_dir:str='./.cache',
                         collection_metadata:dict={}):
@@ -62,8 +66,11 @@ async def embedding_and_store(docs, connection,
         cached_keys = list(store.yield_keys())
         return set(cached_keys)
     
-    embeddings = OpenAIEmbeddings(model=model,api_key=api_key)
-    
+    if source == 'openai':
+        embeddings = OpenAIEmbeddings(model=model,api_key=api_key)
+    elif source == 'ollama':
+        embeddings = OllamaEmbeddings(model=model,base_url=settings.OLLAMA_URL)
+        
     cache_store = LocalFileStore(cache_dir)
     cached_embeddings = CacheBackedEmbeddings.from_bytes_store(embeddings,cache_store)
     

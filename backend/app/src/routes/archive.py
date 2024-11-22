@@ -64,6 +64,7 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,f
                                                 connection=engine,
                                                 collection_name=db_obj.id.hex, #Userfiles의 ID
                                                 api_key=userllm.api_key,
+                                                source=userllm.source,
                                                 model=userllm.name,
                                                 cache_dir=f"{userdir_path}/.cache",
                                                 collection_metadata=collection_metadata)

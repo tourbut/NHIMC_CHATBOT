@@ -3,7 +3,8 @@ import uuid
 from typing import List
 
 class Usage(SQLModel):
-    user_llm_id: uuid.UUID  
+    user_llm_id: uuid.UUID | None = None
+    dept_llm_id: uuid.UUID | None = None
     input_token:int 
     output_token:int
     

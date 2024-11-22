@@ -64,7 +64,6 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                        search_kwargs={"k": 3})
     
     retriever = None
-    chat_in.document_id = None
     if chat_in.document_id is not None:
         document = await chat_crud.get_document(session=session,user_file_id=chat_in.document_id)
         collection = await pgvector_crud.get_collection(session=session,collection_id=document.collection_id)
@@ -74,7 +73,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                     source=embedding.source,
                                     model=embedding.name,
                                     async_mode=False
-                                    ).as_retriever()
+                                    ).as_retriever(search_kwargs={'k': 3})
     
     # Get or create a RedisChatMessageHistory instance
     history = get_redis_history(chat_in.chat_id.hex)
@@ -93,9 +92,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                        source=llm.source,
                                        model=llm.name,
                                        memory=memory,
-                                       retriever=retriever,
-                              #get_redis_history=get_redis_history
-                              )
+                                       retriever=retriever,)
         
         chunks=[]
         thought = None
