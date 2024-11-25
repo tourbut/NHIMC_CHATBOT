@@ -66,25 +66,36 @@ const fastapi = async (operation, url, params, success_callback, failure_callbac
                     try {
                         const { done, value } = await reader.read();
 
-                        const text = decoder.decode(value);
-
                         if (done) {
-                            //console.log(text);
                             return;
                         }
-
-
-                        if (text.indexOf('}{')===-1) {
-                            streamCallback(JSON.parse(text));
+                
+                        const text = decoder.decode(value);
+                        
+                        // JSON 데이터가 연속으로 오는 경우 분리 처리
+                        const jsonStrings = text.split('}{').map((str, i, arr) => {
+                            if (i !== 0) str = '{' + str;
+                            if (i !== arr.length - 1) str = str + '}';
+                            return str;
+                        });
+                
+                        for (const jsonString of jsonStrings) {
+                            try {
+                                const parsedData = JSON.parse(jsonString);
+                                streamCallback(parsedData);
+                            } catch (parseError) {
+                                console.warn("JSON 파싱 실패:", parseError);
+                                continue;
+                            }
                         }
 
-                        readStream(); // 계속 스트림을 읽음
+                        await readStream(); // 계속 스트림을 읽음
                     } catch (error) {
                         console.error("Stream read error:", error);
                     }
                 }
 
-                readStream();
+                await readStream();
             } else {
                 response.json()
                     .then(json => {
