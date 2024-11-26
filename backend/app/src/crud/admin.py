@@ -86,7 +86,9 @@ async def update_apikey(*, session: Session, apikey_update: admin_schema.Get_Api
     return apikey
 
 async def get_dept(*, session: Session) -> List[Dept]| None:
-    statement = select(Dept).where(Dept.is_active == True)
+    statement = select(Dept).where(Dept.is_active == True,
+                                   UserDept.dept_id == Dept.id,
+                                   UserDept.is_active == True)
     dept = await session.exec(statement)
     if not dept:
         return None

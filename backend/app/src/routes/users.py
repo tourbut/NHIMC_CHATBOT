@@ -41,6 +41,7 @@ async def login(
         user = await user_crud.authenticate(session=session, empl_no=form_data.username, password=form_data.password)
         
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=400, detail='Unknown error')
         
     if not user:
