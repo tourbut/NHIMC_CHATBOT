@@ -97,24 +97,36 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
         chunks=[]
         thought = None
         
-        callback_handler = get_openai_callback()
+
         
         input_token=0
         output_token=0
-        
-        with callback_handler as cb:
-            async for chunk in chain.astream({'input':input}):
-                thought = chunk['thought']
-                answer = chunk['answer']
-                chunks.append(answer)
-                yield chat_schema.OutMessage(content=answer.content,
-                                            thought=thought['thought'],
-                                            tools = {'retriever': thought['context']},
-                                            input_token=answer.usage_metadata['input_tokens'] if answer.usage_metadata is not None else None,
-                                            output_token=answer.usage_metadata['output_tokens'] if answer.usage_metadata is not None else None,
-                                            is_done=False).model_dump_json()
-            input_token = cb.prompt_tokens
-            output_token = cb.completion_tokens
+        if llm.source == "openai":
+            callback_handler = get_openai_callback()
+            with callback_handler as cb:
+                async for chunk in chain.astream({'input':input}):
+                    thought = chunk['thought']
+                    answer = chunk['answer']
+                    chunks.append(answer)
+                    yield chat_schema.OutMessage(content=answer.content,
+                                                thought=None,
+                                                tools = {'retriever': ''},
+                                                input_token=None,
+                                                output_token=None,
+                                                is_done=False).model_dump_json()
+                input_token = cb.prompt_tokens
+                output_token = cb.completion_tokens
+        else:
+             async for chunk in chain.astream({'input':input}):
+                    thought = chunk['thought']
+                    answer = chunk['answer']
+                    chunks.append(answer)
+                    yield chat_schema.OutMessage(content=answer.content,
+                                                thought=None,
+                                                tools = {'retriever': ''},
+                                                input_token=None,
+                                                output_token=None,
+                                                is_done=False).model_dump_json()
             
         response=chunks[0]
         

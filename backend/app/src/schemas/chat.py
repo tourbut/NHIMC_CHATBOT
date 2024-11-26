@@ -12,8 +12,8 @@ class SendMessage(SQLModel):
     
 class OutMessage(SQLModel):
     content: str
-    thought : str = None
-    tools : dict = None
+    thought : str | None = None
+    tools : dict | None = None
     input_token: int | None = None
     output_token: int | None = None
     create_date: datetime = datetime.now()

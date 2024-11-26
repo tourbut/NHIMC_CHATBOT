@@ -86,8 +86,6 @@
                 message_list[message_list.length-1].msg = json.content
             }
             else{
-                message_list[message_list.length-1].thought = json.thought
-                message_list[message_list.length-1].tools = json.tools['retriever']
                 message_list[message_list.length-1].msg = json.content
                 message_list[message_list.length-1].time = json.create_date
             }
