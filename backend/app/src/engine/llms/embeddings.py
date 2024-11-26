@@ -1,4 +1,4 @@
-from langchain.text_splitter import CharacterTextSplitter
+from langchain.text_splitter import CharacterTextSplitter,RecursiveCharacterTextSplitter 
 from langchain.embeddings import CacheBackedEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain_ollama import OllamaEmbeddings
@@ -14,11 +14,12 @@ import chardet
 from ....core.config import settings
 
 async def load_and_split(file_ext:str,file_path: str,
-                         splitter_options:dict={"separator":"\n","chunk_size":2000,"chunk_overlap":500}):
-    character_text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
-    separator=splitter_options["separator"],
+                         splitter_options:dict={"separators":["\n\n"],"chunk_size":2000,"chunk_overlap":500}):
+    
+    character_text_splitter = RecursiveCharacterTextSplitter(
+    separators=splitter_options["separators"],
     chunk_size=splitter_options["chunk_size"],
-    chunk_overlap=splitter_options["chunk_size"],
+    chunk_overlap=splitter_options["chunk_overlap"],
     )
     try :
         if file_ext in ['txt','md']:

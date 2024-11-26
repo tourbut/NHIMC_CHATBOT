@@ -51,7 +51,7 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,f
         
         db_obj = await archive_crud.create_file(session=session,file=file_meta,user_id=current_user.id)
         
-        splitter_options = { "separator": "\n","chunk_size": 2000,"chunk_overlap": 500 }
+        splitter_options = { "separators": ["<*sp*>","\n\n"],"chunk_size": 500,"chunk_overlap": 150 }
         docs = await load_and_split(file_ext=file.filename.split(".")[-1],
                                     file_path=path,
                                     splitter_options=splitter_options)

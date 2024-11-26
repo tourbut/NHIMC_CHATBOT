@@ -73,7 +73,8 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                     source=embedding.source,
                                     model=embedding.name,
                                     async_mode=False
-                                    ).as_retriever(search_kwargs={'k': 3})
+                                    ).as_retriever(search_type="mmr",
+                                                   search_kwargs={'k': 2, 'lambda_mult': 0.8})
     
     # Get or create a RedisChatMessageHistory instance
     history = get_redis_history(chat_in.chat_id.hex)
