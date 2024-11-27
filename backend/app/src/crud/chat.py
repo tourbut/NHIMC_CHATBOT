@@ -204,9 +204,9 @@ async def get_documents(*, session: AsyncSession, current_user: User) -> List[ch
     try:                       
         statement = select(UserFiles.file_name.label("title"),
                            UserFiles.collection_id,
-                           UserFiles.id.label("user_file_id")).where(UserFiles.user_id == current_user.id,
+                           UserFiles.id.label("user_file_id")).where(
                                                                UserFiles.delete_yn == False,
-                                                               UserFiles.embedding_yn == True)
+                                                               UserFiles.embedding_yn == True,)
                                      
         documents = await session.exec(statement)
         return documents.all()
