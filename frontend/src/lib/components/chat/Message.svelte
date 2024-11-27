@@ -31,7 +31,7 @@
           <span class="text-sm font-semibold text-gray-900 dark:text-white">{message.name}</span>
           <span class="text-sm font-normal text-gray-500 dark:text-gray-400">{message.time}</span>
        </div>
-       <p id={message.id} class="text-sm font-normal py-2.5 text-gray-900 dark:text-white" style="white-space: pre-wrap;">{message.msg}</p>
+       <P id={message.id} class="text-sm font-normal py-2.5  prose">{@html marked(message.msg)}</P>
     </div>
 </div>
 {:else}
@@ -66,7 +66,7 @@
             </button>
             {/if}
         </div>
-        <P id={message.id} class="text-sm font-normal py-2.5 text-gray-900 dark:text-white prose" style="white-space: pre-wrap;">{@html marked(message.msg)}</P>
+        <P id={message.id} class="text-sm font-normal py-2.5  prose">{@html marked(message.msg)}</P>
     </div>
 </div>
 {/if}
