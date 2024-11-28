@@ -203,6 +203,7 @@ async def update_chat(*,session: AsyncSession, chat: chat_schema.Update_Chat) ->
 async def get_documents(*, session: AsyncSession, current_user: User) -> List[chat_schema.GetDocument]:
     try:                       
         statement = select(UserFiles.file_name.label("title"),
+                           UserFiles.file_desc.label("description"),
                            UserFiles.collection_id,
                            UserFiles.id.label("user_file_id")).where(
                                                                UserFiles.delete_yn == False,
@@ -219,6 +220,7 @@ async def get_documents(*, session: AsyncSession, current_user: User) -> List[ch
 async def get_document(*, session: AsyncSession,user_file_id: uuid.UUID) -> chat_schema.GetDocument:
     try:                       
         statement = select(UserFiles.file_name.label("title"),
+                           UserFiles.file_desc.label("description"),
                            UserFiles.collection_id,
                            UserFiles.id.label("user_file_id")).where(UserFiles.id == user_file_id)
         documents = await session.exec(statement)

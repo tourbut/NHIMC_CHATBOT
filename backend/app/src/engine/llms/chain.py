@@ -27,7 +27,7 @@ from langchain_community.cache import SQLiteCache, SQLAlchemyCache
 import langchain
 
 from ....core.config import settings
-langchain.debug = True
+langchain.debug = settings.DEBUG
 
 set_llm_cache(SQLiteCache(database_path=".cache.db"))
 

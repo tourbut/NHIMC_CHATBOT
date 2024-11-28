@@ -64,7 +64,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                        search_kwargs={"k": 3})
     
     retriever = None
-    collection = None
+    document = None
     if chat_in.document_id is not None:
         document = await chat_crud.get_document(session=session,user_file_id=chat_in.document_id)
         collection = await pgvector_crud.get_collection(session=session,collection_id=document.collection_id)
@@ -87,7 +87,8 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                              is_user=True)
     messages = []
     messages.append(user_message)
-    document_meta = "관련 문서 없음" if collection is None else collection.cmetadata
+    document_meta = "관련 문서 없음" if document is None else {'title':document.title,
+                                                              'description':document.description,}
     chain = thinking_chatbot_chain(api_key=llm.api_key,
                                     source=llm.source,
                                     model=llm.name,

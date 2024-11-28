@@ -99,5 +99,6 @@ class Usage(SQLModel):
 
 class GetDocument(SQLModel):
     title: str
+    description: str | None = None
     collection_id: uuid.UUID
     user_file_id:uuid.UUID
