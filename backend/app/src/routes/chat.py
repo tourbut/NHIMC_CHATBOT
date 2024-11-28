@@ -64,6 +64,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                        search_kwargs={"k": 3})
     
     retriever = None
+    collection = None
     if chat_in.document_id is not None:
         document = await chat_crud.get_document(session=session,user_file_id=chat_in.document_id)
         collection = await pgvector_crud.get_collection(session=session,collection_id=document.collection_id)
@@ -86,22 +87,21 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                              is_user=True)
     messages = []
     messages.append(user_message)
+    document_meta = "관련 문서 없음" if collection is None else collection.cmetadata
+    chain = thinking_chatbot_chain(api_key=llm.api_key,
+                                    source=llm.source,
+                                    model=llm.name,
+                                    memory=memory,
+                                    document_meta=document_meta,
+                                    retriever=retriever,)
     
-    async def chain_astream(input):
+    async def chain_astream(chain,input):
     
-        chain = thinking_chatbot_chain(api_key=llm.api_key,
-                                       source=llm.source,
-                                       model=llm.name,
-                                       memory=memory,
-                                       retriever=retriever,)
-        
         chunks=[]
         thought = None
-        
-
-        
         input_token=0
         output_token=0
+        
         if llm.source == "openai":
             callback_handler = get_openai_callback()
             with callback_handler as cb:
@@ -185,7 +185,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                      create_date=bot_message.create_date.strftime("%Y-%m-%d %H:%M:%S"),
                                      is_done=True).model_dump_json()
         
-    return StreamingResponse(chain_astream(chat_in.input),media_type='text/event-stream')
+    return StreamingResponse(chain_astream(chain,chat_in.input),media_type='text/event-stream')
 
 @router.post("/create_chat",response_model=chat_schema.ResponseChat)
 async def create_chat(*, session: SessionDep_async, current_user: CurrentUser,chat_in: chat_schema.CreateChat):

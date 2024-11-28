@@ -128,6 +128,7 @@ def thinking_chatbot_chain(api_key:str,
                            temperature:float=0.7,
                            callback_manager=None,
                            memory=None,
+                           document_meta=None,
                            retriever=None,
                            ):
     
@@ -154,11 +155,10 @@ def thinking_chatbot_chain(api_key:str,
         raise ValueError(f"Invalid model name: {model}")
     
     runnable = RunnablePassthrough.assign(
-        chat_history=RunnableLambda(memory.load_memory_variables)
-        | itemgetter("chat_history")  # memory_key 와 동일하게 입력합니다.
+        chat_history=RunnableLambda(memory.load_memory_variables)| itemgetter("chat_history")  # memory_key 와 동일하게 입력합니다.
         )
     
-    think_prompt = get_thinking_prompt(pydantic_parser)
+    think_prompt = get_thinking_prompt(pydantic_parser,document_meta)
     prompt = get_thinking_chatbot()
     
     
