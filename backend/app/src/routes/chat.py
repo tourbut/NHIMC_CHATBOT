@@ -241,6 +241,8 @@ async def get_messages(*, session: SessionDep_async, current_user: CurrentUser, 
     except Exception as e:
         print(e)
         messages = await chat_crud.get_messages(session=session,current_user=current_user,chat_id=chat_id)
+        
+    messages = [chat_schema.ReponseMessages(**msg.model_dump()) for msg in messages]
     
     return messages
 

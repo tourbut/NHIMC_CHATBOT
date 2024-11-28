@@ -22,7 +22,8 @@
 
     let file = {
         name: '',
-        ext:'md'
+        description: '',
+        ext:''
       }
 
     function get_data()
@@ -136,6 +137,14 @@
       }
       loading = true;
 
+      file.name = files[0].name
+      file.ext = file_ext
+
+      let params = {
+        file_name: file.name,
+        file_desc: file.description,
+      }
+
       let success_callback = (json) => {
         addToast('info','업로드 완료')
         loading = false;
@@ -144,9 +153,10 @@
       let failure_callback = (json_error) => {
         error = json_error
         loading = false;
-        addToast('error',error.detail)
+        addToast('error',error)
       }
-      await upload_flies(files[0], success_callback, failure_callback);
+
+      await upload_flies(params,files[0], success_callback, failure_callback);
     }
 
 </script>
@@ -166,6 +176,7 @@
             <div>
               <Label for="file" class="mb-2">파일 업로드</Label>
               <FileUploader bind:files={files} bind:value={file_value} />
+              <Textarea bind:value={file.description} placeholder="파일 설명" class="mt-2"/>
               <Button on:click={file_upload}>Upload</Button>
             </div>
           </Card>

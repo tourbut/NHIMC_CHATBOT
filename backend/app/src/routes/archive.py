@@ -1,6 +1,7 @@
+import json
 import uuid
 import io
-from typing import Any,List
+from typing import Annotated, Any,List
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse,StreamingResponse
@@ -18,7 +19,7 @@ from requests.exceptions import RequestException
 from tempfile import NamedTemporaryFile
 from typing import IO
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile,Form
 import os
 
 router = APIRouter()
@@ -35,8 +36,12 @@ async def save_file(file: IO,user_id:uuid.UUID) -> str:
         return tempfile.name,user_file_path 
 
 @router.post("/upload_flies/",response_model=archive_schema.ResponseFile)
-async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,file: UploadFile):
+async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,
+                       file: Annotated[UploadFile, File()],
+                       detail:str = Form(...)) -> archive_schema.ResponseFile:
     try:
+        detail_data = json.loads(detail)  # JSON 문자열을 파싱
+        file_detail = archive_schema.FileDetail(**detail_data)
         # Get userllm
         userllm = await archive_crud.get_userllm(session=session,user_id=current_user.id,llm_type='embedding')
         
@@ -47,6 +52,7 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,f
                                               file_path=path,
                                               file_size=os.path.getsize(path),
                                               file_type=file.content_type,
+                                              file_desc=file_detail.file_desc,
                                               file_ext=file.filename.split(".")[-1])
         
         db_obj = await archive_crud.create_file(session=session,file=file_meta,user_id=current_user.id)
@@ -162,3 +168,13 @@ async def download_file(*, session: SessionDep_async, current_user: CurrentUser,
     except Exception as e:
         print(e)
         raise HTTPException(status_code=404, detail=f"파일 다운로드에 실패하였습니다.")
+    
+@router.post("/test/")
+async def create_file(
+    fileb: Annotated[UploadFile, File()],
+    token: Annotated[str, archive_schema.FileDetail],
+):
+    return {
+        "token": token,
+        "fileb_content_type": fileb.content_type,
+    }

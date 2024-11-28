@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel
 import uuid
 from typing import List
-
+from fastapi import UploadFile
 class Usage(SQLModel):
     user_llm_id: uuid.UUID | None = None
     dept_llm_id: uuid.UUID | None = None
@@ -28,7 +28,11 @@ class FileUpload(SQLModel):
     embedding_yn:bool = False
     embedding_model_id:uuid.UUID | None = None
     collection_id:uuid.UUID | None = None
-    
+
+class FileDetail(SQLModel):
+    file_name:str
+    file_desc:str | None = None
+
 class ResponseFile(SQLModel):
     id: uuid.UUID
     file_name:str

@@ -26,9 +26,9 @@ export async function delete_file(params,success_callback, failure_callback) {
     await fastapi('put', url, params,success_callback,failure_callback)
 }
 
-export async function upload_flies(file,success_callback, failure_callback) {
+export async function upload_flies(params,file,success_callback, failure_callback) {
     let url = `/archive/upload_flies/`
-    await fastapi_file('upload',url, file,success_callback,failure_callback)
+    await fastapi_file('upload',url, params,file,success_callback,failure_callback)
 }
 
 export async function get_file(get_id,params,success_callback, failure_callback) {
