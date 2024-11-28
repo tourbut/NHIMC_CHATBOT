@@ -148,5 +148,7 @@ class Settings(BaseSettings):
     ISIS_DB_PASSWORD:str =''
     
     OLLAMA_URL:str =''
+    DEBUG:bool = False
 
 settings = Settings()  # type: ignore
+print('Debug Mode:',settings.DEBUG)
