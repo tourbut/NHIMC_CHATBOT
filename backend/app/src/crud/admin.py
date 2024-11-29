@@ -134,23 +134,21 @@ async def update_deptllm(*, session: Session, deptllm_update: admin_schema.Updat
 
     return deptllm
 
-async def get_deptusage(*, session: Session,dept_id:uuid.UUID) -> List[admin_schema.Get_DeptUsage]| None:
-    statement = select(Dept.dept_nm,
-                       LLM.source,
+async def get_deptusage_all(*, session: Session):
+    statement = select(LLM.source,
                        LLM.name,
-                       func.date(DeptUsage.usage_date).label("usage_date"),
-                       func.sum(DeptUsage.input_token).label("input_token"),
-                       func.sum(DeptUsage.output_token).label("output_token"),
-                       func.sum((DeptUsage.input_token / 1000000) * LLM.input_price + (UserUsage.output_token / 1000000) * LLM.output_price).label("cost") # 1M 토큰당 비용(1M = 1,000,000)
-                       ).where(DeptLLM.dept_id == dept_id,
-                                DeptLLM.llm_id == LLM.id,
-                                DeptLLM.api_id ==DeptAPIKey.id,
-                                DeptUsage.dept_llm_id == DeptLLM.id).group_by(Dept.dept_nm,
-                                                                              LLM.source,
-                                                                              LLM.name,
-                                                                              func.date(DeptUsage.usage_date)).order_by(func.date(DeptUsage.usage_date).desc())
-    deptusage = await session.exec(statement)
-    if not deptusage:
+                       func.date(UserUsage.usage_date).label("usage_date"),
+                       func.sum(UserUsage.input_token).label("input_token"),
+                       func.sum(UserUsage.output_token).label("output_token"),
+                       func.sum((UserUsage.input_token / 1000000) * LLM.input_price + (UserUsage.output_token / 1000000) * LLM.output_price).label("cost") # 1M 토큰당 비용(1M = 1,000,000)
+                       ).where(DeptLLM.llm_id == LLM.id,
+                               DeptLLM.api_id ==DeptAPIKey.id,
+                                UserUsage.dept_llm_id == DeptLLM.id).group_by(LLM.source,
+                                                                                LLM.name,
+                                                                                func.date(UserUsage.usage_date)).order_by(func.date(UserUsage.usage_date).desc())
+    
+    userusage = await session.exec(statement)
+    if not userusage:
         return None
     else:
-        return deptusage.all()
+        return userusage.all()

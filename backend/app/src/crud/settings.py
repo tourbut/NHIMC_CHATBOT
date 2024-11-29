@@ -1,7 +1,7 @@
 from typing import List
 from app.models import *
 from app.src.schemas import settings as settings_schema
-from sqlmodel import Session, select, func
+from sqlmodel import Session, select, func,union_all
 
 async def get_llm(*, session: Session) -> List[LLM]| None:
     statement = select(LLM)
@@ -80,16 +80,72 @@ async def update_userllm(*, session: Session, userllm_update: settings_schema.Up
     return userllm
 
 async def get_userusage(*, session: Session,user_id:uuid.UUID):
+    statement1 = select(User.name.label("name"),
+                        LLM.source,
+                       LLM.name.label("llm_name"),
+                       func.date(UserUsage.usage_date).label("usage_date"),
+                       func.sum(UserUsage.input_token).label("input_token"),
+                       func.sum(UserUsage.output_token).label("output_token"),
+                       func.sum((UserUsage.input_token / 1000000) * LLM.input_price + (UserUsage.output_token / 1000000) * LLM.output_price).label("cost") # 1M 토큰당 비용(1M = 1,000,000)
+                       ).where(User.id == user_id,
+                           UserLLM.user_id == User.id,
+                                UserLLM.llm_id == LLM.id,
+                                UserLLM.api_id ==UserAPIKey.id,
+                                UserUsage.user_llm_id == UserLLM.id).group_by(User.name,LLM.source,LLM.name,
+                                                                              func.date(UserUsage.usage_date)).order_by(func.date(UserUsage.usage_date).desc())
+    statement2 = select(Dept.dept_nm.label("name"),
+                        LLM.source,
+                       LLM.name.label("llm_name"),
+                       func.date(UserUsage.usage_date).label("usage_date"),
+                       func.sum(UserUsage.input_token).label("input_token"),
+                       func.sum(UserUsage.output_token).label("output_token"),
+                       func.sum((UserUsage.input_token / 1000000) * LLM.input_price + (UserUsage.output_token / 1000000) * LLM.output_price).label("cost") # 1M 토큰당 비용(1M = 1,000,000)
+                       ).where(User.id == user_id,
+                               UserDept.user_id == User.id,
+                               Dept.id == UserDept.dept_id,
+                               DeptLLM.dept_id == Dept.id,
+                                DeptLLM.llm_id == LLM.id,
+                                DeptLLM.api_id ==DeptAPIKey.id,
+                                UserUsage.dept_llm_id == DeptLLM.id).group_by(Dept.dept_nm,LLM.source,LLM.name,
+                                                                              func.date(UserUsage.usage_date)).order_by(func.date(UserUsage.usage_date).desc())
+    statement = union_all(statement1,statement2)
+    userusage = await session.exec(statement)
+    if not userusage:
+        return None
+    else:
+        return userusage.all()
+    
+
+async def get_deptusage(*, session: Session,dept_id:uuid.UUID):
     statement = select(LLM.source,
                        LLM.name,
                        func.date(UserUsage.usage_date).label("usage_date"),
                        func.sum(UserUsage.input_token).label("input_token"),
                        func.sum(UserUsage.output_token).label("output_token"),
                        func.sum((UserUsage.input_token / 1000000) * LLM.input_price + (UserUsage.output_token / 1000000) * LLM.output_price).label("cost") # 1M 토큰당 비용(1M = 1,000,000)
-                       ).where(UserLLM.user_id == user_id,
-                                UserLLM.llm_id == LLM.id,
-                                UserLLM.api_id ==UserAPIKey.id,
-                                UserUsage.user_llm_id == UserLLM.id).group_by(LLM.source,
+                       ).where(DeptLLM.dept_id == dept_id,
+                                DeptLLM.llm_id == LLM.id,
+                                DeptLLM.api_id ==DeptAPIKey.id,
+                                UserUsage.dept_llm_id == DeptLLM.id).group_by(LLM.source,
+                                                                                LLM.name,
+                                                                                func.date(UserUsage.usage_date)).order_by(func.date(UserUsage.usage_date).desc())
+    
+    userusage = await session.exec(statement)
+    if not userusage:
+        return None
+    else:
+        return userusage.all()
+    
+async def get_deptusage_all(*, session: Session):
+    statement = select(LLM.source,
+                       LLM.name,
+                       func.date(UserUsage.usage_date).label("usage_date"),
+                       func.sum(UserUsage.input_token).label("input_token"),
+                       func.sum(UserUsage.output_token).label("output_token"),
+                       func.sum((UserUsage.input_token / 1000000) * LLM.input_price + (UserUsage.output_token / 1000000) * LLM.output_price).label("cost") # 1M 토큰당 비용(1M = 1,000,000)
+                       ).where(DeptLLM.llm_id == LLM.id,
+                               DeptLLM.api_id ==DeptAPIKey.id,
+                                UserUsage.dept_llm_id == DeptLLM.id).group_by(LLM.source,
                                                                                 LLM.name,
                                                                                 func.date(UserUsage.usage_date)).order_by(func.date(UserUsage.usage_date).desc())
     

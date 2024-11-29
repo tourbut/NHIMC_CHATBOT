@@ -130,6 +130,6 @@ async def get_deptusage(*, session: SessionDep_async, current_user: CurrentUser,
     """
     if not current_user.is_admin:
         raise HTTPException(status_code=400, detail="Not enough permissions")
-    deptusage = await admin_crud.get_deptusage(session=session,dept_id=dept_id)
+    deptusage = await admin_crud.get_deptusage_all(session=session,dept_id=dept_id)
         
     return deptusage

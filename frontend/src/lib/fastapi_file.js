@@ -2,10 +2,11 @@ import { API_URL } from '$lib/constants';
 import { user_token } from '$lib/stores';
 import { get } from "svelte/store";
 
-const fastapi_file= async (operation, url, file, success_callback, failure_callback) => {
+const fastapi_file= async (operation, url,params, file, success_callback, failure_callback) => {
     let _url = API_URL + url;
     let formData = new FormData();
     formData.append('file', file);
+    formData.append('detail', JSON.stringify(params));
 
     let options;
     

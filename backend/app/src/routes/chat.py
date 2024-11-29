@@ -119,22 +119,32 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                 input_token = cb.prompt_tokens
                 output_token = cb.completion_tokens
         else:
-             async for chunk in chain.astream({'input':input}):
-                    thought = chunk['thought']
-                    answer = chunk['answer']
-                    chunks.append(answer)
-                    yield chat_schema.OutMessage(content=answer.content,
-                                                thought=None,
-                                                tools = {'retriever': ''},
-                                                input_token=None,
-                                                output_token=None,
-                                                is_done=False).model_dump_json()
+            async for chunk in chain.astream({'input':input}):
+                thought = chunk['thought']
+                answer = chunk['answer']
+                chunks.append(answer)
+                yield chat_schema.OutMessage(content=answer.content,
+                                            thought=None,
+                                            tools = {'retriever': ''},
+                                            input_token=None,
+                                            output_token=None,
+                                            is_done=False).model_dump_json()
+            
+            input_token = chunks[0].usage_metadata['input_tokens']
+            output_token = chunks[0].usage_metadata['output_tokens']
             
         response=chunks[0]
         
         for chunk in chunks[1:]:
             response+=chunk
         
+        usage = chat_schema.Usage(user_llm_id=chat_in.user_llm_id,
+                                  dept_llm_id=chat_in.dept_llm_id,
+                                  input_token=input_token,
+                                  output_token=output_token)
+        
+        await chat_crud.create_messages(session=session,messages=messages,usage=usage)
+                
         bot_message = chat_schema.CreateMessage(user_id=current_user.id,
                         chat_id=chat_in.chat_id,
                         name="바르미",
@@ -145,13 +155,6 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
         
         messages.append(bot_message)
 
-        usage = chat_schema.Usage(user_llm_id=chat_in.user_llm_id,
-                                  dept_llm_id=chat_in.dept_llm_id,
-                                  input_token=input_token,
-                                  output_token=output_token)
-        
-        await chat_crud.create_messages(session=session,messages=messages,usage=usage)
-        
         # Add messages to chat history
         await history.aadd_messages([HumanMessage(content=user_message.content,
                                                   additional_kwargs={

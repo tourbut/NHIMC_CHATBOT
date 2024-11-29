@@ -8,11 +8,12 @@
 
     let usage_table_head=[
       {id:0,name:"usage_date",type:"string",desc:"이용일자"},
-      {id:1,name:"source",type:"string",desc:"출처"},
-      {id:2,name:"name",type:"string",desc:"모델명"},
-      {id:3,name:"input_token",type:"integer",desc:"Input Token"},
-      {id:4,name:"output_token",type:"integer",desc:"Output Token"},
-      {id:5,name:"cost",type:"float",desc:"비용"},
+      {id:1,name:"name",type:"string",desc:"사용자"},
+      {id:2,name:"source",type:"string",desc:"출처"},
+      {id:3,name:"llm_name",type:"string",desc:"모델명"},
+      {id:4,name:"input_token",type:"integer",desc:"Input Token"},
+      {id:5,name:"output_token",type:"integer",desc:"Output Token"},
+      {id:6,name:"cost",type:"float",desc:"비용"},
     ];
 
     let ComboMenu = [
@@ -30,12 +31,14 @@
     {
       let params = {}
 
-      let success_callback = (json) => {        
+      let success_callback = (json) => { 
+        console.log(json)       
         usage_day = json.map((item) => {
           return {
             usage_date: item.usage_date.substring(0,10),
-            source: item.source,
             name: item.name,
+            source: item.source,
+            llm_name: item.llm_name,
             input_token: item.input_token,
             output_token: item.output_token,
             cost: item.cost
@@ -45,8 +48,9 @@
         usage_month = json.map((item) => {
           return {
             usage_date: item.usage_date.substring(0,7),
-            source: item.source,
             name: item.name,
+            source: item.source,
+            llm_name: item.llm_name,
             input_token: item.input_token,
             output_token: item.output_token,
             cost: item.cost
@@ -63,8 +67,9 @@
           } else {
             acc[key] = {
               usage_date: item.usage_date,
-              source: item.source,
               name: item.name,
+              source: item.source,
+              llm_name: item.llm_name,
               cost: item.cost,
               input_token: item.input_token,
               output_token: item.output_token

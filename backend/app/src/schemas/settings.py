@@ -46,8 +46,9 @@ class Delete_UserLLM(SQLModel):
     id:uuid.UUID 
 
 class Get_UserUsage(SQLModel):
-    source:str
     name:str
+    source:str
+    llm_name:str
     usage_date:datetime
     input_token:int
     output_token:int
