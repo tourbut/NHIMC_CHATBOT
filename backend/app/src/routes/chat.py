@@ -143,8 +143,6 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                   input_token=input_token,
                                   output_token=output_token)
         
-        await chat_crud.create_messages(session=session,messages=messages,usage=usage)
-                
         bot_message = chat_schema.CreateMessage(user_id=current_user.id,
                         chat_id=chat_in.chat_id,
                         name="바르미",
@@ -154,6 +152,8 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                         is_user=False)
         
         messages.append(bot_message)
+        
+        await chat_crud.create_messages(session=session,messages=messages,usage=usage)
 
         # Add messages to chat history
         await history.aadd_messages([HumanMessage(content=user_message.content,
