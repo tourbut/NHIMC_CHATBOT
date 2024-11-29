@@ -72,7 +72,7 @@
         llm_table_head[1].combo=table_body.map(item => {return {value:item.id,name:item.name}})
         llm_table_head[2].combo=api_table_body.filter(item => item.active_yn).map(item => {return {value:item.id,name:item.api_key,dept_id:item.dept_id}})
 
-        console.log(json)
+
         llm_table_body = json.map(item => {
           
           return {
@@ -147,14 +147,10 @@
       {
         if(event.target.name=="btn_new")
         { 
-          console.log('create')
-          console.log(params)
           await create_deptllm(params,success_callback, failure_callback)
         }
         else
         {
-          console.log('update')
-          console.log(params)
           await update_deptllm(params,success_callback, failure_callback)
         }
       }

@@ -32,7 +32,6 @@
   }
 
   onMount(async () => {
-      console.log("checked_user_active token:",$user_token)
     if ($user_token !== "" && location.pathname !== '/login') {
       await checked_user_active()
     }
