@@ -1,7 +1,7 @@
 <script>
     import { Button, Spinner } from "flowbite-svelte";
     import { Hr} from 'flowbite-svelte';
-    import { Card,Label, Input, InputAddon, ButtonGroup, Toggle, Textarea} from 'flowbite-svelte';
+    import { Card,Label, NumberInput, Textarea} from 'flowbite-svelte';
     import { Tabs, TabItem, P } from 'flowbite-svelte';
     import MarkdownViewer from "$lib/components/archive/MarkdownViewer.svelte";
     import { addToast } from '$lib/common';
@@ -23,7 +23,12 @@
     let file = {
         name: '',
         description: '',
-        ext:''
+        ext:'',
+        separators:["<*sp*>","\n\n"],
+        chunk_size:1000,
+        chunk_overlap:250,
+        child_chunk_size:100,
+        child_chunk_overlap:20
       }
 
     function get_data()
@@ -143,6 +148,11 @@
       let params = {
         file_name: file.name,
         file_desc: file.description,
+        separators:["<*sp*>"],
+        chunk_size:file.chunk_size,
+        chunk_overlap:file.chunk_overlap,
+        child_chunk_size:file.child_chunk_size,
+        child_chunk_overlap:file.child_chunk_overlap
       }
 
       let success_callback = (json) => {
@@ -177,6 +187,30 @@
               <Label for="file" class="mb-2">파일 업로드</Label>
               <FileUploader bind:files={files} bind:value={file_value} />
               <Textarea bind:value={file.description} placeholder="파일 설명" class="mt-2"/>
+              <div class="flex items-center justify-between">
+                <Label class="space-y-2 mb-4">
+                  Chunk Size
+                  <NumberInput bind:value={file.chunk_size} class="mt-2"/>
+                </Label>
+                <Label class="space-y-2 mb-4">
+                  Chunk Overlap
+                  <NumberInput bind:value={file.chunk_overlap} class="mt-2"/>
+                </Label>
+              </div>
+              <div class="flex items-center justify-between">
+                <Label class="space-y-2 mb-4">
+                  Separators
+                  <Textarea bind:value={file.separators} class="mt-2"/>
+                </Label>
+                <Label class="space-y-2 mb-4">
+                  Child Chunk Size
+                  <NumberInput bind:value={file.child_chunk_size} class="mt-2"/>
+                </Label>
+                <Label class="space-y-2 mb-4">
+                  Child Chunk Overlap
+                  <NumberInput bind:value={file.child_chunk_overlap} class="mt-2"/>
+                </Label>
+              </div>
               <Button on:click={file_upload}>Upload</Button>
             </div>
           </Card>

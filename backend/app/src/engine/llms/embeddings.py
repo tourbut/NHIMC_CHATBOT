@@ -210,7 +210,7 @@ async def create_ParentDocument(docs,
     )
     
     child_splitter = RecursiveCharacterTextSplitter(
-    separators=splitter_options['separators'],
+    #separators=splitter_options['separators'],
     chunk_size=splitter_options['child_chunk_size'],
     chunk_overlap=splitter_options['child_chunk_overlap'],
     length_function=len,
@@ -221,7 +221,6 @@ async def create_ParentDocument(docs,
         docstore=store,
         parent_splitter=parent_splitter,
         child_splitter=child_splitter,
-        search_kwargs={"k": 1}
     )
     
     

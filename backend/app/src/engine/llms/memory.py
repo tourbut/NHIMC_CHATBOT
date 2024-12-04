@@ -60,7 +60,6 @@ def pg_ParentDocumentRetriever(connection,
     )
     
     child_splitter = RecursiveCharacterTextSplitter(
-    separators=splitter_options['separators'],
     chunk_size=splitter_options['child_chunk_size'],
     chunk_overlap=splitter_options['child_chunk_overlap'],
     length_function=len,
@@ -72,7 +71,10 @@ def pg_ParentDocumentRetriever(connection,
         docstore=store,
         parent_splitter=parent_splitter,
         child_splitter=child_splitter,
-        search_kwargs={"k": 3}
+        #search_type="similarity_score_threshold",
+        #search_kwargs={"score_threshold": 0.6}
+        search_type="mmr",
+        search_kwargs={"k": 1, "lambda": 0.1}
     )
     
     return retriever

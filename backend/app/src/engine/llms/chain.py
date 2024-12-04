@@ -17,7 +17,7 @@ from .prompt import (
     get_thinking_prompt,
     get_thinking_chatbot)
 
-from .parser import strparser,pydantic_parser
+from .parser import strparser,think_parser
 
 from langchain.globals import set_llm_cache
 from langchain_community.cache import SQLiteCache, SQLAlchemyCache
@@ -125,7 +125,7 @@ def chatbot_chain(api_key:str,
 def thinking_chatbot_chain(api_key:str,
                            source:str,
                            model:str='gpt-4o-mini',
-                           temperature:float=0.7,
+                           temperature:float=0.1,
                            callback_manager=None,
                            memory=None,
                            document_meta=None,
@@ -151,6 +151,7 @@ def thinking_chatbot_chain(api_key:str,
                          base_url= "http://192.168.1.73:11434",
                          temperature=temperature,
                          callback_manager=callback_manager,
+                         #format="json",
                          #num_gpu=4,
                          #num_ctx=1024*4,
                          #num_predict=512,
@@ -163,11 +164,10 @@ def thinking_chatbot_chain(api_key:str,
         chat_history=RunnableLambda(memory.load_memory_variables)| itemgetter("chat_history")  # memory_key 와 동일하게 입력합니다.
         )
     
-    think_prompt = get_thinking_prompt(pydantic_parser,document_meta)
+    think_prompt = get_thinking_prompt(think_parser,document_meta)
     prompt = get_thinking_chatbot()
     
-    
-    think_chain = runnable|think_prompt|llm|pydantic_parser
+    think_chain = runnable|think_prompt|llm|think_parser
     answer_chain = prompt|llm
 
     def get_thought(output):
@@ -185,11 +185,12 @@ def thinking_chatbot_chain(api_key:str,
             return rtn
         else:
             return ""
-    
+        
     def output_formatter(output):
+        print(output)
         return {
             "thought": output["thought"],
-            "answer": output["answer"]
+            "answer": output["answer"],
         }
         
     final_chain = (

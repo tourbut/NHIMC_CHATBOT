@@ -61,12 +61,13 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,
         docs = await load(file_ext=file.filename.split(".")[-1],
                           file_path=path,)
 
-        splitter_options = {"separators":["<*sp*>","\n\n"],
-                            "chunk_size":1000,
-                            "chunk_overlap":250,
-                            "child_chunk_size":100,
-                            "child_chunk_overlap":20
+        splitter_options = {"separators":file_detail.separators,
+                            "chunk_size":file_detail.chunk_size,
+                            "chunk_overlap":file_detail.chunk_overlap,
+                            "child_chunk_size":file_detail.child_chunk_size,
+                            "child_chunk_overlap":file_detail.child_chunk_overlap
                             }
+        
         # Embedding and store
         collection_metadata = {"file_name":file_meta.file_name,
                                "file_size":file_meta.file_size,

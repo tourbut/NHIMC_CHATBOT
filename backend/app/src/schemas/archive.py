@@ -32,6 +32,11 @@ class FileUpload(SQLModel):
 class FileDetail(SQLModel):
     file_name:str
     file_desc:str | None = None
+    separators:List[str] | None = None
+    chunk_size:int | None = None
+    chunk_overlap:int | None = None
+    child_chunk_size:int | None = None
+    child_chunk_overlap:int | None = None
 
 class ResponseFile(SQLModel):
     id: uuid.UUID
