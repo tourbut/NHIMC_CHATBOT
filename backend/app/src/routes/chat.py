@@ -17,7 +17,7 @@ from app.src.engine.llms.chain import (
     chatbot_chain,
     thinking_chatbot_chain
 )
-from app.src.engine.llms.memory import pg_vetorstore_with_memory, pg_vetorstore
+from app.src.engine.llms.memory import pg_vetorstore_with_memory, pg_vetorstore,pg_ParentDocumentRetriever
 from datetime import datetime
 from requests.exceptions import RequestException
 from langchain_redis import RedisChatMessageHistory
@@ -68,14 +68,14 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
     if chat_in.document_id is not None:
         document = await chat_crud.get_document(session=session,user_file_id=chat_in.document_id)
         collection = await pgvector_crud.get_collection(session=session,collection_id=document.collection_id)
-        retriever = pg_vetorstore(connection=engine,
+        retriever = pg_ParentDocumentRetriever(connection=engine,
                                     collection_name=collection.name,
                                     api_key=embedding.api_key,
                                     source=embedding.source,
                                     model=embedding.name,
-                                    async_mode=False
-                                    ).as_retriever(search_type="mmr",
-                                                   search_kwargs={'k': 2, 'lambda_mult': 0.8})
+                                    async_mode=False,
+                                    splitter_options=collection.cmetadata
+                                    )
     
     # Get or create a RedisChatMessageHistory instance
     history = get_redis_history(chat_in.chat_id.hex)

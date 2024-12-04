@@ -12,7 +12,7 @@ from app.src.schemas import archive as archive_schema
 
 from app.core.config import settings
 from app.src.engine.llms.chain import translate_chain,summarize_chain
-from app.src.engine.llms.embeddings import load_and_split,embedding_and_store
+from app.src.engine.llms.embeddings import load_and_split,embedding_and_store, load,create_ParentDocument
 
 from requests.exceptions import RequestException
 
@@ -57,26 +57,36 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,
         
         db_obj = await archive_crud.create_file(session=session,file=file_meta,user_id=current_user.id)
         
-        splitter_options = { "separators": ["<*sp*>","\n\n"],"chunk_size": 500,"chunk_overlap": 150 }
-        docs = await load_and_split(file_ext=file.filename.split(".")[-1],
-                                    file_path=path,
-                                    splitter_options=splitter_options)
 
-        
+        docs = await load(file_ext=file.filename.split(".")[-1],
+                          file_path=path,)
+
+        splitter_options = {"separators":["<*sp*>","\n\n"],
+                            "chunk_size":1000,
+                            "chunk_overlap":250,
+                            "child_chunk_size":100,
+                            "child_chunk_overlap":20
+                            }
         # Embedding and store
         collection_metadata = {"file_name":file_meta.file_name,
                                "file_size":file_meta.file_size,
                                "file_ext":file_meta.file_ext,
-                               "file_desc":file_meta.file_desc}
+                               "file_desc":file_meta.file_desc,
+                               "separators":splitter_options['separators'],
+                               "chunk_size":splitter_options['chunk_size'],
+                               "chunk_overlap":splitter_options['chunk_overlap'],
+                               "child_chunk_size":splitter_options['child_chunk_size'],
+                               "child_chunk_overlap":splitter_options['child_chunk_overlap'],}
         
-        vectorstore,used_tokens = await embedding_and_store(docs=docs,
+        vectorstore,used_tokens = await create_ParentDocument(docs=docs,
                                                 connection=engine,
                                                 collection_name=db_obj.id.hex, #Userfiles의 ID
                                                 api_key=userllm.api_key,
                                                 source=userllm.source,
                                                 model=userllm.name,
                                                 cache_dir=f"{userdir_path}/.cache",
-                                                collection_metadata=collection_metadata)
+                                                collection_metadata=collection_metadata,
+                                                splitter_options=splitter_options)
         
         
         db_obj.embedding_yn = True
@@ -103,6 +113,7 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,
             embedding_usage = archive_schema.Usage(user_llm_id=userllm.id,
                                                    input_token=used_tokens,
                                                    output_token=0)
+            
             await archive_crud.create_usage(session=session,usage=embedding_usage)
 
     except Exception as e:

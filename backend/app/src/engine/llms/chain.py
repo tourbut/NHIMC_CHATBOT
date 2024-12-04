@@ -150,7 +150,12 @@ def thinking_chatbot_chain(api_key:str,
         llm = ChatOllama(model=model,
                          base_url= "http://192.168.1.73:11434",
                          temperature=temperature,
-                         callback_manager=callback_manager)
+                         callback_manager=callback_manager,
+                         #num_gpu=4,
+                         #num_ctx=1024*4,
+                         #num_predict=512,
+                         #num_thread=16,
+                         )
     else:
         raise ValueError(f"Invalid model name: {model}")
     
@@ -171,7 +176,9 @@ def thinking_chatbot_chain(api_key:str,
     def get_context(output):
         if retriever:
             docs = retriever.invoke(output["thought"].search_msg)
-            rtn = "검색어 : "+output["thought"].search_msg
+            rtn = f"""검색어 : {output["thought"].search_msg} 
+            검색결과
+            """
             for i in range(len(docs)):
                 rtn = rtn + "\n\n-------- page : "+str(i)+" --------\n\n" + docs[i].page_content
                 

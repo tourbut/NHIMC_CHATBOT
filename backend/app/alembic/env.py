@@ -41,7 +41,9 @@ target_metadata = SQLModel.metadata
 # ... etc.
 
 def include_object(object, name, type_, reflected, compare_to):
-    if type_ == "table" and name in ("langchain_pg_collection", "langchain_pg_embedding"):
+    if type_ == "table" and name in ("langchain_pg_collection",
+                                     "langchain_pg_embedding",
+                                     "langchain_key_value_stores"):
         return False
     else:
         return True
