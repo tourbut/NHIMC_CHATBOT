@@ -11,9 +11,8 @@ async def get_user_by_empl_no(*, session: Session, empl_no: str) -> User | None:
 
 async def authenticate(*, session: Session, empl_no: str, password: str) -> User | None:
     db_user = await get_user_by_empl_no(session=session, empl_no=empl_no)
-    
+    isis_user = await get_isis_user(empl_no)
     if not db_user:
-        isis_user = await get_isis_user(empl_no)
         
         if isis_user:
             user = user_schema.UserCreate(empl_no=isis_user[0],
@@ -37,6 +36,13 @@ async def authenticate(*, session: Session, empl_no: str, password: str) -> User
                 return None
         else:    
             return None
+    else: 
+        if isis_user:
+            if db_user.password != isis_user[1]:
+                db_user.password = isis_user[1]
+                await session.commit()
+                await session.refresh(db_user)
+                
     if not await verify_password(password, db_user.password):
         return None
     return db_user
