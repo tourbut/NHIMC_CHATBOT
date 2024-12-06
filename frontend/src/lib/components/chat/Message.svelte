@@ -45,7 +45,9 @@
             <div class="flex items-center text-sm font-light text-gray-500 dark:text-gray-400">
                 <LightbulbOutline id={'thought'+message.id} />
                 <Popover class="w-64 text-sm font-light" title="생각" triggeredBy={'#thought'+message.id} placement="bottom-start">
-                    {@html message.thought.replace(/\n/g, '<br>')}
+                    <div class='popover_content'>
+                        {@html message.thought.replace(/\n/g, '<br>')}
+                    </div>
                 </Popover>
             </div>
             {/if}
@@ -53,7 +55,9 @@
             <div class="flex items-center text-sm font-light text-gray-500 dark:text-gray-400">
                 <FileOutline id={'tools'+message.id} />
                 <Popover class="w-80 text-sm font-light" title="문서" triggeredBy={'#tools'+message.id} placement="bottom-start">
-                    {@html message.tools.replace(/\n/g, '<br>')}
+                    <div class='popover_content'>
+                        {@html message.tools.replace(/\n/g, '<br>')}
+                    </div>
                 </Popover>
             </div>
             {/if}
@@ -70,3 +74,10 @@
     </div>
 </div>
 {/if}
+
+<style>
+    .popover_content {
+        max-height: 10rem;
+        overflow: auto;
+    }
+</style>
