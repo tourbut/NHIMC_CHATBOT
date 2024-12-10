@@ -222,20 +222,23 @@ def thinking_chatbot_chain(api_key:str,
             
             results = rerank_chain.batch(inputs,
                                          config={"max_concurrency": 3},)
-            idx_max = results.index(max(results,key=lambda x:x.score))
+
+            final_idx=[]
+            for result in results:
+                if result.score > 8:
+                    final_idx.append(results.index(result))
             
-            result = results[idx_max]
-            
-            if result.score <= 6:
+            if len(final_idx) == 0:
                 return "해당 문서 없음"
             else :
-                
                 rtn = f"""검색어 : {output["thought"].search_msg}
-                검색 문서 Score: {results[idx_max].score}점(10점 만점)
-                Score 측정 사유:{results[idx_max].Reasons_for_scoring}
-                검색결과
                 """
-                rtn = rtn + "\n\n-------- page : "+str(idx_max)+" --------\n\n" + docs[idx_max].page_content
+                for idx in final_idx:
+                    rtn+=f"""검색 문서 Score: {results[idx].score}점(10점 만점)
+                    Score 측정 사유:{results[idx].Reasons_for_scoring}
+                    검색결과
+                    """
+                    rtn = rtn + "\n\n-------- page : "+str(idx)+" --------\n\n" + docs[idx].page_content
             
             return rtn
         else:
@@ -265,6 +268,5 @@ def thinking_chatbot_chain(api_key:str,
         }
         |RunnableLambda(output_formatter)
         )
-    
     
     return final_chain
