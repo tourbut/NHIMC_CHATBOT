@@ -74,7 +74,7 @@ def pg_ParentDocumentRetriever(connection,
         #search_type="similarity_score_threshold",
         #search_kwargs={"score_threshold": 0.6}
         search_type="mmr",
-        search_kwargs={"k": 3, "lambda": 0.3}
+        search_kwargs={"k": 6, "lambda": 0.2}
     )
     
     return retriever

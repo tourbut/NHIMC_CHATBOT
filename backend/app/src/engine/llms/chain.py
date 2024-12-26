@@ -1,3 +1,4 @@
+from typing import List
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_ollama import ChatOllama
@@ -124,31 +125,49 @@ def map_rerank_chain(llm):
     from langchain_core.prompts import PromptTemplate
     from langchain_core.output_parsers import PydanticOutputParser
     from pydantic import BaseModel, Field
-    class AnswerWithScore(BaseModel):
-        '''
-        The user's question and the score and reasons for scoring the answer.
-        '''
-        score: float = Field( ..., title="Score from 1.0 - 10.0. 10.0 is the best score.")
-        Reasons_for_scoring: str = Field( ..., title="Reasons for scoring.")
+    
+    class AnswerEvaluation(BaseModel):
+        """Model for evaluating search result quality"""
+        
+        score: float = Field(
+            ..., 
+            title="Overall Score",
+            description="Quality score of search results (1.0-10.0)",
+            ge=1.0,
+            le=10.0
+        )
+        
+        evaluation_reasons: str = Field(
+            ...,
+            title="Evaluation Reasons",
+            description="Specific reasons for each score given"
+        )
         
     
-    parser = PydanticOutputParser(pydantic_object=AnswerWithScore)
+    parser = PydanticOutputParser(pydantic_object=AnswerEvaluation)
     
     prompt_template = """
-    <INSTRUCTION>
-    Using ONLY the following context answer the user's question. If you can't just say you don't know, don't make anything up.
-    If the answer answers the user question the score should be high, else it should be low.
-    On a scale of 1.0 to 10.0, write whether you have enough context to answer the user's question.
-    </INSTRUCTION>
-    <QUESTION>
-    {input} 
-    </QUESTION>
-    <CONTEXT> 
-    {context}
-    </CONTEXT>
-    <FORMAT>
-    {format_instructions}
-    </FORMAT>
+<SYSTEM>
+You are an expert evaluator. Rate how well the context answers the question on a scale of 1.0-10.0:
+1.0~2.9: Completely irrelevant or incorrect
+3.0~4.9: Partially relevant but insufficient
+5.0~6.9: Adequately answers the question
+7.0~8.9: Good answer with minor gaps
+9.0~10.0: Perfect and comprehensive answer
+Respond to Korean.
+</SYSTEM>
+
+<QUESTION>
+{input}
+</QUESTION>
+
+<CONTEXT>
+{context}
+</CONTEXT>
+
+<OUTPUT FORMAT>
+{format_instructions}
+</OUTPUT FORMAT>
     """
     
     prompt = PromptTemplate(
@@ -215,6 +234,9 @@ def thinking_chatbot_chain(api_key:str,
     
     def get_context(output):
         if retriever:
+            rtn = f"""검색어 : {output["thought"].search_msg}
+            """
+            
             docs = retriever.invoke(output["thought"].search_msg)
             inputs = []
             for doc in docs:
@@ -225,20 +247,22 @@ def thinking_chatbot_chain(api_key:str,
 
             final_idx=[]
             for result in results:
-                if result.score > 8:
+                if result.score >= 9:
                     final_idx.append(results.index(result))
             
             if len(final_idx) == 0:
-                return "해당 문서 없음"
+                rtn += "해당 문서 없음"
+                return rtn
             else :
-                rtn = f"""검색어 : {output["thought"].search_msg}
-                """
+                rtn += f"""총 문서 수: {len(docs)}"""
                 for idx in final_idx:
-                    rtn+=f"""검색 문서 Score: {results[idx].score}점(10점 만점)
-                    Score 측정 사유:{results[idx].Reasons_for_scoring}
+                    rtn+=f"""
+                    ---------Doc No.{idx}---------
+                    검색 문서 적합 점수(10점 만점): {results[idx].score}점
+                    측정 사유:{results[idx].evaluation_reasons}
                     검색결과
                     """
-                    rtn = rtn + "\n\n-------- page : "+str(idx)+" --------\n\n" + docs[idx].page_content
+                    rtn = rtn + docs[idx].page_content
             
             return rtn
         else:
