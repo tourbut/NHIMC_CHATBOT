@@ -22,7 +22,6 @@
 
     let failure_callback = (json_error) => {
         alert("세션이 만료되었습니다. 다시 로그인해주세요.");
-        
         username.set("");
         user_token.set("");
         goto('/login');
@@ -49,39 +48,29 @@
 	</title>
 </svelte:head>
 
-<div >
-  <div class="navbar">
-    <Navigation />
-    <div class="container">
-      <div class="content">
-        <slot />
-      </div>
-    </div>
-  </div>
-  <div class="footer">
-    <Toasts />
-    <Footer />
-  </div>
-</div> 
-
-
-
+<div class="navbar">
+  <Navigation />
+</div>
+<div class="content">
+  <slot />
+</div>
+<div class="footer">
+  <Footer />
+</div>
+<Toasts />
 <style>
 .navbar {
     z-index: 1000;
-    position: fixed;
     width: 100%;
   }
-.container {
-  display: flex;
-}
 .content {
   flex: 1; /* 남은 공간을 차지하도록 설정 */
+  padding: 5px;
+  width: 100%;
 }
 .footer {
-  flex-shrink: 0; /* 브라우저 크기가 줄어들 때, footer는 크기를 줄이지 않도록 설정 */
-  position: fixed;
-  bottom: 0;
   width: 100%;
+  height: 10px;
+  margin-top: 20px;
 }
 </style>

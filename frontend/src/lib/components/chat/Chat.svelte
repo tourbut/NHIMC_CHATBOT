@@ -13,7 +13,7 @@
 
     export let chat_id = ''
     export let selected_llm={value:0,name:"모델선택",is_userllm:true}
-    export let selected_userdocument={value:0,name:"문서선택"}
+    export let selected_userdocument={value:0,name:"None"}
     export let chat_title = ''
 
     let message_list= []
@@ -131,8 +131,9 @@
         }
 
 </script>
-<div >
-    <Navbar rounded color="form">
+<div>
+    <div>
+        <Navbar rounded color="form" class='px-2 py-1' >
         <NavHamburger />
         <NavBrand>{chat_title}</NavBrand>
         <NavUl >
@@ -140,18 +141,18 @@
             Model : {selected_llm.name}
           </NavLi>  
           <NavLi class="cursor-pointer">
-            File : {selected_userdocument.name}
+            File : {selected_userdocument ? selected_userdocument.name : 'None'}
           </NavLi>
         </NavUl>
       </Navbar>
-</div>
-<div class="flex flex-col gap-4">
-    <div class="message-container" bind:this={messageListElement}>
-        {#each message_list as message}
-            <Message bind:message={message}/>
-        {/each}
-    </div>  
-    <div class="">
+    </div>
+
+    <div class="flex flex-col gap-4">
+        <div class="message-container" bind:this={messageListElement}>
+            {#each message_list as message}
+                <Message bind:message={message}/>
+            {/each}
+        </div>  
         <MessageInput bind:message={user_msg} sendMessage={sendMessage}/>
     </div>
 </div>
@@ -162,6 +163,7 @@
         flex-direction: column;
         gap: 1rem;                /* Tailwind의 gap-4 */
         overflow-y: auto;         /* 내용이 넘칠 경우 수직 스크롤바 표시 */
-        max-height: 68vh;         /* 최대 높이 60vh (화면 높이의 60%) */
+        min-height: 69vh;         /* 최대 높이 60vh (화면 높이의 60%) */
+        max-height: 69vh;         /* 최대 높이 60vh (화면 높이의 60%) */
     }
 </style>

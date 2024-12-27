@@ -37,14 +37,14 @@ class CreateChat(SQLModel):
     title: str
     user_llm_id: uuid.UUID | None = None
     dept_llm_id: uuid.UUID | None  = None
-    user_file_id: uuid.UUID
+    user_file_id: uuid.UUID| None  = None
 
 class ResponseChat(SQLModel):
     id: uuid.UUID
     title: str
     user_llm_id: uuid.UUID | None = None
     dept_llm_id: uuid.UUID | None = None
-    user_file_id: uuid.UUID
+    user_file_id: uuid.UUID | None = None
     
 class GetChat(SQLModel):
     category: str = "chat"
@@ -101,4 +101,4 @@ class GetDocument(SQLModel):
     title: str
     description: str | None = None
     collection_id: uuid.UUID
-    user_file_id:uuid.UUID
+    user_file_id:uuid.UUID | None = None

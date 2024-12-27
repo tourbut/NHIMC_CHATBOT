@@ -20,7 +20,6 @@
     <form class="flex flex-col space-y-3" action="#">
         {#if (header)}
         <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">{header}</h3>
-        
         {/if}
         {#each table_head as head}
             {#if (head.type === 'boolean')}

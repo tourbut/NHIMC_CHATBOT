@@ -6,6 +6,9 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough,RunnableParallel
 from langchain.callbacks import StdOutCallbackHandler
 from langchain.callbacks.manager import CallbackManager
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import PydanticOutputParser
+from pydantic import BaseModel, Field
 
 from operator import itemgetter
 
@@ -16,7 +19,9 @@ from .prompt import (
     get_chatbot_prompt_with_history,
     get_chatbot_prompt_with_memory,
     get_thinking_prompt,
-    get_thinking_chatbot)
+    get_thinking_chatbot,
+    get_thinking_NoDoc_prompt,
+    get_thinking_NoDoc_chatbot)
 
 from .parser import strparser,think_parser
 
@@ -122,9 +127,6 @@ def chatbot_chain(api_key:str,
         return chain
 
 def map_rerank_chain(llm):
-    from langchain_core.prompts import PromptTemplate
-    from langchain_core.output_parsers import PydanticOutputParser
-    from pydantic import BaseModel, Field
     
     class AnswerEvaluation(BaseModel):
         """Model for evaluating search result quality"""
@@ -179,7 +181,6 @@ Respond to Korean.
     map_chain = prompt | llm | parser
     return map_chain
                         
-
 def thinking_chatbot_chain(api_key:str,
                            source:str,
                            model:str='gpt-4o-mini',
@@ -209,11 +210,6 @@ def thinking_chatbot_chain(api_key:str,
                          base_url= settings.OLLAMA_URL,
                          temperature=temperature,
                          callback_manager=callback_manager,
-                         #format="json",
-                         #num_gpu=4,
-                         #num_ctx=1024*4,
-                         #num_predict=512,
-                         #num_thread=16,
                          )
     else:
         raise ValueError(f"Invalid model name: {model}")
@@ -247,7 +243,7 @@ def thinking_chatbot_chain(api_key:str,
 
             final_idx=[]
             for result in results:
-                if result.score >= 9:
+                if result.score >= 7:
                     final_idx.append(results.index(result))
             
             if len(final_idx) == 0:
@@ -260,7 +256,7 @@ def thinking_chatbot_chain(api_key:str,
                     ---------Doc No.{idx}---------
                     검색 문서 적합 점수(10점 만점): {results[idx].score}점
                     측정 사유:{results[idx].evaluation_reasons}
-                    검색결과
+                    ---------검색결과---------
                     """
                     rtn = rtn + docs[idx].page_content
             
@@ -288,6 +284,82 @@ def thinking_chatbot_chain(api_key:str,
         {
             "thought":RunnablePassthrough(),
             "context":RunnablePassthrough(),
+            "answer":answer_chain
+        }
+        |RunnableLambda(output_formatter)
+        )
+    
+    return final_chain
+
+def thinking_chatbot_NoDoc_chain(api_key:str,
+                           source:str,
+                           model:str='gpt-4o-mini',
+                           temperature:float=0.1,
+                           callback_manager=None,
+                           memory=None,
+                           ):
+    
+    callback_manager = CallbackManager([StdOutCallbackHandler()])
+    
+    if model.startswith('gpt'):
+        llm = ChatOpenAI(model=model,
+                        temperature=temperature,
+                        api_key=api_key,
+                        callback_manager=callback_manager,
+                        stream_usage=True)
+        
+    elif model.startswith('claude'):
+        llm = ChatAnthropic(model=model,
+                            temperature=temperature,
+                            api_key=api_key,
+                            callback_manager=callback_manager)
+    elif source == 'ollama':
+        llm = ChatOllama(model=model,
+                         base_url= settings.OLLAMA_URL,
+                         temperature=temperature,
+                         callback_manager=callback_manager,
+                         )
+    else:
+        raise ValueError(f"Invalid model name: {model}")
+    
+    runnable = RunnablePassthrough.assign(
+        chat_history=RunnableLambda(memory.load_memory_variables)| itemgetter("chat_history")  # memory_key 와 동일하게 입력합니다.
+        )
+    
+    class AIThink(BaseModel):
+        '''모델 추론 결과
+        Respond to Korean.
+        '''
+        THOUGHT: str = Field(..., title="사용자의 질문에 처음 모델이 생각한 내용")
+    parser = PydanticOutputParser(pydantic_object=AIThink)
+    
+    think_prompt = get_thinking_NoDoc_prompt(parser)
+    prompt = get_thinking_NoDoc_chatbot()
+    
+    think_chain = runnable|think_prompt|llm|parser
+    answer_chain = prompt|llm
+    
+    def get_thought(output):
+        return output["thought"].THOUGHT
+    
+    def output_formatter(output):
+        print(output)
+        return {
+            "thought": output["thought"],
+            "answer": output["answer"],
+        }
+        
+    final_chain = (
+        RunnableParallel(
+            thought = think_chain,
+            input = RunnablePassthrough()
+        )
+        |{
+            "thought":RunnableLambda(get_thought),
+            "input" : RunnablePassthrough()
+        }|
+        {
+            "thought":RunnablePassthrough(),
             "answer":answer_chain
         }
         |RunnableLambda(output_formatter)

@@ -15,7 +15,8 @@ from app.src.engine.llms.chain import (
     translate_chain,
     summarize_chain,
     chatbot_chain,
-    thinking_chatbot_chain
+    thinking_chatbot_chain,
+    thinking_chatbot_NoDoc_chain
 )
 from app.src.engine.llms.memory import pg_vetorstore_with_memory, pg_vetorstore,pg_ParentDocumentRetriever
 from datetime import datetime
@@ -36,6 +37,16 @@ REDIS_URL = settings.REDIS_URL
 # Function to get or create a RedisChatMessageHistory instance
 def get_redis_history(session_id: str) -> BaseChatMessageHistory:
     return RedisChatMessageHistory(session_id, redis_url=REDIS_URL, ttl=60 * 60 * 24 * 7)
+
+@router.post("/create_chat",response_model=chat_schema.ResponseChat)
+async def create_chat(*, session: SessionDep_async, current_user: CurrentUser,chat_in: chat_schema.CreateChat):
+    chat = await chat_crud.create_chat(session=session,current_user=current_user,chat_in=chat_in)
+    return chat
+
+@router.get("/get_chat_list",response_model=List[chat_schema.GetChat])
+async def get_chat_list(*, session: SessionDep_async, current_user: CurrentUser):
+    chats = await chat_crud.get_chat_list(session=session,current_user=current_user)
+    return chats
 
 @router.post("/send_message",response_model=chat_schema.OutMessage)
 async def send_message(*, session: SessionDep_async, current_user: CurrentUser,chat_in: chat_schema.SendMessage):
@@ -87,14 +98,24 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                              is_user=True)
     messages = []
     messages.append(user_message)
+    
     document_meta = "관련 문서 없음" if document is None else {'title':document.title,
                                                               'description':document.description,}
-    chain = thinking_chatbot_chain(api_key=llm.api_key,
-                                    source=llm.source,
-                                    model=llm.name,
-                                    memory=memory,
-                                    document_meta=document_meta,
-                                    retriever=retriever,)
+    if document is None:
+        #제공된 문서가 없는 경우
+        chain = thinking_chatbot_NoDoc_chain(api_key=llm.api_key,
+                                             source=llm.source,
+                                             model=llm.name,
+                                             memory=memory,
+                                             )
+    else:
+        #제공된 문서가 있는 경우
+        chain = thinking_chatbot_chain(api_key=llm.api_key,
+                                        source=llm.source,
+                                        model=llm.name,
+                                        memory=memory,
+                                        document_meta=document_meta,
+                                        retriever=retriever,)
     
     async def chain_astream(chain,input):
     
@@ -147,8 +168,8 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                         chat_id=chat_in.chat_id,
                         name="바르미",
                         content=response.content,
-                        thought=thought['thought'],
-                        tools=json.dumps({'retriever': thought['context']}, ensure_ascii=False),
+                        thought=thought.get('thought', ''),
+                        tools=json.dumps({'retriever': thought.get('context', '') }, ensure_ascii=False),
                         is_user=False)
         
         messages.append(bot_message)
@@ -191,16 +212,6 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
         
     return StreamingResponse(chain_astream(chain,chat_in.input),media_type='text/event-stream')
 
-@router.post("/create_chat",response_model=chat_schema.ResponseChat)
-async def create_chat(*, session: SessionDep_async, current_user: CurrentUser,chat_in: chat_schema.CreateChat):
-    chat = await chat_crud.create_chat(session=session,current_user=current_user,chat_in=chat_in)
-    return chat
-
-@router.get("/get_chat_list",response_model=List[chat_schema.GetChat])
-async def get_chat_list(*, session: SessionDep_async, current_user: CurrentUser):
-    chats = await chat_crud.get_chat_list(session=session,current_user=current_user)
-    return chats
-
 @router.get("/get_messages",response_model=List[chat_schema.ReponseMessages])
 async def get_messages(*, session: SessionDep_async, current_user: CurrentUser, chat_id:uuid.UUID):
     
@@ -221,10 +232,18 @@ async def get_messages(*, session: SessionDep_async, current_user: CurrentUser, 
             messages.append(msg)
         
         if len(history.messages)==0:
-            messages = await chat_crud.get_messages(session=session,current_user=current_user,chat_id=chat_id)
-                    # Add messages to chat history
-            for message in messages:
+            db_messages = await chat_crud.get_messages(session=session,current_user=current_user,chat_id=chat_id)
+            # Add messages to chat history
+            messages = []
+            for message in db_messages:
                 if message.is_user:
+                    messages.append(chat_schema.ReponseMessages(chat_id=chat_id,
+                                                                name=message.name,
+                                                                content=message.content,
+                                                                thought=None,
+                                                                tools=None,
+                                                                is_user=True,
+                                                                create_date=message.create_date))
                     await history.aadd_messages([HumanMessage(content=message.content,
                                                         additional_kwargs={
                                                             "user_id":str(message.user_id),
@@ -232,6 +251,14 @@ async def get_messages(*, session: SessionDep_async, current_user: CurrentUser, 
                                                             "create_date":message.create_date.strftime("%Y-%m-%d %H:%M:%S")
                                                             }),])
                 else:
+                    messages.append(chat_schema.ReponseMessages(chat_id=message.chat_id,
+                                                                name=message.name,
+                                                                content=message.content,
+                                                                thought=message.thought,
+                                                                tools=json.loads(message.tools),
+                                                                is_user=False,
+                                                                create_date=message.create_date))
+                        
                     await history.aadd_messages([AIMessage(content=str(message.content),
                                                         additional_kwargs={
                                                             "user_id":str(message.user_id),
@@ -244,8 +271,6 @@ async def get_messages(*, session: SessionDep_async, current_user: CurrentUser, 
     except Exception as e:
         print(e)
         messages = await chat_crud.get_messages(session=session,current_user=current_user,chat_id=chat_id)
-        
-    messages = [chat_schema.ReponseMessages(**msg.model_dump()) for msg in messages]
     
     return messages
 

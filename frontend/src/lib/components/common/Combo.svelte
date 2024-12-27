@@ -14,7 +14,7 @@
       { drop_value:'fr',value: 'MI', name: 'Michigan' }
     ];
     export let is_dropcombo=false
-    export let selected_name=""
+    export let selected_name
 
     let drop_items = ComboMenu.filter((item, index, self) =>
       index === self.findIndex((t) => (
