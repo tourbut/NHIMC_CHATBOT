@@ -16,7 +16,7 @@
 
 </script>
 
-<Modal bind:open={formModal} size="xs" autoclose={false} outsideclose={true} class="w-full" on:close={() => form_data={}}>
+<Modal bind:open={formModal} size="xs" autoclose={false} outsideclose={true} class="w-full" on:close={() => {form_data={};}}>
     <form class="flex flex-col space-y-3" action="#">
         {#if (header)}
         <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">{header}</h3>

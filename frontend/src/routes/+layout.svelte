@@ -49,24 +49,39 @@
 	</title>
 </svelte:head>
 
-<Navigation />
-
-<div class="container">
-  <div class="content">
-  <slot />
+<div >
+  <div class="navbar">
+    <Navigation />
+    <div class="container">
+      <div class="content">
+        <slot />
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <Toasts />
+    <Footer />
   </div>
 </div> 
 
-<Toasts />
-<Footer />
 
 
 <style>
+.navbar {
+    z-index: 1000;
+    position: fixed;
+    width: 100%;
+  }
 .container {
   display: flex;
-  min-height: 80vh; /* 브라우저 높이와 동일하게 설정 */
 }
 .content {
   flex: 1; /* 남은 공간을 차지하도록 설정 */
+}
+.footer {
+  flex-shrink: 0; /* 브라우저 크기가 줄어들 때, footer는 크기를 줄이지 않도록 설정 */
+  position: fixed;
+  bottom: 0;
+  width: 100%;
 }
 </style>

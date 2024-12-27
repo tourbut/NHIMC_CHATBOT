@@ -178,7 +178,8 @@
     </div>
 </div>
 
-<ComboModal header={"채팅방 생성"} formModal={showModal} btn_click={btn_create_chat}
+<ComboModal header="채팅방 생성" btn_click={btn_create_chat}
+            bind:formModal={showModal} 
             bind:table_head={table_head}
             bind:form_data={form_data}> </ComboModal>
 
@@ -188,6 +189,6 @@
         margin-left: auto;           /* 좌우 중앙 정렬 */
         margin-right: auto;          /* 좌우 중앙 정렬 */
         padding: 1rem;               /* padding: 1rem (Tailwind의 p-4에 해당) */
-        max-width: 64rem;            /* 최대 너비 64rem (Tailwind의 max-w-5xl에 해당) */
+        max-width: 70rem;            /* 최대 너비 64rem (Tailwind의 max-w-5xl에 해당) */
     }
 </style>

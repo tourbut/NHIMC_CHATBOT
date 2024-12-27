@@ -161,8 +161,7 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;                /* Tailwind의 gap-4 */
-        min-height: 63vh;         /* 최소 높이 설정 (필요에 따라 조정 가능) */
-        max-height: 63vh;         /* 최대 높이 설정 (필요에 따라 조정 가능) */
         overflow-y: auto;         /* 내용이 넘칠 경우 수직 스크롤바 표시 */
+        max-height: 68vh;         /* 최대 높이 60vh (화면 높이의 60%) */
     }
 </style>
