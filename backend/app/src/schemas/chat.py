@@ -26,6 +26,7 @@ class GetUserLLM(SQLModel):
     name: str
     type: str
     api_key: str
+    url:str = ''
 
 class GetDeptLLM(SQLModel):
     id: uuid.UUID 

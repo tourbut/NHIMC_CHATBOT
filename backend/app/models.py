@@ -40,6 +40,7 @@ class LLM(CommonBase, table=True):
     input_price: float = Field(nullable=False)
     output_price: float = Field(nullable=False)
     is_active: bool = Field(default=True)
+    url: Optional[str] = Field(nullable=True)
 
 class DeptAPIKey(CommonBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")

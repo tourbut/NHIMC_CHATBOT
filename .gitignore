@@ -6,3 +6,4 @@ prd.env
 test/*.md
 app/database/pgdata
 app/database/migrations
+/tester

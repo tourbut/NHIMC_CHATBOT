@@ -184,6 +184,7 @@ Respond to Korean.
 def thinking_chatbot_chain(api_key:str,
                            source:str,
                            model:str='gpt-4o-mini',
+                           base_url:str='http://localhost:11434',
                            temperature:float=0.1,
                            callback_manager=None,
                            memory=None,
@@ -207,7 +208,7 @@ def thinking_chatbot_chain(api_key:str,
                             callback_manager=callback_manager)
     elif source == 'ollama':
         llm = ChatOllama(model=model,
-                         base_url= settings.OLLAMA_URL,
+                         base_url= base_url,
                          temperature=temperature,
                          callback_manager=callback_manager,
                          )
@@ -294,6 +295,7 @@ def thinking_chatbot_chain(api_key:str,
 def thinking_chatbot_NoDoc_chain(api_key:str,
                            source:str,
                            model:str='gpt-4o-mini',
+                           base_url:str='http://localhost:11434',
                            temperature:float=0.1,
                            callback_manager=None,
                            memory=None,
@@ -315,7 +317,7 @@ def thinking_chatbot_NoDoc_chain(api_key:str,
                             callback_manager=callback_manager)
     elif source == 'ollama':
         llm = ChatOllama(model=model,
-                         base_url= settings.OLLAMA_URL,
+                         base_url= base_url,
                          temperature=temperature,
                          callback_manager=callback_manager,
                          )

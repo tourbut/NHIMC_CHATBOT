@@ -8,20 +8,21 @@ from langchain.retrievers import ParentDocumentRetriever
 from langchain.text_splitter import CharacterTextSplitter,RecursiveCharacterTextSplitter 
 from langchain.storage._lc_store import create_kv_docstore
 from langchain_community.storage import SQLStore, RedisStore
-from ....core.config import settings
 
 def pg_vetorstore(connection,
                   collection_name:str,
                   api_key:str,
                   source:str,
                   model:str='text-embedding-3-large',
+                  base_url:str='http://localhost:11434',
                   async_mode=False):
 
     if source == 'openai':
         embeddings = OpenAIEmbeddings(model=model,
                                     api_key=api_key)
     elif source == 'ollama':
-        embeddings = OllamaEmbeddings(model=model,base_url=settings.OLLAMA_URL)
+        embeddings = OllamaEmbeddings(model=model,
+                                      base_url=base_url)
         
     vectorstore = PGVector(
     embeddings=embeddings,
@@ -38,6 +39,7 @@ def pg_ParentDocumentRetriever(connection,
                   api_key:str,
                   source:str,
                   model:str='text-embedding-3-large',
+                  base_url:str='http://localhost:11434',
                   async_mode=False,
                   splitter_options:dict={"separators":["\n\n"],"chunk_size":2000,"chunk_overlap":500,
                                                        "child_chunk_size":200,"child_chunk_overlap":50}):
@@ -47,6 +49,7 @@ def pg_ParentDocumentRetriever(connection,
                                 api_key=api_key,
                                 source=source,
                                 model=model,
+                                base_url=base_url,
                                 async_mode=async_mode
                                 )
     postgre = SQLStore(namespace=collection_name, engine=connection)
@@ -84,6 +87,7 @@ def pg_vetorstore_with_memory(connection,
                   api_key:str,
                   source:str='openai',
                   model:str='text-embedding-3-large',
+                  base_url:str='http://localhost:11434',
                   search_kwargs={"k": 3},
                   ):
     
@@ -97,6 +101,7 @@ def pg_vetorstore_with_memory(connection,
                                 api_key=api_key,
                                 source=source,
                                 model=model,
+                                base_url=base_url,
                                 async_mode=async_mode
                                 )
     retriever = vectorstore.as_retriever(search_kwargs=search_kwargs)

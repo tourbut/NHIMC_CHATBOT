@@ -10,7 +10,8 @@ class LLMCreate(SQLModel):
     input_price: float
     output_price: float
     is_active: bool = False
-
+    url:str = ""
+    
 class Get_LLM(SQLModel):
     id: uuid.UUID 
     source: str
@@ -20,6 +21,7 @@ class Get_LLM(SQLModel):
     input_price: float
     output_price: float
     is_active: bool = False
+    url: str
 
 class Get_Dept(SQLModel):
     id: uuid.UUID 

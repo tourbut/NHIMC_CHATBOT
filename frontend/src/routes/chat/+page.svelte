@@ -61,11 +61,13 @@
 
             chat_title=json.title
             chat_id = json.id
-            chat_list[0].items = [...chat_list[0].items, {id: json.id, label: json.title, herf: '', caption: selected_userdocument.name}];
+            chat_list[0].items = [...chat_list[0].items, {id: json.id, label: json.title, herf: '', caption: selected_userdocument ? selected_userdocument.name : ''}];
         }
+
         let failure_callback = (json_error) => {
             addToast('error',json_error.detail)
         }
+
         await create_chat(params, success_callback, failure_callback);
     }
 

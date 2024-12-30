@@ -72,6 +72,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                        api_key=embedding.api_key,
                                        source=embedding.source,
                                        model=embedding.name,
+                                       base_url=embedding.url,
                                        search_kwargs={"k": 3})
     
     retriever = None
@@ -84,6 +85,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                     api_key=embedding.api_key,
                                     source=embedding.source,
                                     model=embedding.name,
+                                    base_url=embedding.url,
                                     async_mode=False,
                                     splitter_options=collection.cmetadata
                                     )
@@ -106,6 +108,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
         chain = thinking_chatbot_NoDoc_chain(api_key=llm.api_key,
                                              source=llm.source,
                                              model=llm.name,
+                                             base_url=llm.url,
                                              memory=memory,
                                              )
     else:
@@ -113,6 +116,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
         chain = thinking_chatbot_chain(api_key=llm.api_key,
                                         source=llm.source,
                                         model=llm.name,
+                                        base_url=llm.url,
                                         memory=memory,
                                         document_meta=document_meta,
                                         retriever=retriever,)
