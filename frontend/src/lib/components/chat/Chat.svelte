@@ -57,7 +57,7 @@
             params = {
             chat_id: chat_id,
             user_llm_id: selected_llm.value,
-            document_id: selected_userdocument.value == 0 ? null : selected_userdocument.value,
+            document_id: selected_userdocument ? null : selected_userdocument.value,
             input: user_msg,
             }
         }
@@ -66,7 +66,7 @@
             params = {
             chat_id: chat_id,
             dept_llm_id: selected_llm.value,
-            document_id: selected_userdocument.value == 0 ? null : selected_userdocument.value,
+            document_id: selected_userdocument  ? null : selected_userdocument.value,
             input: user_msg,
             }
         }
