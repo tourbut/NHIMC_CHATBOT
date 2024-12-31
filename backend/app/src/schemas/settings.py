@@ -12,6 +12,7 @@ class Get_LLM(SQLModel):
     description: str
     input_price: float
     output_price: float
+    url:str  | None
 
 class Create_Apikey(SQLModel):
     api_name:str
