@@ -26,13 +26,14 @@ class GetUserLLM(SQLModel):
     name: str
     type: str
     api_key: str
-    url:str = ''
+    url:str | None
 
 class GetDeptLLM(SQLModel):
     id: uuid.UUID 
     source: str
     name: str
     api_key: str
+    url:str | None
 
 class CreateChat(SQLModel):
     title: str
