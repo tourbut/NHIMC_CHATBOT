@@ -52,7 +52,9 @@ async def login(
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return user_schema.Token(access_token=await security.create_access_token(str(user.id), expires_delta=access_token_expires),
                              name=user.name,
-                             is_admin=user.is_admin)
+                             is_admin=user.is_admin,
+                             dept_cd=user.dept_cd,
+                             dept_nm=user.dept_nm)
 
 
 @router.get("/get_user", response_model=user_schema.UserPublic)

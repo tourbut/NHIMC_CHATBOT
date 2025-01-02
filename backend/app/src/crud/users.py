@@ -4,12 +4,21 @@ from sqlmodel import Session, select
 from app.src.utils.security import get_password_hash, verify_password
 from app.src.utils.fromOracle import get_isis_user
 
-async def get_user_by_empl_no(*, session: Session, empl_no: str) -> User | None:
-    statement = select(User).where(User.empl_no == empl_no)
+async def get_user_by_empl_no(*, session: Session, empl_no: str) -> user_schema.GetUserAndDept | None:
+    statement = select(User.id,
+                       User.empl_no,
+                       User.name,
+                       User.password,
+                       User.is_admin,
+                       User.is_active,
+                       Dept.dept_cd,
+                       Dept.dept_nm).where(User.empl_no == empl_no,
+                                           UserDept.user_id == User.id,
+                                           Dept.id == UserDept.dept_id)
     session_user = await session.exec(statement)
     return session_user.first()
 
-async def authenticate(*, session: Session, empl_no: str, password: str) -> User | None:
+async def authenticate(*, session: Session, empl_no: str, password: str) -> user_schema.GetUserAndDept | None:
     db_user = await get_user_by_empl_no(session=session, empl_no=empl_no)
     isis_user = await get_isis_user(empl_no)
     if not db_user:
@@ -31,7 +40,15 @@ async def authenticate(*, session: Session, empl_no: str, password: str) -> User
                             
                 await session.commit()
                 await session.refresh(db_user)
-                return db_user
+                
+                rtn = user_schema.GetUserAndDept(id=db_user.id,
+                                                 empl_no=db_user.empl_no,
+                                                 name=db_user.name,
+                                                 is_admin=db_user.is_admin,
+                                                 is_active=db_user.is_active,
+                                                 dept_cd=dept.dept_cd)
+                
+                return rtn
             else:
                 return None
         else:    

@@ -2,7 +2,7 @@
     import { Navbar, NavBrand, NavLi, NavUl, NavHamburger} from 'flowbite-svelte';
     import { Dropdown, DropdownItem, DropdownDivider} from 'flowbite-svelte';
     import { ChevronDownOutline } from 'flowbite-svelte-icons';
-    import { APP_NAME,username,user_token,is_admin } from '$lib/stores';
+    import { APP_NAME,username,user_token,is_admin,dept_cd } from '$lib/stores';
     import { DarkMode } from 'flowbite-svelte';
     const logout = async () => {
         username.set("");
@@ -17,13 +17,16 @@
         <span class="self-center whitespace-nowrap text-xl font-semibold dark:text-white">{$APP_NAME}</span>
     </NavBrand>
     <NavHamburger  />
-    <NavUl >
+    <NavUl>
         <NavLi href="/">Home</NavLi>
         {#if $username}
         <NavLi href="/chat">Chat</NavLi>
+        {#if $dept_cd == '41310' || $dept_cd == '10400'}
+        <NavLi href="/textminig">텍스트마이닝</NavLi>
+        {/if}
         <NavLi class="cursor-pointer">
             Settings<ChevronDownOutline class="w-6 h-6 ms-2 text-primary-800 dark:text-white inline" />
-        </NavLi>    
+        </NavLi>
         <Dropdown class="w-44 z-20">
             <!-- <DropdownItem href="/detail">개인정보</DropdownItem> -->
             <DropdownItem href="/llms">LLM설정</DropdownItem>

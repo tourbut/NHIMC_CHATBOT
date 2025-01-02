@@ -21,6 +21,18 @@ class Token(SQLModel):
     is_admin: bool = False
     access_token: str
     token_type: str = "bearer"
+    dept_cd: str
+    dept_nm: str
 
 class TokenPayload(SQLModel):
     sub: uuid.UUID | None = None
+
+class GetUserAndDept(SQLModel):
+    id: uuid.UUID 
+    empl_no: str 
+    password: str
+    name: str 
+    is_active: bool 
+    is_admin: bool
+    dept_cd: str
+    dept_nm: str

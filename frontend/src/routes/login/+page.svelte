@@ -3,7 +3,7 @@
   import { goto } from '$app/navigation';
   import { login } from '$lib/apis/user';
   import { addToast } from '$lib/common';
-  import { user_token,username,is_admin } from '$lib/stores';
+  import { user_token,username,is_admin, dept_cd, dept_nm } from '$lib/stores';
   let error = {detail:[]}
   let empl_no = ''
   let password = ''
@@ -19,6 +19,8 @@
       user_token.set(json.access_token)
       username.set(json.name)
       is_admin.set(json.is_admin)
+      dept_nm.set(json.dept_nm)
+      dept_cd.set(json.dept_cd)
       goto('/')
     }
 
@@ -33,7 +35,7 @@
 </script>
 {#if $username}
   <div class="container mx-auto p-4 max-w-md">
-    <h1>{$username}님 반갑습니다.</h1>
+    <h1>{$dept_nm} {$username}님 반갑습니다.</h1>
   </div>
 {:else}
 <Card class="container mx-auto p-4 max-w-md my-8">
