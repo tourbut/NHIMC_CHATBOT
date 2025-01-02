@@ -88,6 +88,8 @@
             }
 
             selected_userdocument = userdocument_list.find(item => item.value == json.user_file_id)
+            selected_userdocument = selected_userdocument ? selected_userdocument : null
+
         }
         let failure_callback = (json_error) => {
             addToast('error',json_error.detail)
