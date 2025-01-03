@@ -4,7 +4,7 @@
     import { v4 as uuidv4 } from 'uuid';
 
     import MessageInput from "$lib/components/common/MessageInput.svelte";
-    import Message from "$lib/components/common//Message.svelte";
+    import Message from "$lib/components/common/Message.svelte";
     import { send_message, get_messages } from "$lib/apis/chat";
     import { addToast } from '$lib/common';
 
