@@ -13,7 +13,7 @@
 
     export let chat_id = ''
     export let selected_llm={value:0,name:"모델선택",is_userllm:true}
-    export let selected_userdocument={value:0,name:"None"}
+    export let selected_userdocument
     export let chat_title = ''
 
     let message_list= []
@@ -89,6 +89,7 @@
                 message_list[message_list.length-1].time = json.create_date
             }
         }
+        console.log(params)
         await send_message(params, success_callback, failure_callback,streamCallback);
     }
 
