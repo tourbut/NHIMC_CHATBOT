@@ -96,7 +96,6 @@
       }
 
       let tmllm_success_callback = (json) => {
-        console.log(json)
         tmllm_table_head[0].combo=table_body.map(item => {return {value:item.id,name:item.name}})
         tmllm_table_body = json.map(item => {
           

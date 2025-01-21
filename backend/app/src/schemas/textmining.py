@@ -23,6 +23,7 @@ class CreateTmLLM(SQLModel):
     
 class Get_Out_TmLLM(SQLModel):
     id : uuid.UUID
+    llm_id:uuid.UUID  | None  = None
     source: str
     type: str
     name: str

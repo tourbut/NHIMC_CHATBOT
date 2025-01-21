@@ -115,6 +115,7 @@ async def get_llm(*, session: AsyncSession) -> List[textmining_schema.Get_Out_Tm
 async def get_tmllm(session: AsyncSession) -> List[textmining_schema.Get_Out_TmLLM]:
     try:
         statement = select(TmLLM.id,
+                           LLM.id.label("llm_id"),
                            LLM.source,
                            LLM.type,
                            LLM.name,
