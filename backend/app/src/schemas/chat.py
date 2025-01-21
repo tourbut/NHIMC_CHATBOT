@@ -76,7 +76,8 @@ class CreateMessage(SQLModel):
     thought : str = None
     tools : str = None
     is_user: bool
-    create_date: datetime= datetime.now()
+    create_date: datetime = datetime.now()
+    update_date: datetime = datetime.now()
     
     
 class Chat(SQLModel):

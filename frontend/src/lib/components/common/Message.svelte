@@ -10,7 +10,8 @@
         thought: 'thought',
         tools: 'tools',
         time: '2024.02.20. 14:30:22',
-        is_user: true
+        is_user: true,
+        is_done: false
     }
 
     function copyToClipboard() {
@@ -36,7 +37,13 @@
 </div>
 {:else}
 <div class="flex items-start gap-2.5">
-    <Avatar src="/바르미_상반신.png" size="sm"/>
+    {#if message.name == '바르미'}
+        <Avatar src="/바르미_상반신.png" size="sm"/>
+    {:else if message.name == '미드미'}
+        <Avatar src="/미드미_상반신.png" size="sm"/>
+    {:else}
+        <Avatar src="/바르미_상반신.png" size="sm"/>
+    {/if}
     <div class="min-w-30 relative flex flex-col w-auto max-w-half leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700">
         <div class="flex items-center space-x-2 rtl:space-x-reverse relative">
             <span class="text-sm font-semibold text-gray-900 dark:text-white">{message.name}</span>
@@ -61,7 +68,7 @@
                 </Popover>
             </div>
             {/if}
-            {#if message.msg}
+            {#if message.msg && message.is_done}
             <button on:click={copyToClipboard} class="absolute right-0 text-gray-900 dark:text-gray-400 m-0.5 hover:bg-gray-200 dark:bg-gray-700  dark:hover:bg-gray-800 rounded-lg py-2 px-2.5 inline-flex items-center justify-center">
                 <span id="default-message" class="inline-flex items-center">
                     <ClipboardOutline />

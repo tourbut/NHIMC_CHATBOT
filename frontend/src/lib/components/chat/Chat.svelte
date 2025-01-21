@@ -86,7 +86,7 @@
             }
             else{
                 message_list[message_list.length-1].msg = json.content
-                message_list[message_list.length-1].time = json.create_date
+                message_list[message_list.length-1].time = new Date(json.create_date).toLocaleString()
             }
         }
         console.log(params)

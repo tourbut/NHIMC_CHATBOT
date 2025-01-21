@@ -5,6 +5,8 @@
     import { get_llm, get_dept, get_apikey,get_deptllm,get_deptusage,
              create_llm,create_apikey,create_deptllm,
              update_llm, update_apikey,update_deptllm } from "$lib/apis/admin";
+
+    import {get_tmllm,create_tmllm} from "$lib/apis/textmining";
     import { onMount } from 'svelte';
     import { addToast } from '$lib/common';
     let table_head=[
@@ -32,8 +34,15 @@
       {id:3,name:"active_yn",type:"boolean",desc:"활성화여부"},
     ]
 
+    let tmllm_table_head=[
+      {id:0,name:"llm_id",type:"combo",desc:"모델",combo:[]},
+      {id:1,name:"active_yn",type:"boolean",desc:"활성화여부"},
+    ]
+
     let api_table_body=[];
     let llm_table_body=[];
+    let tmllm_table_body=[];
+
 
     let table_body=[]
     let form_data={}
@@ -46,7 +55,6 @@
       let params = {}
 
       let success_callback = (json) => {
-        console.log(json)
         table_body = json
       }
 
@@ -87,6 +95,19 @@
         }) 
       }
 
+      let tmllm_success_callback = (json) => {
+        console.log(json)
+        tmllm_table_head[0].combo=table_body.map(item => {return {value:item.id,name:item.name}})
+        tmllm_table_body = json.map(item => {
+          
+          return {
+            id:item.id,
+            llm_id:table_body.find(llm => llm.id==item.llm_id).name,
+            active_yn:item.active_yn
+          }
+        }) 
+      } 
+
       let failure_callback = (json_error) => {
         addToast('error',json_error.detail)
       }
@@ -95,6 +116,7 @@
       await get_dept(params,dept_success_callback, failure_callback)
       await get_apikey(params,api_success_callback, failure_callback)
       await get_deptllm(params,deptllm_success_callback, failure_callback)
+      await get_tmllm(params,tmllm_success_callback, failure_callback)
     }
     
     onMount(async () => {
@@ -156,6 +178,17 @@
           await update_deptllm(params,success_callback, failure_callback)
         }
       }
+      else if (event.target.id == 3) //텍스트마이닝 모델
+      {
+        if(event.target.name=="btn_new")
+        { 
+          await create_tmllm(params,success_callback, failure_callback)
+        }
+        else
+        {
+          await update_tmllm(params,success_callback, failure_callback)
+        }
+      }
     }
 
     //form_data의 dept_id가 변경될때 해당 되는 api_key만 재정렬
@@ -180,6 +213,10 @@
       <TabItem title="부서별 모델 설정">
           <Table btn_id=2 btn_click={onsubmit} is_combo_modal={true} is_editable={true} 
                  bind:table_head={llm_table_head} bind:table_body={llm_table_body} bind:form_data={form_data} bind:formModal={formModal}/>
+      </TabItem> 
+      <TabItem title="텍스트마이닝 모델 설정">
+          <Table btn_id=3 btn_click={onsubmit} is_combo_modal={true} is_editable={true} 
+                 bind:table_head={tmllm_table_head} bind:table_body={tmllm_table_body} bind:form_data={form_data} bind:formModal={formModal}/>
       </TabItem> 
     </Tabs>
     

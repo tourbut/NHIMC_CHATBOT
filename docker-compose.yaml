@@ -2,10 +2,12 @@ version: '1.0'
 
 services:
   db:
-    image: pgvector/pgvector:pg16
+    build:
+      context: .
+      dockerfile: db/Dockerfile
     container_name: nhimc_chat-db
     volumes:
-      - app-db-data:/var/lib/postgresql/data/pgdata
+      - nhimcchat-db-data:/var/lib/postgresql/data/pgdata
       - ./script/initdb:/docker-entrypoint-initdb.d
     env_file: 
       - prd.env
@@ -14,6 +16,11 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+      - LANG=ko_KR.euckr
+      - LC_COLLATE=C
+      - LC_CTYPE=C
+      - TZ=Asia/Seoul
+      - POSTGRES_INITDB_ARGS=--encoding=EUC_KR --lc-collate=C --lc-ctype=C
     ports:
       - 5432:5432
     networks:
@@ -70,6 +77,7 @@ services:
 
 volumes:
   app-db-data:
+  nhimcchat-db-data:
 
 networks:
   nhimcchat-public:

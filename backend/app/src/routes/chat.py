@@ -1,3 +1,4 @@
+from turtle import update
 import uuid
 import json
 from typing import Any,List
@@ -97,7 +98,9 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                                              chat_id=chat_in.chat_id,
                                              name=current_user.name,
                                              content=chat_in.input,
-                                             is_user=True)
+                                             is_user=True,
+                                             create_date=datetime.now(),
+                                             update_date=datetime.now())
     messages = []
     messages.append(user_message)
     
@@ -174,7 +177,9 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,c
                         content=response.content,
                         thought=thought.get('thought', ''),
                         tools=json.dumps({'retriever': thought.get('context', '') }, ensure_ascii=False),
-                        is_user=False)
+                        is_user=False,
+                        create_date=datetime.now(),
+                        update_date=datetime.now())
         
         messages.append(bot_message)
         
