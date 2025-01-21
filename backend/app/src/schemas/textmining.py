@@ -36,6 +36,10 @@ class CreateTmChat(SQLModel):
     description : str | None = None
     instruct_id : uuid.UUID | None = None
 
+class Create_Out_TmChat(SQLModel):
+    id : uuid.UUID
+    title : str
+
 class UpdateTmChat(SQLModel):
     id: uuid.UUID
     title: str  | None = None

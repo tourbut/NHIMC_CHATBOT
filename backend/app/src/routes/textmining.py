@@ -66,7 +66,7 @@ async def get_llm(*, session: SessionDep_async):
     llms = await textmining_crud.get_llm(session=session)
     return llms
 
-@router.post("/create_tmchat",response_model=textmining_schema.CreateTmChat)
+@router.post("/create_tmchat",response_model=textmining_schema.Create_Out_TmChat)
 async def create_tmchat(*, session: SessionDep_async, current_user: CurrentUser,tmchat_in: textmining_schema.CreateTmChat):
         
     if not current_user.is_admin:
