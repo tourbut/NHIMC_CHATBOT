@@ -127,4 +127,10 @@ async def chain_invoke(chain,input):
         input_token = cb.prompt_tokens
         output_token = cb.completion_tokens
         
-    return response.Response,(input_token,output_token)
+    # Ensure response.Response is a list
+    if isinstance(response.Response, dict):
+        response_list = [response.Response]
+    else:
+        response_list = response.Response
+        
+    return response_list,(input_token,output_token)

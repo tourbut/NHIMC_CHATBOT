@@ -68,9 +68,6 @@ async def get_llm(*, session: SessionDep_async):
 
 @router.post("/create_tmchat",response_model=textmining_schema.Create_Out_TmChat)
 async def create_tmchat(*, session: SessionDep_async, current_user: CurrentUser,tmchat_in: textmining_schema.CreateTmChat):
-        
-    if not current_user.is_admin:
-        raise HTTPException(status_code=400, detail="Not enough permissions")
     
     tmchat = await textmining_crud.create_tmchat(session=session,current_user=current_user,tmchat_in=tmchat_in)
     return tmchat
