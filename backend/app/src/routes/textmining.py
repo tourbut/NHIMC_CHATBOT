@@ -232,7 +232,8 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,t
                                         create_date=datetime.now(),
                                         update_date=datetime.now())
     
-    response,token = await chain_invoke(chain,tmchat_in.input)
+    response,token,prompt = await chain_invoke(chain,tmchat_in.input)
+
     if response:
         out_message = "```\n"
         
@@ -243,8 +244,6 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,t
     else:
         out_message = "None"
     
-    
-
     messages = []
     messages.append(user_message)
     
@@ -252,6 +251,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,t
                                                     chat_id=tmchat_in.chat_id,
                                                     name="미드미",
                                                     content=out_message,
+                                                    full_prompt=prompt.text,
                                                     is_user=False,
                                                     create_date=datetime.now(),
                                                     update_date=datetime.now())
@@ -264,6 +264,7 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,t
     await textmining_crud.create_tmmessages(session=session,current_user=current_user,tmmessages_in=messages,usage=usage)
             
     rtn = textmining_schema.OutMessage(content=out_message,
+                                       full_prompt=prompt.text,
                                         input_token=token[0],
                                         output_token=token[1],
                                         is_done=True)

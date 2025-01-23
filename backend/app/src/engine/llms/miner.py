@@ -77,7 +77,12 @@ def create_chain(instruct_detail:textmining_schema.Get_Out_TmInstructDetail,
     
     chain = prompt|llm|parser
     
-    return chain
+    final_chain = RunnableParallel(
+        output_prompt = prompt,
+        textminig = chain
+    )
+    
+    return final_chain
     
 async def chain_astream(chain,input):
     chunks=[]
@@ -128,9 +133,9 @@ async def chain_invoke(chain,input):
         output_token = cb.completion_tokens
         
     # Ensure response.Response is a list
-    if isinstance(response.Response, dict):
-        response_list = [response.Response]
+    if isinstance(response['textminig'].Response, dict):
+        response_list = [response['textminig'].Response]
     else:
-        response_list = response.Response
+        response_list = response['textminig'].Response
         
-    return response_list,(input_token,output_token)
+    return response_list,(input_token,output_token),response['output_prompt']

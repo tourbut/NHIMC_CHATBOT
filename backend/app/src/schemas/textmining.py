@@ -189,6 +189,7 @@ class SendMessage(SQLModel):
 
 class OutMessage(SQLModel):
     content: str
+    full_prompt: str | None = None
     input_token: int | None = None
     output_token: int | None = None
     create_date: datetime = datetime.now()
@@ -198,6 +199,7 @@ class CreateTmMessages(SQLModel):
     chat_id: uuid.UUID
     name:str
     content: str
+    full_prompt: str | None = None
     is_user: bool
 
 class Get_Out_TmMessages(SQLModel):
@@ -205,6 +207,7 @@ class Get_Out_TmMessages(SQLModel):
     chat_id: uuid.UUID
     name:str
     content: str
+    full_prompt: str | None = None
     is_user: bool
     create_date : datetime
     

@@ -53,7 +53,9 @@
 
         let success_callback = (json) => {
             message_list[message_list.length-1].msg = json.content
+            message_list[message_list.length-1].thought = json.full_prompt
             message_list[message_list.length-1].is_done = true
+            
         }
 
         let failure_callback = (json_error) => {
@@ -75,6 +77,7 @@
                     id: uuidv4(),
                     name: item.name,
                     msg: item.content,
+                    thought: item.full_prompt,
                     time: new Date(item.create_date).toLocaleString(),
                     is_user: item.is_user,
                     is_done: true

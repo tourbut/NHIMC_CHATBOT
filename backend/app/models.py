@@ -193,6 +193,7 @@ class TmMessages(CommonBase,table=True):
     user_id: uuid.UUID = Field(foreign_key="user.id", description="유저ID")
     name:str = Field(nullable=False, description="이름")
     content: str = Field(nullable=False, description="내용")
+    full_prompt: Optional[str] = Field(nullable=True, description="풀프롬프트")
     is_user: bool = Field(nullable=False, description="유저여부")
 
 class TmExtract(CommonBase,table=True):
