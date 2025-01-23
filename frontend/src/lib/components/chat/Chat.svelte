@@ -89,7 +89,6 @@
                 message_list[message_list.length-1].time = new Date(json.create_date).toLocaleString()
             }
         }
-        console.log(params)
         await send_message(params, success_callback, failure_callback,streamCallback);
     }
 
