@@ -253,14 +253,14 @@ async def update_tmoutputschema(session: AsyncSession, current_user: User, tmout
                 session.add(tmoutputschemaattr)
                 
             await session.flush()
-            rtn_item = textmining_schema.UpdateTmOutputSchemaAttr .model_validate(tmoutputschemaattr)
+            rtn_item = textmining_schema.UpdateTmOutputSchemaAttr.model_validate(tmoutputschemaattr)
             rtn_attr.append(rtn_item)
             
         await session.commit()
         await session.refresh(tmoutputschema)
         await session.refresh(tmoutputschemaattr)
         
-        rtn = textmining_schema.UpdateTmOutputSchema.model_validate(tmoutputschema,update={'attr':[rtn_attr]})
+        rtn = textmining_schema.UpdateTmOutputSchema.model_validate(tmoutputschema,update={'attr':rtn_attr})
         
         return rtn
 

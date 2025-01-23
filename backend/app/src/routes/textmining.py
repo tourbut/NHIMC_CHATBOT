@@ -17,7 +17,7 @@ from app.core.config import settings
 router = APIRouter()
 
 
-@router.post("/create_topic",response_model=textmining_schema.CreateTopic)
+@router.post("/create_topic",response_model=textmining_schema.Create_Out_Topic)
 async def create_topic(*, session: SessionDep_async, current_user: CurrentUser,topic_in: textmining_schema.CreateTopic):
     topic = await textmining_crud.create_topic(session=session,current_user=current_user,topic_in=topic_in)
     return topic
@@ -143,8 +143,11 @@ async def create_tminstruct(*, session: SessionDep_async, current_user: CurrentU
                             tminstruct_in: textmining_schema.CreateTmInstruct):   
     tminstruct = await textmining_crud.create_tminstruct(session=session,current_user=current_user
                                                          ,tminstruct_in=tminstruct_in)
-    
-    return tminstruct
+
+    tmchat_in = textmining_schema.UpdateTmChat(id=tminstruct_in.chat_id,instruct_id=tminstruct.id)
+    tmchat = await textmining_crud.update_tmchat(session=session,tmchat_in=tmchat_in)
+
+    return tmchat
 
 @router.get("/get_tminstructs/{topic_id}",response_model=List[textmining_schema.Get_Out_TmInstruct])
 async def get_tminstructs(*, session: SessionDep_async, current_user: CurrentUser, topic_id: uuid.UUID):
@@ -233,12 +236,15 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,t
                                         update_date=datetime.now())
     
     response,token = await chain_invoke(chain,tmchat_in.input)
-    out_message = "```\n"
-    
-    for content in response:
-        out_message += str(content)+"\n"
-    
-    out_message += "\n```"
+    if response:
+        out_message = "```\n"
+        
+        for content in response:
+            out_message += str(content)+"\n"
+        
+        out_message += "\n```"
+    else:
+        out_message = "None"
     
     
 

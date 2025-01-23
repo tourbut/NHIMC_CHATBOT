@@ -121,8 +121,10 @@ async def chain_invoke(chain,input):
     callback_handler = get_openai_callback()
     input_token=0
     output_token=0
+    
     with callback_handler as cb:
         response = await chain.ainvoke({'input':input})
         input_token = cb.prompt_tokens
         output_token = cb.completion_tokens
+        
     return response.Response,(input_token,output_token)

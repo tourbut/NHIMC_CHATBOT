@@ -167,7 +167,6 @@
                     }
                 })
             }
-
             await update_topic(params, success_callback, failure_callback);
             
             is_topic_fix = false;
@@ -177,6 +176,7 @@
                 addToast('info','생성 완료')
                 showTopicModal = false;
                 topic_list = [...topic_list,{value: json.id, name: json.topic_name, contents: json.contents}]
+                selected_topic = json.id
             }
             await create_topic(params, success_callback, failure_callback);
         }
@@ -223,6 +223,7 @@
                 topic: json.topic_id, schema_version : json.schema_version, schema_desc: json.schema_desc,attr: json.attr}]
             
             combo_schema_list = schema_list.filter(item => item.topic == instruct_data['topic_id'])
+            selected_schema = json.id
         }
 
         let failure_callback = (json_error) => {
@@ -263,30 +264,21 @@
             mining_llm_id: instruct_data['mining_llm_id'],
             instruct_prompt: instruct_data['instruct_prompt'],
             response_prompt: instruct_data['response_prompt'],
-            output_schema_id: instruct_data['schema_id']
+            output_schema_id: instruct_data['schema_id'],
+            chat_id: chat_id
         }
 
         let success_callback = (json) => {
-            addToast('info','생성 완료')
-            instruct_data['instruct_id'] = json.id
+            addToast('info','지시문 적용 완료')
+            instruct_data['instruct_id'] = json.instruct_id
         }
 
         let failure_callback = (json_error) => {
             addToast('error',json_error.detail)
         }
         
-        let param_chat = {
-            id: chat_id,
-            instruct_id: instruct_data['instruct_id']
-        }
-
-        let success_callback_chat = (json) => {
-            addToast('info','지시문 적용 완료')
-        }
-        
         if (instruct_data['instruct_id'] == '') {
             await create_tminstruct(params, success_callback, failure_callback);
-            await update_tmchat(param_chat, success_callback_chat, failure_callback);
         }
         else {
             params['id'] = instruct_data['instruct_id']
@@ -370,9 +362,15 @@
                 주제 선택
             </Label>
             <div>
-                <button id="fix-topic" class="hover-button" on:click={() => {showModal('topic_fix')}} >
-                    <EditOutline class="w-4 h-4 text-primary-700" />
-                </button>
+                {#if selected_topic}
+                    <button id="fix-topic" class="hover-button" on:click={() => {showModal('topic_fix')}} >
+                        <EditOutline class="w-4 h-4 text-primary-700" />
+                    </button>
+                {:else}
+                    <button id="fix-topic" class="hover-button" disabled>
+                        <EditOutline class="w-4 h-4 text-gray-300" />
+                    </button>
+                {/if}
                 <button id="add-topic" class="hover-button" on:click={() => {showModal('topic_add')}}>
                     <PlusOutline class="w-4 h-4 text-primary-700" />
                 </button>
@@ -405,9 +403,15 @@
             <Label >스키마 선택
             </Label>
             <div>
-                <button id="fix-schema" class="hover-button" on:click={() => {showModal('schema_fix')}}>
-                    <EditOutline class="w-4 h-4 text-primary-700" />
-                </button>
+                {#if selected_schema}
+                    <button id="fix-schema" class="hover-button" on:click={() => {showModal('schema_fix')}}>
+                        <EditOutline class="w-4 h-4 text-primary-700" />
+                    </button>
+                {:else}
+                    <button id="fix-schema" class="hover-button" disabled>
+                        <EditOutline class="w-4 h-4 text-gray-300" />
+                    </button>
+                {/if}
                 <button id="add-schema" class="hover-button" on:click={() => {showModal('schema_add')}}>
                     <PlusOutline class="w-4 h-4 text-primary-700" />
                 </button>

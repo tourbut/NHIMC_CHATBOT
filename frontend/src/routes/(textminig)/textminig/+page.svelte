@@ -14,7 +14,6 @@
     let chat_title=''
     let topic_name=''
     let showModal = false;
-    let instruct_id= ''
     
     let table_head=[
         {id:0,name:"title",type:"text",desc:"채팅방명"},
@@ -54,6 +53,14 @@
 
             chat_title=json.title
             chat_id = json.id
+            instruct_data['instruct_id'] = ''
+            instruct_data['topic_id'] = ''
+            instruct_data['mining_llm_id'] = ''
+            instruct_data['instruct_prompt'] = ''
+            instruct_data['response_prompt'] = ''
+            instruct_data['schema_id'] = ''
+            instruct_data['title'] = ''
+            instruct_data['memo'] = ''
             chat_list[0].items = [...chat_list[0].items, {id: json.id, label: json.title, herf: '', caption: ''}];
         }
 
@@ -67,7 +74,7 @@
     const onclick = async (id) => {
         chat_id = id
         chat_title = chat_list.find(item => item.items.find(item => item.id == id)).items.find(item => item.id == id).label
-        instruct_id = chat_list.find(item => item.items.find(item => item.id == id)).items.find(item => item.id == id).instruct_id
+        let instruct_id = chat_list.find(item => item.items.find(item => item.id == id)).items.find(item => item.id == id).instruct_id
         let params = {
             tmchat_id:id
         }

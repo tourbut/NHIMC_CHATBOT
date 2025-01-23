@@ -6,7 +6,13 @@ import uuid
 class CreateTopic(SQLModel):
     topic_name: str
     contents: str
+
+class Create_Out_Topic(SQLModel):
+    id : uuid.UUID
+    topic_name: str
+    contents: str
     
+
 class Get_Out_Topic(SQLModel):
     id : uuid.UUID
     topic_name: str
@@ -58,6 +64,12 @@ class CreateTmOutputSchemaAttr(SQLModel):
     attr_name : str
     attr_desc : str
     attr_type : str
+    
+class Create_Out_TmOutputSchemaAttr(SQLModel):
+    id : uuid.UUID
+    attr_name : str
+    attr_desc : str
+    attr_type : str
 
 class UpdateTmOutputSchemaAttr(SQLModel):
     id : uuid.UUID | None = None
@@ -85,7 +97,7 @@ class Create_Out_TmOutputSchema(SQLModel):
     schema_desc : str
     schema_version : str
     topic_id : uuid.UUID
-    attr : List[CreateTmOutputSchemaAttr]
+    attr : List[Create_Out_TmOutputSchemaAttr]
 
 class UpdateTmOutputSchema(SQLModel):
     id : uuid.UUID | None = None
@@ -120,6 +132,7 @@ class CreateTmInstruct(SQLModel):
     instruct_prompt: str
     response_prompt: str
     output_schema_id: uuid.UUID
+    chat_id: uuid.UUID
 
 class UpdateTmInstruct(SQLModel):
     id: uuid.UUID
@@ -132,7 +145,7 @@ class UpdateTmInstruct(SQLModel):
     output_schema_id: uuid.UUID | None = None
 
 class Create_Out_TmInstruct(SQLModel):
-    id : uuid.UUID
+    instruct_id : uuid.UUID
 
 class Get_Out_TmInstruct(SQLModel):
     id : uuid.UUID
