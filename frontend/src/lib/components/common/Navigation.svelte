@@ -4,11 +4,13 @@
     import { ChevronDownOutline } from 'flowbite-svelte-icons';
     import { APP_NAME,username,user_token,is_admin,dept_cd } from '$lib/stores';
     import { DarkMode } from 'flowbite-svelte';
+    import { page } from '$app/stores';
     const logout = async () => {
         username.set("");
         user_token.set("");
     }
     let fluid = false;
+    $: activeUrl = $page.url.pathname;
 </script>
 <Navbar {fluid} class="text-black" rounded color="form" let:NavContainer>
     <NavContainer class="mb-px mt-px px-1" {fluid}>
@@ -17,7 +19,7 @@
         <span class="self-center whitespace-nowrap text-xl font-semibold dark:text-white">{$APP_NAME}</span>
     </NavBrand>
     <NavHamburger  />
-    <NavUl>
+    <NavUl {activeUrl}>
         <NavLi href="/">Home</NavLi>
         {#if $username}
         <NavLi href="/chat">Chat</NavLi>
