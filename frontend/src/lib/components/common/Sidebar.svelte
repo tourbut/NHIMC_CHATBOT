@@ -60,23 +60,3 @@
         </SidebarWrapper>
     </Sidebar>
 </div>
-
-<style>
-    /* 스크롤바 스타일링 (선택사항) */
-    :global(.overflow-y-auto::-webkit-scrollbar) {
-        width: 4px;
-    }
-    
-    :global(.overflow-y-auto::-webkit-scrollbar-track) {
-        background: transparent;
-    }
-    
-    :global(.overflow-y-auto::-webkit-scrollbar-thumb) {
-        background: #888;
-        border-radius: 2px;
-    }
-    
-    :global(.overflow-y-auto::-webkit-scrollbar-thumb:hover) {
-        background: #555;
-    }
-</style>

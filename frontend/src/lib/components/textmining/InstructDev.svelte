@@ -576,4 +576,5 @@
     max-height: 800px; /* 원하는 최대 높이로 설정 */
     overflow-y: auto;
   }
+  
 </style>

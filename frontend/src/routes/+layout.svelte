@@ -65,12 +65,28 @@
   }
 .content {
   flex: 1; /* 남은 공간을 차지하도록 설정 */
-  padding: 5px;
+  padding: 4px;
   width: 100%;
 }
 .footer {
   width: 100%;
   height: 10px;
-  margin-top: 20px;
+  margin-top:10px;
 }
+  :global(*::-webkit-scrollbar) {
+      width: 4px;
+  }
+  
+  :global(*::-webkit-scrollbar-track) {
+      background: transparent;
+  }
+  
+  :global(*::-webkit-scrollbar-thumb) {
+      background: #888;
+      border-radius: 2px;
+  }
+  
+  :global(*::-webkit-scrollbar-thumb:hover) {
+      background: #555;
+  }
 </style>
