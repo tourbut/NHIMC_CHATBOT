@@ -1,9 +1,8 @@
 <script>
     import { Sidebar, SidebarGroup, SidebarItem, SidebarWrapper,Tooltip } from 'flowbite-svelte';
     import { Button, Dropdown, DropdownItem, ToolbarButton, DropdownDivider } from 'flowbite-svelte';
-    import { DotsHorizontalOutline, DotsVerticalOutline } from 'flowbite-svelte-icons';
     import { P } from 'flowbite-svelte';
-    import { PlusOutline,  CloseCircleSolid } from 'flowbite-svelte-icons';
+    import { PlusOutline,   DotsHorizontalOutline, TrashBinOutline, ShareNodesOutline } from 'flowbite-svelte-icons';
     let is_hidden = true;
     export let side_menus = [
     { 
@@ -49,9 +48,17 @@
                         <DotsHorizontalOutline class="dots-menu dark:text-white w-6 h-6 cursor-pointer" />
                     </div>
                     <Dropdown triggeredBy=".dots-menu" class="w-[100px]">
-                    <DropdownItem>공유</DropdownItem>
-                    <DropdownItem slot="footer" class="text-red-600" on:click={btn_item_more_click(item.id)}>
-                        삭제
+                    <DropdownItem>
+                        <div class="flex">
+                            <ShareNodesOutline class="mr-2" />
+                            공유
+                        </div>
+                    </DropdownItem>
+                    <DropdownItem class="text-red-600" slot="footer" on:click={btn_item_more_click(item.id)}>
+                        <div class="flex">
+                            <TrashBinOutline class="mr-2" />
+                            삭제
+                        </div>
                     </DropdownItem>
                     </Dropdown>
                     {/each}
@@ -60,23 +67,3 @@
         </SidebarWrapper>
     </Sidebar>
 </div>
-
-<style>
-    /* 스크롤바 스타일링 (선택사항) */
-    :global(.overflow-y-auto::-webkit-scrollbar) {
-        width: 4px;
-    }
-    
-    :global(.overflow-y-auto::-webkit-scrollbar-track) {
-        background: transparent;
-    }
-    
-    :global(.overflow-y-auto::-webkit-scrollbar-thumb) {
-        background: #888;
-        border-radius: 2px;
-    }
-    
-    :global(.overflow-y-auto::-webkit-scrollbar-thumb:hover) {
-        background: #555;
-    }
-</style>
