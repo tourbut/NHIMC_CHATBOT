@@ -45,9 +45,9 @@ async def login(
         raise HTTPException(status_code=400, detail='Unknown error')
         
     if not user:
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
+        raise HTTPException(status_code=400, detail="사번 또는 패스워드가 틀렸습니다.")
     elif not user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise HTTPException(status_code=400, detail="비활성화된 계정입니다.")
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return user_schema.Token(access_token=await security.create_access_token(str(user.id), expires_delta=access_token_expires),
