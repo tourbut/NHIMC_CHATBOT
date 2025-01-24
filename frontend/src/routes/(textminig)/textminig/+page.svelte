@@ -53,13 +53,13 @@
 
             chat_title=json.title
             chat_id = json.id
+            instruct_data['title'] = json.title
             instruct_data['instruct_id'] = ''
             instruct_data['topic_id'] = ''
             instruct_data['mining_llm_id'] = ''
             instruct_data['instruct_prompt'] = ''
             instruct_data['response_prompt'] = ''
             instruct_data['schema_id'] = ''
-            instruct_data['title'] = ''
             instruct_data['memo'] = ''
             chat_list[0].items = [...chat_list[0].items, {id: json.id, label: json.title, herf: '', caption: ''}];
         }
@@ -165,7 +165,8 @@
 <div class="flex h-[80vh]">
     <div class="w-64 flex-shrink-0">
         <Sidebar btn_item_more_click={closeChat} btn_add_button={createChat} btn_click={onclick}
-                 bind:side_menus={chat_list}/>
+                 bind:side_menus={chat_list}
+                 create_btn_name="지시문 생성"/>
     </div> 
     {#if chat_id}
     <div class="flex flex-1">

@@ -5,9 +5,7 @@ from datetime import datetime
 from typing import Optional
 
 from datetime import datetime
-
-from tomlkit import item, table
-
+\
 class CommonBase(SQLModel):
     create_date: datetime = Field(default=datetime.now())
     update_date: datetime = Field(default=datetime.now())
@@ -152,6 +150,7 @@ class TmTopic(CommonBase,table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     topic_name : str = Field(nullable=False, description="토픽명")
     contents    : str = Field(nullable=False, description="내용")
+    sql: Optional[str] = Field(nullable=True, description="SQL")
     user_id    : uuid.UUID = Field(foreign_key="user.id", description="유저ID")
 
 class TmOutputSchema(CommonBase,table=True):
@@ -179,6 +178,7 @@ class TmInstruct(CommonBase,table=True):
     userprompt_id : uuid.UUID = Field(foreign_key="userprompt.id", description="유저프롬프트ID")
     mining_llm_id: uuid.UUID = Field(foreign_key="tmllm.id", description="마이닝LLMID")
     output_schema_id: uuid.UUID = Field(foreign_key="tmoutputschema.id", description="아웃풋스키마ID")
+    is_final: bool = Field(default=False,nullable=True, description="최종 등록여부")
     
 class TmChats(CommonBase,table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
@@ -196,16 +196,9 @@ class TmMessages(CommonBase,table=True):
     full_prompt: Optional[str] = Field(nullable=True, description="풀프롬프트")
     is_user: bool = Field(nullable=False, description="유저여부")
 
-class TmExtract(CommonBase,table=True):
-    id : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
-    topic_id : uuid.UUID = Field(foreign_key="tmtopic.id", description="토픽ID")
-    sql: str = Field(nullable=False, description="SQL")
-    user_id : uuid.UUID = Field(foreign_key="user.id", description="유저ID")
-
 class TmExecSet(CommonBase,table=True):
     id : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     instruct_id: uuid.UUID = Field(foreign_key="tminstruct.id")
-    extract_id : uuid.UUID = Field(foreign_key="tmextract.id")
     user_id: uuid.UUID = Field(foreign_key="user.id")
 
 class TmMaster(CommonBase,table=True):

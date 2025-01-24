@@ -482,46 +482,6 @@ async def get_tmmessages(session: AsyncSession, current_user: User, tmchat_id: u
     except Exception as e:
         print(e)
         raise e
-    
-async def create_tmextract(session: AsyncSession, current_user: User, tmextract_in: textmining_schema.CreateTmExtract) -> TmExtract:
-    try:
-        tmextract = TmExtract.model_validate(tmextract_in,update={"user_id":current_user.id})
-        session.add(tmextract)
-        await session.commit()
-        await session.refresh(tmextract)
-        return tmextract
-    except Exception as e:
-        print(e)
-        await session.rollback()
-        raise e
-
-async def get_tmextracts(session: AsyncSession, current_user: User) -> List[textmining_schema.Get_Out_TmExtract]:
-    try:
-        statement = select(TmExtract).where(TmExtract.delete_yn == False,
-                                          TmExtract.user_id == current_user.id)
-        tmextracts = await session.exec(statement)
-        return tmextracts.all()
-    except Exception as e:
-        print(e)
-        raise e
-
-async def get_tmextract(session: AsyncSession, tmextract_id: uuid.UUID) -> textmining_schema.Get_Out_TmExtract:
-    try:
-        statement = select(TmExtract).where(TmExtract.id == tmextract_id)
-        tmextract = await session.exec(statement)
-        return tmextract.first()
-    except Exception as e:
-        print(e)
-        raise e
-
-async def get_tmextracts_by_topic(session: AsyncSession, topic_id: uuid.UUID) -> List[textmining_schema.Get_Out_TmExtract]:
-    try:
-        statement = select(TmExtract).where(TmExtract.topic_id == topic_id)
-        tmextracts = await session.exec(statement)
-        return tmextracts.all()
-    except Exception as e:
-        print(e)
-        raise e
 
 async def create_tmexecset(session: AsyncSession, current_user: User, tmexecset_in: textmining_schema.CreateTmExecSet) -> TmExecSet:
     try:

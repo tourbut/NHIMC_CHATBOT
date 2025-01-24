@@ -6,22 +6,25 @@ import uuid
 class CreateTopic(SQLModel):
     topic_name: str
     contents: str
+    sql: str| None = None
 
 class Create_Out_Topic(SQLModel):
     id : uuid.UUID
     topic_name: str
     contents: str
+    sql: str | None = None
     
-
 class Get_Out_Topic(SQLModel):
     id : uuid.UUID
     topic_name: str
     contents: str
+    sql: str| None = None
 
 class UpdateTopic(SQLModel):
     id: uuid.UUID
     topic_name: str
     contents: str
+    sql: str| None = None
     
 class CreateTmLLM(SQLModel):
     llm_id : uuid.UUID
@@ -211,23 +214,12 @@ class Get_Out_TmMessages(SQLModel):
     is_user: bool
     create_date : datetime
     
-class CreateTmExtract(SQLModel):
-    topic_id : uuid.UUID
-    sql: str
-
-class Get_Out_TmExtract(SQLModel):
-    id : uuid.UUID
-    topic_id : uuid.UUID
-    sql: str
-
 class CreateTmExecSet(SQLModel):
     instruct_id: uuid.UUID
-    extract_id : uuid.UUID
 
 class Get_Out_TmExecSet(SQLModel):
     id : uuid.UUID
     instruct_id: uuid.UUID
-    extract_id : uuid.UUID
 
 class CreateTmMaster(SQLModel):
     exec_set_id: uuid.UUID

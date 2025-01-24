@@ -64,8 +64,7 @@
         schema_desc:'',
         attr:[{ seq:0, attr_name: '', attr_type: '', attr_desc: '' }]
     }
-
-    let prompt_group='instruct'
+    let schema_attr_data=[{ seq:0, attr_name: '', attr_type: '', attr_desc: '' }]
 
     let attr_type = [
         {value: 'str', name: 'Str'},
@@ -343,6 +342,10 @@
 
     $: if(selected_schema){
         instruct_data['schema_id'] = selected_schema
+        if (schema_list.length > 0) {
+            schema_attr_data = schema_list.find(item => item.value == selected_schema).attr
+        }
+
     }
 
     $: if (selected_tmllm) {
@@ -350,16 +353,22 @@
     }
 
 </script>
-<div>
+<div class="instruct-div-scroll">
     <div class="mb-2">
-        <FloatingLabelInput style="filled" size="small" type="text" bind:value={instruct_data['title']} >
+        <FloatingLabelInput style="filled" size="small" type="text" bind:value={instruct_data['title']} disabled >
             지시문 제목
         </FloatingLabelInput>
     </div>
+    <div class="mt-1 flex-container">
+        <Label class="mr-2">모델</Label>
+        <div class="fill-space">
+        <Combo underline={true} placeholder="모델 선택" ComboMenu={tmllm_list} bind:selected_name={selected_tmllm}/>
+        </div>
+    </div>  
     <div class="mt-1">
         <div class="block mb-2 flex justify-between items-center">
             <Label>
-                주제 선택
+                원문
             </Label>
             <div>
                 {#if selected_topic}
@@ -375,32 +384,20 @@
                     <PlusOutline class="w-4 h-4 text-primary-700" />
                 </button>
             </div>
-            <Tooltip triggeredBy="#fix-topic">주제 수정</Tooltip>
-            <Tooltip triggeredBy="#add-topic">주체 추가</Tooltip>
+            <Tooltip triggeredBy="#fix-topic">수정</Tooltip>
+            <Tooltip triggeredBy="#add-topic">추가</Tooltip>
         </div>
-        <Combo ComboMenu={topic_list} bind:selected_name={selected_topic}/>
-    </div>  
-    <div class="mt-1">
-        <Label class="block mb-2">모델 선택</Label>
-        <Combo ComboMenu={tmllm_list} bind:selected_name={selected_tmllm}/>
+        <Combo placeholder="원문 선택" ComboMenu={topic_list} bind:selected_name={selected_topic}/>
     </div>  
     <div class="mt-1">
         <Label class="block mb-">프롬프트 작성</Label>
-        <div class="flex gap-3 mt-1">
-            <Radio bind:group={prompt_group} value="instruct">Instruct</Radio>
-            <Radio bind:group={prompt_group} value="response">Response</Radio>
-        </div>
         <div class="mt-2">
-            {#if prompt_group == 'instruct'}
-            <Textarea class="min-h-[200px] max-h-[400px]" bind:value={instruct_data['instruct_prompt']} placeholder="Instuct 입력" />
-            {:else}
-            <Textarea class="min-h-[200px] max-h-[400px]" bind:value={instruct_data['response_prompt']} placeholder="Response  입력" />
-            {/if}
+            <Textarea class="min-h-[100px] max-h-[150px]" bind:value={instruct_data['instruct_prompt']} placeholder="명령어 입력" />
         </div>
     </div>
     <div class="mt-1">
         <div class="block mb-2 flex justify-between items-center">
-            <Label >스키마 선택
+            <Label >스키마
             </Label>
             <div>
                 {#if selected_schema}
@@ -416,10 +413,36 @@
                     <PlusOutline class="w-4 h-4 text-primary-700" />
                 </button>
             </div>
-            <Tooltip triggeredBy="#fix-schema">스키마 수정</Tooltip>
-            <Tooltip triggeredBy="#add-schema">스키마 추가</Tooltip>
+            <Tooltip triggeredBy="#fix-schema">수정</Tooltip>
+            <Tooltip triggeredBy="#add-schema">추가</Tooltip>
         </div>
-        <Combo ComboMenu={combo_schema_list} bind:selected_name={selected_schema} />
+        <div>
+            <Combo placeholder="스키마 선택" ComboMenu={combo_schema_list} bind:selected_name={selected_schema} />
+        </div>
+        <div class="mt-1 max-height-scroll">
+            <Table class="w-full" shadow>
+                <TableHead class="sticky">
+                    <TableHeadCell class="text-center">속성명</TableHeadCell>
+                    <TableHeadCell class="text-center">타입</TableHeadCell>
+                    <TableHeadCell class="text-center">설명</TableHeadCell>
+                </TableHead>
+                <TableBody>
+                {#each schema_attr_data as row, index}
+                    <TableBodyRow>
+                        <TableBodyCell>
+                            {row.attr_name}
+                        </TableBodyCell>
+                        <TableBodyCell>
+                            {row.attr_type} 
+                        </TableBodyCell>
+                        <TableBodyCell>
+                            {row.attr_desc}
+                        </TableBodyCell>
+                    </TableBodyRow>
+                {/each}
+                </TableBody>
+            </Table>
+        </div>
     </div>
     <div class="mt-1">
         <Label class="block mb-2">메모</Label>
@@ -428,10 +451,16 @@
     <Button type="submit" class="w-full" on:click={btn_create_or_replace_instruct}>지시문 적용</Button>
 </div>
 
-<!-- 주제 생성 모달 -->
+<!-- 원문 생성 모달 -->
 <Modal bind:open={showTopicModal} size="xs" autoclose={true} outsideclose={true} class="w-full" on:close={init_data}>
     <form class="flex flex-col space-y-3" action="#">
-        <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">주제 생성</h3>
+        <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">
+            {#if is_topic_fix}
+                원문 수정
+            {:else}
+                원문 생성
+            {/if}
+            </h3>
         <FloatingLabelInput style="filled" id="floating_filled" name="floating_filled" type="text" bind:value={topic_data['topic_name']}>
             {topic_head[1].desc}
         </FloatingLabelInput>
@@ -449,10 +478,15 @@
     </form>
 </Modal>
 
-<!-- 속성 생성 모달 -->
+<!-- 스키마 생성 모달 -->
 <Modal bind:open={showSchemaModal} size="md" autoclose={true} outsideclose={true} class="w-full" on:close={init_data}>
     <form class="flex flex-col space-y-3" action="#">
-        <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">속성 생성</h3>
+        <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">
+            {#if is_schema_fix}
+                스키마 수정
+            {:else}
+                스키마 생성
+            {/if}</h3>
         <div class="flex gap-2">
             <div class="flex-[5]">
                 <FloatingLabelInput style="filled" id="floating_filled" name="floating_filled" type="text" bind:value={schema_data['schema_name']}>
@@ -526,4 +560,20 @@
         /* 색상 반전 효과 */
         filter: invert(1);
     }
+  .flex-container {
+    display: flex;
+    align-items: center;
+  }
+  .fill-space {
+    flex-grow: 1;
+  }
+  .max-height-scroll {
+    min-height: 100px; /* 원하는 최대 높이로 설정 */
+    max-height: 250px; /* 원하는 최대 높이로 설정 */
+    overflow-y: auto;
+  }
+  .instruct-div-scroll {
+    max-height: 800px; /* 원하는 최대 높이로 설정 */
+    overflow-y: auto;
+  }
 </style>

@@ -15,7 +15,8 @@
     ];
     export let is_dropcombo=false
     export let selected_name
-
+    export let placeholder = "선택하세요."
+    export let underline = false
     let drop_items = ComboMenu.filter((item, index, self) =>
       index === self.findIndex((t) => (
         t.drop_value === item.drop_value
@@ -48,10 +49,10 @@
       </DropdownItem>
       {/each} 
     </Dropdown>
-    <Select items={select_menu} class="!rounded-s-none" bind:value={selected_name} />
+    <Select underline={underline} placeholder={placeholder} items={select_menu} class="!rounded-s-none" bind:value={selected_name} />
   </div>
   {:else}
-  <div class="flex">
-    <Select items={ComboMenu} class="!rounded-s-none" bind:value={selected_name}/>
+  <div>
+    <Select underline={underline} placeholder={placeholder} items={ComboMenu} class="!rounded-s-none" bind:value={selected_name}/>
   </div>
   {/if}

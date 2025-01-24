@@ -21,7 +21,7 @@
       is_admin.set(json.is_admin)
       dept_nm.set(json.dept_nm)
       dept_cd.set(json.dept_cd)
-      goto('/')
+      goto('/chat')
     }
 
     let failure_callback = (json_error) => {

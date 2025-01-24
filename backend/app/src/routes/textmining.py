@@ -162,28 +162,6 @@ async def update_tminstruct(*, session: SessionDep_async, current_user: CurrentU
     tminstruct = await textmining_crud.update_tminstruct(session=session,tminstruct_in=tminstruct_in)
     return tminstruct
 
-@router.post("/create_tmextract",response_model=textmining_schema.CreateTmExtract)
-async def create_tmextract(*, session: SessionDep_async, current_user: CurrentUser,
-                            tmextract_in: textmining_schema.CreateTmExtract):
-    tmextract = await textmining_crud.create_tmextract(session=session,current_user=current_user
-                                                       ,tmextract_in=tmextract_in)
-    return tmextract
-
-@router.get("/get_tmextracts/{topic_id}",response_model=List[textmining_schema.Get_Out_TmExtract])
-async def get_tmextracts(*, session: SessionDep_async, current_user: CurrentUser, topic_id: uuid.UUID):
-    tmextracts = await textmining_crud.get_tmextracts(session=session,current_user=current_user)
-    return tmextracts
-
-@router.get("/get_tmextract/{tmextract_id}",response_model=textmining_schema.Get_Out_TmExtract)
-async def get_tmextract(*, session: SessionDep_async, current_user: CurrentUser, tmextract_id: uuid.UUID):
-    tmextract = await textmining_crud.get_tmextract(session=session,tmextract_id=tmextract_id)
-    return tmextract
-
-@router.get("/get_tmextracts_by_topic/{topic_id}",response_model=List[textmining_schema.Get_Out_TmExtract])
-async def get_tmextracts_by_topic(*, session: SessionDep_async, current_user: CurrentUser, topic_id: uuid.UUID):
-    tmextracts = await textmining_crud.get_tmextracts_by_topic(session=session,topic_id=topic_id)
-    return tmextracts
-
 @router.post("/create_tmexecset",response_model=textmining_schema.CreateTmExecSet)
 async def create_tmexecset(*, session: SessionDep_async, current_user: CurrentUser,
                            tmexecset_in: textmining_schema.CreateTmExecSet):
