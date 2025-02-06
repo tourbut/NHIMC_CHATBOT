@@ -5,7 +5,8 @@ from datetime import datetime
 from typing import Optional
 
 from datetime import datetime
-\
+
+
 class CommonBase(SQLModel):
     create_date: datetime = Field(default=datetime.now())
     update_date: datetime = Field(default=datetime.now())
@@ -137,8 +138,28 @@ class CommonCode(CommonBase,table=True):
     code_nm: str = Field(nullable=False, description="코드명")
     code_desc: str | None = Field(nullable=True, description="코드설명")
 
+#ChatBot
 
+class Tools(CommonBase,table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
+    tool_name: str = Field(nullable=False, description="이름")
+    description: str | None = Field(nullable=True, description="설명")
+    api_url: str = Field(nullable=False, description="API URL")
+    api_key: str = Field(nullable=False, description="API KEY")
+    parameters : str | None = Field(nullable=True, description="파라미터")    
+    user_id: uuid.UUID = Field(foreign_key="user.id", description="유저ID")
 
+class ChatBot(CommonBase,table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
+    bot_name : str = Field(nullable=False, description="챗봇명")
+    description : Optional[str] = Field(nullable=True, description="설명")
+    user_prompt_id: uuid.UUID = Field(foreign_key="userprompt.id", description="유저프롬프트ID")
+    user_llm_id: Optional[uuid.UUID] = Field(foreign_key="userllm.id", description="유저LLMID")
+    dept_llm_id: Optional[uuid.UUID] = Field(foreign_key="deptllm.id", description="부서LLMID")
+    user_file_id: Optional[uuid.UUID] = Field(foreign_key="userfiles.id", description="유저파일ID")
+    tools_id: Optional[uuid.UUID] = Field(foreign_key="tools.id", description="도구ID")
+    user_id: uuid.UUID = Field(foreign_key="user.id", description="생성자ID")
+    
 #Mining Models
 
 class TmLLM(CommonBase, table=True):
