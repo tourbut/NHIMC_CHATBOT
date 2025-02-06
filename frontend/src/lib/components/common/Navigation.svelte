@@ -10,7 +10,16 @@
         user_token.set("");
     }
     let fluid = false;
+    let activeParentMenu = "";
     $: activeUrl = $page.url.pathname;
+    $: {
+        if (activeUrl.includes('/archive') || activeUrl.includes('/llms') || 
+            activeUrl.includes('/usage') || activeUrl.includes('/admin')) {
+            activeParentMenu = 'settings';
+        } else {
+            activeParentMenu = '';
+        }
+    }
 </script>
 <Navbar {fluid} class="text-black" rounded color="form" let:NavContainer>
     <NavContainer class="mb-px mt-px px-1" {fluid}>
@@ -26,7 +35,7 @@
         {#if $dept_cd == '41310' || $dept_cd == '10400'}
         <NavLi href="/textminig">텍스트마이닝</NavLi>
         {/if}
-        <NavLi class="cursor-pointer">
+        <NavLi class="cursor-pointer {activeParentMenu === 'settings' ? 'active' : ''}" >
             Settings<ChevronDownOutline class="w-6 h-6 ms-2 text-primary-800 dark:text-white inline" />
         </NavLi>
         <Dropdown class="w-44 z-20">
@@ -48,3 +57,15 @@
     </NavContainer>
 </Navbar>
 
+<style>
+    :global(.active) {
+        color: var(--primary-600);
+        background-color: var(--primary-50);
+        border-radius: 0.375rem;
+    }
+    
+    :global(.dark .active) {
+        color: var(--primary-400);
+        background-color: var(--primary-900);
+    }
+</style>

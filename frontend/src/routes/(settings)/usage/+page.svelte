@@ -32,7 +32,6 @@
       let params = {}
 
       let success_callback = (json) => { 
-        console.log(json)       
         usage_day = json.map((item) => {
           return {
             usage_date: item.usage_date.substring(0,10),
