@@ -278,7 +278,8 @@ async def get_tmoutputschemas(session: AsyncSession) -> List[textmining_schema.G
         
         rtn = []
         for schema in outputschemas:  
-            statement2 = select(TmOutputSchemaAttr).where(TmOutputSchemaAttr.schema_id == schema.id)
+            statement2 = select(TmOutputSchemaAttr).where(TmOutputSchemaAttr.schema_id == schema.id,
+                                                          TmOutputSchemaAttr.delete_yn == False)
             tmoutputschemaattrs = await session.exec(statement2)
             
             tmp = textmining_schema.Get_Out_TmOutputSchema.model_validate(schema,update={'attr':tmoutputschemaattrs.all()})
