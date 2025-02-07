@@ -40,7 +40,7 @@
         let res_msg= {
             id: uuidv4(),
             name: '바르미',
-            msg: '',
+            msg: '생각중... 잠시만 기다려주세요',
             thought: '',
             tools: '',
             time: new Date().toLocaleString(),
