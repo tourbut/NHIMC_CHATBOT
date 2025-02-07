@@ -571,6 +571,8 @@
     min-height: 100px; /* 원하는 최대 높이로 설정 */
     max-height: 250px; /* 원하는 최대 높이로 설정 */
     overflow-y: auto;
+    min-width: 510px;
+    max-width: 510px;
   }
   .instruct-div-scroll {
     max-height: 800px; /* 원하는 최대 높이로 설정 */
