@@ -126,6 +126,11 @@ class Get_Out_UserPrompt(SQLModel):
     id : uuid.UUID
     instruct_prompt: str
     response_prompt: str
+
+class UpdateUserPrompt(SQLModel):
+    id: uuid.UUID
+    instruct_prompt: str | None = None
+    response_prompt: str | None = None
     
 class CreateTmInstruct(SQLModel):
     title: str

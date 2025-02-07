@@ -431,10 +431,22 @@ async def get_tminstruct_detail(session: AsyncSession, current_user: User, instr
 async def update_tminstruct(session: AsyncSession, tminstruct_in: textmining_schema.UpdateTmInstruct):
     try:
         tminstruct = await session.get(TmInstruct, tminstruct_in.id)
-    
+        
         if not tminstruct:
             return None
         else:
+            
+            userprompt = await session.get(UserPrompt, tminstruct.userprompt_id)
+            i_prompt = textmining_schema.UpdateUserPrompt(id=userprompt.id,
+                                                          instruct_prompt=tminstruct_in.instruct_prompt, 
+                                                          response_prompt=tminstruct_in.response_prompt)
+            
+            update_dict_prompt = i_prompt.model_dump(exclude_unset=True)
+            userprompt.sqlmodel_update(update_dict_prompt)
+            userprompt.update_date = datetime.now()
+            session.add(userprompt)
+            await session.flush()
+            
             update_dict = tminstruct_in.model_dump(exclude_unset=True)
             tminstruct.sqlmodel_update(update_dict)
             tminstruct.update_date = datetime.now()
