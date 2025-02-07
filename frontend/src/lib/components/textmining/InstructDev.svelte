@@ -1,14 +1,14 @@
 <script>
     import { onMount } from 'svelte';
     import { addToast } from '$lib/common';
-    import { FloatingLabelInput, Textarea, Label, Modal, Radio, P, Select} from 'flowbite-svelte';
+    import { FloatingLabelInput, Textarea, Label, Modal, Radio, P, Select, Checkbox} from 'flowbite-svelte';
     import { Input, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Button, Tooltip} from 'flowbite-svelte';
-    import { PlusOutline, EditOutline } from 'flowbite-svelte-icons';
+    import { PlusOutline, EditOutline,MinusOutline } from 'flowbite-svelte-icons';
     
     import Combo from '$lib/components/common/Combo.svelte';
     import {get_topics, get_tmllm, get_tmoutputschemas,
             create_topic,create_tmoutputschema, create_tminstruct,
-            update_tmchat,update_tminstruct,update_tmoutputschema,update_topic} from "$lib/apis/textmining";
+            update_tminstruct,update_tmoutputschema,update_topic} from "$lib/apis/textmining";
 
     export let chat_id = ''
     export let instruct_data = {
@@ -62,7 +62,7 @@
         schema_name:'',
         schema_version:'',
         schema_desc:'',
-        attr:[{ seq:0, attr_name: '', attr_type: '', attr_desc: '' }]
+        attr:[{ seq:0, attr_name: '', attr_type: '', attr_desc: '',delete_yn : false }]
     }
     let schema_attr_data=[{ seq:0, attr_name: '', attr_type: '', attr_desc: '' }]
 
@@ -237,8 +237,11 @@
                 addToast('info','수정 완료')
                 schema_list = schema_list.map(item => {
                     if (item.value == json.id) {
+                        
+                        let attr = json.attr.filter(item => item.delete_yn == false)
+
                         return {value: json.id, name: json.schema_name, 
-                            topic: json.topic_id, schema_version : json.schema_version, schema_desc: json.schema_desc,attr: json.attr}
+                            topic: json.topic_id, schema_version : json.schema_version, schema_desc: json.schema_desc,attr: attr}
                     }
                     else {
                         return item
@@ -343,7 +346,7 @@
     $: if(selected_schema){
         instruct_data['schema_id'] = selected_schema
         if (schema_list.length > 0) {
-            schema_attr_data = schema_list.find(item => item.value == selected_schema).attr
+            schema_attr_data = schema_list.find(item => item.value == selected_schema).attr   
         }
 
     }
@@ -515,7 +518,8 @@
                         </TableHeadCell>
                         <TableHeadCell class="w-[30%] text-center">속성명</TableHeadCell>
                         <TableHeadCell class="w-[20%] text-center">타입</TableHeadCell>
-                        <TableHeadCell class="w-[calc(50%-40px)] text-center">설명</TableHeadCell>
+                        <TableHeadCell class="w-[calc(60%-40px)] text-center">설명</TableHeadCell>
+                        <TableHeadCell class="w-[10%] text-center">삭제</TableHeadCell>
                     </TableHead>
                     <TableBody>
                     {#each schema_data['attr'] as row, index}
@@ -531,12 +535,15 @@
                             <TableBodyCell>
                                 <Select underline size="md"  placeholder="" value={row.attr_type} items={attr_type} 
                                 on:change={(e) => handleInput(e, index, 'attr_type')}
-                                class="w-full"  />
+                                class="w-full" />
                             </TableBodyCell>
                             <TableBodyCell>
                                 <FloatingLabelInput type="text" value={row.attr_desc}
                                 on:input={(e) => handleInput(e, index, 'attr_desc')} 
                                 class="w-full" />
+                            </TableBodyCell>
+                            <TableBodyCell>
+                                <Checkbox bind:checked={row.delete_yn} />
                             </TableBodyCell>
                         </TableBodyRow>
                     {/each}

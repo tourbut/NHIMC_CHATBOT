@@ -86,6 +86,7 @@ class Get_Out_TmOutputSchemaAttr(SQLModel):
     attr_name : str
     attr_desc : str
     attr_type : str
+    delete_yn : bool
     
 class CreateTmOutputSchema(SQLModel):
     schema_name : str
