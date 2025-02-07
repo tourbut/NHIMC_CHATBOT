@@ -420,7 +420,8 @@ async def get_tminstruct_detail(session: AsyncSession, current_user: User, instr
         tminstruct = await session.exec(statement1)
         result1 = tminstruct.first()
         
-        statement2 = select(TmOutputSchemaAttr).where(TmOutputSchemaAttr.schema_id == result1.output_schema_id)
+        statement2 = select(TmOutputSchemaAttr).where(TmOutputSchemaAttr.schema_id == result1.output_schema_id,
+                                                      TmOutputSchemaAttr.delete_yn == False)
         tmoutputschemaattrs = await session.exec(statement2)
 
         rtn = textmining_schema.Get_Out_TmInstructDetail.model_validate(result1,update={'output_schema_attr':tmoutputschemaattrs.all()})
