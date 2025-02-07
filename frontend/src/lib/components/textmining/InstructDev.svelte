@@ -269,7 +269,6 @@
 
         let success_callback = (json) => {
             addToast('info','지시문 적용 완료')
-            console.log(json)
             instruct_data['instruct_id'] = json.id
         }
 
@@ -356,7 +355,7 @@
 </script>
 <div class="instruct-div-scroll">
     <div class="mb-2">
-        <FloatingLabelInput style="filled" size="small" type="text" bind:value={instruct_data['title']} disabled >
+        <FloatingLabelInput style="filled" size="small" type="text" bind:value={instruct_data['title']}  >
             지시문 제목
         </FloatingLabelInput>
     </div>

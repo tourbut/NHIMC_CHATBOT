@@ -8,7 +8,8 @@ from langchain.callbacks import StdOutCallbackHandler
 from langchain.callbacks.manager import CallbackManager
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
-from pydantic import BaseModel, Field,create_model
+from langchain.output_parsers import OutputFixingParser
+from pydantic import BaseModel, Field, ValidationError,create_model
 
 from operator import itemgetter
 from .parser import create_dynamic_schema, create_parser
@@ -22,7 +23,7 @@ import langchain
 
 from ....core.config import settings
 langchain.debug = settings.DEBUG
-set_llm_cache(SQLiteCache(database_path=".cache.db"))
+#set_llm_cache(SQLiteCache(database_path=".cache.db"))
 
 def create_chain(instruct_detail:textmining_schema.Get_Out_TmInstructDetail,
                  temperature:float=0.3,
@@ -35,6 +36,8 @@ def create_chain(instruct_detail:textmining_schema.Get_Out_TmInstructDetail,
                      base_url=instruct_detail.mining_llm_url,
                      temperature=temperature,
                      callback_manager=callback_manager,
+                     seed=1004,
+                     format='json'
                      )
     
     dict_attr = {}
@@ -47,18 +50,39 @@ def create_chain(instruct_detail:textmining_schema.Get_Out_TmInstructDetail,
     
     class output_list(BaseModel):
         """information about a EMR Report."""
-        
-        Response: Optional[List[schema]]
+        Response: Optional[List[schema]] = Field(None, description="Response from the LLM")
     
     parser = create_parser(pydantic_object=output_list)
+    
+    async def validate_and_fix(output):
+        try:
+            return output_list.model_validate(output)
+        except ValidationError as e:
+            # 수정을 위한 프롬프트 템플릿
+            parser = create_parser(pydantic_object=output_list)
+            fix_template = """
+            {format_instructions}
+            <input>
+            {current_output}
+            </input>
+            """
+            
+            fix_prompt = PromptTemplate(
+                template=fix_template,
+                input_variables=["current_output"],
+                partial_variables={"format_instructions": parser.get_format_instructions()}
+            )
+            
+            # 수정 체인 실행
+            fix_chain = fix_prompt | llm | parser
+            return await fix_chain.ainvoke({"current_output": output})
+        
+
     
     template = """
     <INSTRUCTION>
     {instruct_prompt}
     </INSTRUCTION>
-    <RESPONSE TEMPLATE>
-    {response_prompt}
-    </RESPONSE TEMPLATE>
     <OUTPUT FORMAT>
     {format_instructions}
     </OUTPUT FORMAT>
@@ -71,18 +95,19 @@ def create_chain(instruct_detail:textmining_schema.Get_Out_TmInstructDetail,
         template=template,
         input_variables=["input"],
         partial_variables={"format_instructions": parser.get_format_instructions(),
-                           "instruct_prompt": instruct_detail.instruct_prompt,
-                           "response_prompt": instruct_detail.response_prompt}
+                           "instruct_prompt": instruct_detail.instruct_prompt}
     )
     
-    chain = prompt|llm|parser
+    #fix_parser = OutputFixingParser.from_llm(parser=parser, llm=llm)
+    
+    chain = prompt|llm
     
     final_chain = RunnableParallel(
         output_prompt = prompt,
-        textminig = chain
+        textminig = chain| validate_and_fix
     )
     
-    return final_chain
+    return final_chain.with_retry(stop_after_attempt=1)
     
 async def chain_astream(chain,input):
     chunks=[]
@@ -127,15 +152,18 @@ async def chain_invoke(chain,input):
     input_token=0
     output_token=0
     
-    with callback_handler as cb:
-        response = await chain.ainvoke({'input':input})
-        input_token = cb.prompt_tokens
-        output_token = cb.completion_tokens
-        
-    # Ensure response.Response is a list
-    if isinstance(response['textminig'].Response, dict):
-        response_list = [response['textminig'].Response]
-    else:
-        response_list = response['textminig'].Response
-        
-    return response_list,(input_token,output_token),response['output_prompt']
+    try:
+        with callback_handler as cb:
+            response = await chain.ainvoke({'input':input})
+            input_token = cb.prompt_tokens
+            output_token = cb.completion_tokens
+            
+        if isinstance(response['textminig'].Response, dict):
+            response_list = [response['textminig'].Response]
+        else:
+            response_list = response['textminig'].Response
+            
+        return response_list,(input_token,output_token),response['output_prompt']
+    except Exception as e:
+        print(e)
+        raise e

@@ -197,56 +197,59 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,t
     '''Send a message to the chat
     chat_id와 instrction_id로 
     userprompt_id, mining_llm_id, output_schema_id로 각각의 값을 조회후 마이닝 모델 구성'''
-    
-    instruct_detail = await textmining_crud.get_tminstruct_detail(session=session,current_user=current_user,instruct_id=tmchat_in.instruct_id)
-    
-    chain = create_chain(instruct_detail=instruct_detail)
-    
-    user_message = textmining_schema.CreateTmMessages(user_id=current_user.id,
-                                        chat_id=tmchat_in.chat_id,
-                                        name=current_user.name,
-                                        content=tmchat_in.input,
-                                        is_user=True,
-                                        create_date=datetime.now(),
-                                        update_date=datetime.now())
-    
-    response,token,prompt = await chain_invoke(chain,tmchat_in.input)
+    try:
+        instruct_detail = await textmining_crud.get_tminstruct_detail(session=session,current_user=current_user,instruct_id=tmchat_in.instruct_id)
+        
+        chain = create_chain(instruct_detail=instruct_detail)
+        
+        user_message = textmining_schema.CreateTmMessages(user_id=current_user.id,
+                                            chat_id=tmchat_in.chat_id,
+                                            name=current_user.name,
+                                            content=tmchat_in.input,
+                                            is_user=True,
+                                            create_date=datetime.now(),
+                                            update_date=datetime.now())
+        
+        response,token,prompt = await chain_invoke(chain,tmchat_in.input)
 
-    if response:
-        out_message = "```\n"
-        
-        for content in response:
-            out_message += str(content)+"\n"
-        
-        out_message += "\n```"
-    else:
-        out_message = "None"
-    
-    messages = []
-    messages.append(user_message)
-    
-    bot_message = textmining_schema.CreateTmMessages(user_id=current_user.id,
-                                                    chat_id=tmchat_in.chat_id,
-                                                    name="미드미",
-                                                    content=out_message,
-                                                    full_prompt=prompt.text,
-                                                    is_user=False,
-                                                    create_date=datetime.now(),
-                                                    update_date=datetime.now())
-    messages.append(bot_message)
-    
-    usage = textmining_schema.Usage(tm_llm_id=instruct_detail.mining_llm_id,
-                                  input_token=token[0],
-                                  output_token=token[1])
-    
-    await textmining_crud.create_tmmessages(session=session,current_user=current_user,tmmessages_in=messages,usage=usage)
+        if response:
+            out_message = "```\n"
             
-    rtn = textmining_schema.OutMessage(content=out_message,
-                                       full_prompt=prompt.text,
-                                        input_token=token[0],
-                                        output_token=token[1],
-                                        is_done=True)
-    return rtn
+            for content in response:
+                out_message += str(content)+"\n"
+            
+            out_message += "\n```"
+        else:
+            out_message = "None"
+        
+        messages = []
+        messages.append(user_message)
+        
+        bot_message = textmining_schema.CreateTmMessages(user_id=current_user.id,
+                                                        chat_id=tmchat_in.chat_id,
+                                                        name="미드미",
+                                                        content=out_message,
+                                                        full_prompt=prompt.text,
+                                                        is_user=False,
+                                                        create_date=datetime.now(),
+                                                        update_date=datetime.now())
+        messages.append(bot_message)
+        
+        usage = textmining_schema.Usage(tm_llm_id=instruct_detail.mining_llm_id,
+                                    input_token=token[0],
+                                    output_token=token[1])
+        
+        await textmining_crud.create_tmmessages(session=session,current_user=current_user,tmmessages_in=messages,usage=usage)
+                
+        rtn = textmining_schema.OutMessage(content=out_message,
+                                        full_prompt=prompt.text,
+                                            input_token=token[0],
+                                            output_token=token[1],
+                                            is_done=True)
+        return rtn
+    except Exception as e:
+        print(e)
+        return textmining_schema.OutMessage(content=f"Error:{e}",is_done=True)
     
 
 @router.get("/get_messages",response_model=List[textmining_schema.Get_Out_TmMessages])
