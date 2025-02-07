@@ -269,7 +269,8 @@
 
         let success_callback = (json) => {
             addToast('info','지시문 적용 완료')
-            instruct_data['instruct_id'] = json.instruct_id
+            console.log(json)
+            instruct_data['instruct_id'] = json.id
         }
 
         let failure_callback = (json_error) => {
