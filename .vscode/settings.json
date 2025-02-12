@@ -1,0 +1,19 @@
+{
+    "dbcode.connections": [
+        {
+            "connectionId": "sUnmJwOx0CHeQD5ebChe_",
+            "name": "nhimc_chatbot_local",
+            "driver": "postgres",
+            "color": "#009670",
+            "connectionType": "host",
+            "host": "localhost",
+            "port": 5432,
+            "ssl": false,
+            "username": "nhimc",
+            "password": "",
+            "savePassword": "secretStorage",
+            "database": "nhimcchat",
+            "connectionTimeout": 30
+        }
+    ]
+}
