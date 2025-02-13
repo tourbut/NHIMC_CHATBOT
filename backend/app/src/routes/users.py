@@ -1,7 +1,7 @@
 from typing import Any, Annotated
 from datetime import timedelta
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from psycopg import DatabaseError
 
 from app.src.utils import security
@@ -31,7 +31,7 @@ async def signup(*, session: SessionDep_async, user_in: user_schema.UserCreate) 
     return user
 
 @router.post("/login")
-async def login(
+async def login(request: Request, 
     session: SessionDep_async, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> user_schema.Token:
     """
@@ -59,8 +59,8 @@ async def login(
         dept_cd=user.dept_cd,
         dept_nm=user.dept_nm)
     
-    redis = await redis_client()
-    redis.setex(
+    redis = request.app.state.redis
+    await redis.setex(
         name = f"user:{user.id}",
         time = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # 토큰 만료시간과 동일하게 설정
         value = user_token.model_dump_json()
