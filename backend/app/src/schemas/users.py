@@ -17,8 +17,10 @@ class UserPublic(SQLModel):
     is_active: bool
     
 class Token(SQLModel):
+    id : uuid.UUID
     name: str
     is_admin: bool = False
+    is_active : bool = True
     access_token: str
     token_type: str = "bearer"
     dept_cd: str

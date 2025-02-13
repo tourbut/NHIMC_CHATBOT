@@ -7,7 +7,7 @@ from psycopg import DatabaseError
 from app.src.utils import security
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.src.deps import SessionDep_async,CurrentUser
+from app.src.deps import SessionDep_async,CurrentUser,redis_client
 from app.src.crud import users as user_crud
 from app.src.schemas import users as user_schema
 
@@ -50,11 +50,23 @@ async def login(
         raise HTTPException(status_code=400, detail="비활성화된 계정입니다.")
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    return user_schema.Token(access_token=await security.create_access_token(str(user.id), expires_delta=access_token_expires),
-                             name=user.name,
-                             is_admin=user.is_admin,
-                             dept_cd=user.dept_cd,
-                             dept_nm=user.dept_nm)
+    user_token = user_schema.Token(
+        id=user.id,
+        access_token=await security.create_access_token(str(user.id), expires_delta=access_token_expires),
+        name=user.name,
+        is_admin=user.is_admin,
+        is_active=user.is_active,
+        dept_cd=user.dept_cd,
+        dept_nm=user.dept_nm)
+    
+    redis = await redis_client()
+    redis.setex(
+        name = f"user:{user.id}",
+        time = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # 토큰 만료시간과 동일하게 설정
+        value = user_token.model_dump_json()
+    )
+    
+    return user_token
 
 
 @router.get("/get_user", response_model=user_schema.UserPublic)
