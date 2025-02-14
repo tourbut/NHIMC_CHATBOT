@@ -71,12 +71,15 @@
         await send_message_bot(params, success_callback, failure_callback,streamCallback);
     }
 
-    async function get_data(params)
+    async function get_data(gubun,params)
     {        
 
         message_list=[]
         let success_callback = (json) => {
+
+            
             message_list = json.map(item => {
+                if ((gubun == 'chat' && item.chat_id == params.id)&&(gubun == 'chatbot' && item.chatbot_id == params.id)){
                 return {
                     id: uuidv4(),
                     name: item.name,
@@ -87,8 +90,9 @@
                     is_user: item.is_user,
                     is_done: true
                 }
+                    
+                }
             })
-
         }
 
         let failure_callback = (json_error) => {
@@ -98,10 +102,10 @@
     }
 
     $: if (chatbot_data['chatbot_id']) {
-            get_data({id: chatbot_data['chatbot_id']})
+            get_data('chatbot',{id: chatbot_data['chatbot_id']})
         } 
         else if (chatbot_data['chat_id'] ) {
-            get_data({id: chatbot_data['chat_id']})
+            get_data('chat',{id: chatbot_data['chat_id']})
         }
 
     let messageListElement;

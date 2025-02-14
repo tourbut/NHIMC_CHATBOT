@@ -246,6 +246,8 @@ async def get_messages(*, session: SessionDep_async, current_user: CurrentUser, 
             for message in db_messages:
                 if message.is_user:
                     messages.append(chat_schema.ReponseMessages(
+                                                                chat_id=message.chat_id,
+                                                                chatbot_id=message.chatbot_id,
                                                                 name=message.name,
                                                                 content=message.content,
                                                                 thought=None,
@@ -260,6 +262,8 @@ async def get_messages(*, session: SessionDep_async, current_user: CurrentUser, 
                                                             }),])
                 else:
                     messages.append(chat_schema.ReponseMessages(
+                                                                chat_id=message.chat_id,
+                                                                chatbot_id=message.chatbot_id,
                                                                 name=message.name,
                                                                 content=message.content,
                                                                 thought=message.thought,
