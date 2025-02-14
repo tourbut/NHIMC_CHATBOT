@@ -282,6 +282,69 @@ async def get_messages(*, session: SessionDep_async, current_user: CurrentUser, 
     
     return messages
 
+
+@router.get("/get_messages_by_chatbot",response_model=List[chat_schema.ReponseMessages])
+async def get_messages_by_chatbot(*, session: SessionDep_async, current_user: CurrentUser, id:uuid.UUID):
+    
+    # Redis에서 메시지를 가져오는 코드
+    try:
+        
+        history = get_redis_history(id.hex,redis_client=await redis_client())
+        messages = []
+        for message in history.messages:
+            msg = chat_schema.ReponseMessages(
+                name=message.additional_kwargs["name"],
+                content=message.content,
+                thought=message.additional_kwargs["thought"] if "thought" in message.additional_kwargs else None,
+                tools=message.additional_kwargs["tools"] if "tools" in message.additional_kwargs else None,
+                is_user=message.type == "human",
+                create_date=datetime.strptime(message.additional_kwargs["create_date"],"%Y-%m-%d %H:%M:%S")
+            )
+            messages.append(msg)
+        
+        if len(history.messages)==0:
+            db_messages = await chat_crud.get_messages_by_chatbot_id(session=session,current_user=current_user,id=id)
+            # Add messages to chat history
+            messages = []
+            for message in db_messages:
+                if message.is_user:
+                    messages.append(chat_schema.ReponseMessages(
+                                                                name=message.name,
+                                                                content=message.content,
+                                                                thought=None,
+                                                                tools=None,
+                                                                is_user=True,
+                                                                create_date=message.create_date))
+                    await history.aadd_messages([HumanMessage(content=message.content,
+                                                        additional_kwargs={
+                                                            "user_id":str(message.user_id),
+                                                            "name":message.name,
+                                                            "create_date":message.create_date.strftime("%Y-%m-%d %H:%M:%S")
+                                                            }),])
+                else:
+                    messages.append(chat_schema.ReponseMessages(
+                                                                name=message.name,
+                                                                content=message.content,
+                                                                thought=message.thought,
+                                                                tools=json.loads(message.tools),
+                                                                is_user=False,
+                                                                create_date=message.create_date))
+                        
+                    await history.aadd_messages([AIMessage(content=str(message.content),
+                                                        additional_kwargs={
+                                                            "user_id":str(message.user_id),
+                                                            "name":message.name,
+                                                            "thought":message.thought,
+                                                            "tools" : json.loads(message.tools),
+                                                            "create_date":message.create_date.strftime("%Y-%m-%d %H:%M:%S")
+                                                            })])
+            
+    except Exception as e:
+        print(e)
+        messages = await chat_crud.get_messages_by_chatbot_id(session=session,current_user=current_user,id=id)
+    
+    return messages
+
 @router.get("/get_userllm",response_model=List[chat_schema.GetUserLLM])
 async def get_userllm(*, session: SessionDep_async, current_user: CurrentUser):
     userllm = await chat_crud.get_userllm(session=session,user_id=current_user.id)

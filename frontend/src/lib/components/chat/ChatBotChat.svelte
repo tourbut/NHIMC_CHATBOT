@@ -5,7 +5,7 @@
 
     import MessageInput from "$lib/components/common/MessageInput.svelte";
     import Message from "$lib/components/common//Message.svelte";
-    import { send_message_bot, get_messages } from "$lib/apis/chat";
+    import { send_message_bot, get_messages,get_messages_by_chatbot } from "$lib/apis/chat";
     import { addToast } from '$lib/common';
 
     import { username } from '$lib/stores';
@@ -72,7 +72,7 @@
         await send_message_bot(params, success_callback, failure_callback,streamCallback);
     }
 
-    async function get_data(params)
+    async function get_data(gubun,params)
     {        
 
         message_list=[]
@@ -95,15 +95,22 @@
         let failure_callback = (json_error) => {
             addToast('error',json_error.detail)
         }
-        await get_messages(params, success_callback, failure_callback);
+
+        if (gubun=='chatbot'){
+            await get_messages_by_chatbot(params, success_callback, failure_callback)
+        }
+        else if(gubun=='chat'){
+            await get_messages(params, success_callback, failure_callback)
+        }
     }
 
     $: if (chatbot_id) {
-            get_data({id: chatbot_id})
+            get_data('chatbot',{id: chatbot_id})
         } 
     $: if (chat_id) {
-            get_data({id: chat_id})
+            get_data('chat',{id: chat_id})
         }
+        
     let messageListElement;
     
     $ : if (message_list.length > 0) {

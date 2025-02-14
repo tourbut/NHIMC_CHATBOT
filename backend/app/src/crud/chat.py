@@ -156,7 +156,7 @@ async def create_usage(*,session: AsyncSession, usage: chat_schema.Usage) -> Use
 
 async def get_messages(*, session: AsyncSession,current_user: User, id:uuid.UUID) -> List[chat_schema.ReponseMessages]:
     try:
-        statement = select(Messages).where(or_(Messages.chat_id == id,Messages.chatbot_id == id),
+        statement = select(Messages).where(Messages.chat_id == id,
                                             Messages.user_id == current_user.id,
                                             Messages.delete_yn == False).order_by(Messages.create_date)
         
@@ -166,7 +166,20 @@ async def get_messages(*, session: AsyncSession,current_user: User, id:uuid.UUID
         print(e)
         await session.rollback()
         raise e
-
+    
+async def get_messages_by_chatbot_id(*, session: AsyncSession,current_user: User, id:uuid.UUID) -> List[chat_schema.ReponseMessages]:
+    try:
+        statement = select(Messages).where(Messages.chatbot_id == id,
+                                            Messages.user_id == current_user.id,
+                                            Messages.delete_yn == False).order_by(Messages.create_date)
+        
+        messages = await session.exec(statement)
+        return messages.all()
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+    
 async def get_chat_list(*, session: AsyncSession, current_user: User) -> List[chat_schema.GetChat]:
     try:
         statement = select(Chats).where(Chats.user_id == current_user.id,

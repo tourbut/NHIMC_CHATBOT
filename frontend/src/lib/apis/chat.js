@@ -30,6 +30,11 @@ export async function get_messages(params, success_callback, failure_callback) {
     await fastapi('get', url, params,success_callback,failure_callback)
 }
 
+export async function get_messages_by_chatbot(params, success_callback, failure_callback) {
+    let url = "/chat/get_messages_by_chatbot/"
+    await fastapi('get', url, params,success_callback,failure_callback)
+}
+
 export async function delete_chat(params, success_callback, failure_callback) {
     let url = "/chat/delete_chat/"
     await fastapi('put', url, params,success_callback,failure_callback)
