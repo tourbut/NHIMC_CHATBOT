@@ -422,7 +422,6 @@ def chatbot_chain(instruct_prompt:str,
             return ""
         
     def output_formatter(output):
-        print(output)
         return {
             "thought": output["thought"],
             "answer": output["answer"],
