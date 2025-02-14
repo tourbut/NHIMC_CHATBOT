@@ -25,6 +25,7 @@ async def lifespan(app: FastAPI):
     app.state.redis = await RedisManager.get_redis()
     yield
     await RedisManager.close()
+    print("End application")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

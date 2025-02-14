@@ -1,10 +1,9 @@
 from typing import List
 import uuid
-
-from sqlalchemy import literal_column
 from app.models import *
 from app.src.schemas import chat as chat_schema
-from sqlmodel import select, union_all
+from sqlmodel import or_, select, union_all,union,literal_column
+from sqlalchemy.orm import aliased
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 
@@ -56,11 +55,12 @@ async def get_deptllm(*, session: AsyncSession,user_id:uuid.UUID) -> List[chat_s
         raise e    
 
 
-async def get_llm(*, session: AsyncSession,user_id:uuid.UUID,user_llm_id:uuid.UUID,dept_llm_id:uuid.UUID) -> List[chat_schema.GetUserLLM]| None:
+async def get_llm(*, session: AsyncSession,user_id:uuid.UUID) -> List[chat_schema.GetUserLLM]| None:
     try:
         
         statement1 = select(literal_column("'user'").label("gubun"),
                             UserLLM.id.label("llm_id"),
+                            LLM.id,
                             LLM.source,
                             LLM.name,
                             LLM.type,
@@ -72,6 +72,7 @@ async def get_llm(*, session: AsyncSession,user_id:uuid.UUID,user_llm_id:uuid.UU
 
         statement2 = select(literal_column("'dept'").label("gubun"),
                             DeptLLM.id.label("llm_id"),
+                            LLM.id,
                             LLM.source,
                             LLM.name,
                             LLM.type,
@@ -153,11 +154,12 @@ async def create_usage(*,session: AsyncSession, usage: chat_schema.Usage) -> Use
         await session.rollback()
         raise e
 
-async def get_messages(*, session: AsyncSession,current_user: User, chat_id:uuid.UUID) -> List[chat_schema.ReponseMessages]:
+async def get_messages(*, session: AsyncSession,current_user: User, id:uuid.UUID) -> List[chat_schema.ReponseMessages]:
     try:
-        statement = select(Messages).where(Messages.chat_id == chat_id,
-                                        Messages.user_id == current_user.id,
-                                        Messages.delete_yn == False)
+        statement = select(Messages).where(or_(Messages.chat_id == id,Messages.chatbot_id == id),
+                                            Messages.user_id == current_user.id,
+                                            Messages.delete_yn == False).order_by(Messages.create_date)
+        
         messages = await session.exec(statement)
         return messages.all()
     except Exception as e:
@@ -233,4 +235,188 @@ async def get_document(*, session: AsyncSession,user_file_id: uuid.UUID) -> chat
         print(e)
         await session.rollback()
         raise e
+  
+
+# ChatBot
+async def create_chatbot(*, session: AsyncSession, current_user: User, chatbot_in: chat_schema.CreateChatBot) -> ChatBot:
+    try:
+        chatbot = ChatBot.model_validate(chatbot_in,update={"user_id":current_user.id})
+        session.add(chatbot)
+        await session.commit()
+        await session.refresh(chatbot)
+        return chatbot
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+
+async def update_chatbot(*, session: AsyncSession, current_user: User, chatbot_in: chat_schema.UpdateChatBot) -> ChatBot:
+    try:
+        chatbot = await session.get(ChatBot, chatbot_in.id)
+        if not chatbot:
+            return None
+        else:
+            if chatbot.user_id != current_user.id:
+                raise Exception("Not Authorized")
+            update_dict = chatbot_in.model_dump(exclude_unset=True)
+            chatbot.sqlmodel_update(update_dict)
+            chatbot.update_date = datetime.now()
+            session.add(chatbot)
+            await session.commit()
+            await session.refresh(chatbot)
+        return chatbot
     
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+    
+async def get_chatbot(*, session: AsyncSession, chatbot_id:uuid.UUID) -> chat_schema.Get_Out_ChatBot:
+    try:
+        statement = select(ChatBot).where(ChatBot.id == chatbot_id)
+        chatbot = await session.exec(statement)
+        return chatbot.first()
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+                            
+
+async def get_chatbot_list_by_userid(*, session: AsyncSession, current_user: User) -> List[chat_schema.Get_Out_ChatBot]:
+    try:
+        statement = select(ChatBot).where(ChatBot.user_id == current_user.id,
+                                           ChatBot.delete_yn == False)
+        chatbots = await session.exec(statement)
+        return chatbots.all()
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+
+async def get_chatbot_list_by_public(*, session: AsyncSession, current_user: User) -> List[chat_schema.Get_Out_ChatBot]:
+    try:
+        
+        statement1 = select(ChatBot).where(ChatBot.user_id == current_user.id,
+                                           ChatBot.delete_yn == False)
+        statement2 = select(ChatBot).where(ChatBot.is_public == True,
+                                          ChatBot.delete_yn == False)
+        statement = union(statement1, statement2)
+        chatbots = await session.exec(statement)
+        return chatbots.all()
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+
+async def get_chatbot_list(*, session: AsyncSession) -> List[chat_schema.Get_Out_ChatBot]:
+    try:
+        statement = select(ChatBot).where(ChatBot.delete_yn == False)
+        chatbots = await session.exec(statement)
+        return chatbots.all()
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+
+    
+async def create_bottools(*, session: AsyncSession, bottools: chat_schema.CreateBotTools) -> BotTools:
+    try:
+        db_obj = BotTools.model_validate(bottools)
+        session.add(db_obj)
+        await session.commit()
+        await session.refresh(db_obj)
+        return db_obj
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+    
+async def create_tools(*, session: AsyncSession, tools: chat_schema.CreateTools) -> Tools:
+    try:
+        db_obj = Tools.model_validate(tools)
+        session.add(db_obj)
+        await session.commit()
+        await session.refresh(db_obj)
+        return db_obj
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+
+async def create_botdocument(*, session: AsyncSession, current_user:User, document_in: chat_schema.CreateBotDocument) -> BotDocuments:
+    try:
+        db_obj = BotDocuments.model_validate(document_in,update={"user_id":current_user.id})
+        session.add(db_obj)
+        await session.commit()
+        await session.refresh(db_obj)
+        return db_obj
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+
+async def get_botdocuments(*, session: AsyncSession, current_user: User) -> List[chat_schema.Get_Out_Document]:
+    """
+    Get documents for chatbot
+    유저가 속한 부서의 문서만 조회
+    """
+    try:                       
+        statement = select( BotDocuments.id,
+                            UserFiles.file_name.label("title"),
+                            UserFiles.file_desc.label("description"),
+                            UserFiles.collection_id,
+                            UserFiles.id.label("user_file_id"),
+                            BotDocuments.request_dept_id,
+                            Dept.dept_nm.label("request_dept_nm"),
+                            BotDocuments.is_active).where(UserFiles.delete_yn == False,
+                                                          UserFiles.embedding_yn == True,
+                                                          UserFiles.id == BotDocuments.userfile_id,
+                                                          BotDocuments.request_dept_id == Dept.id,
+                                                          UserDept.user_id == current_user.id,
+                                                          UserDept.dept_id == BotDocuments.request_dept_id)
+                                     
+        documents = await session.exec(statement)
+        return documents.all()
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+
+async def get_chatbot_alldata(*, session: AsyncSession, chatbot_id:uuid.UUID) -> chat_schema.GetChatbotAllData:
+    try:
+        user_llm = aliased(LLM, name="user_llm")
+        dept_llm = aliased(LLM, name="dept_llm")
+        embedding_llm = aliased(LLM, name="embedding_llm")
+        embedding_userllm = aliased(UserLLM, name="embedding_userllm")
+        
+        statement = select(
+            ChatBot.id,
+            ChatBot.instruct_prompt,
+            ChatBot.thought_prompt,
+            ChatBot.user_llm_id,
+            ChatBot.dept_llm_id,
+            user_llm.name.label("userllm_name"),
+            UserLLM.llm_id.label("userllm_id"),
+            dept_llm.name.label("deptllm_name"),
+            DeptLLM.llm_id.label("deptllm_id"),
+            embedding_llm.name.label("embedding_name"),
+            embedding_userllm.llm_id.label("embedding_id"),
+            UserFiles.file_name.label("file_title"),
+            UserFiles.file_desc.label("file_description"),
+            UserFiles.collection_id,
+            ChatBot.bottools_id
+            ).join(UserLLM, UserLLM.id == ChatBot.user_llm_id, isouter=True) \
+             .join(DeptLLM, DeptLLM.id == ChatBot.dept_llm_id, isouter=True) \
+             .join(UserFiles, UserFiles.id == ChatBot.user_file_id, isouter=True) \
+             .join(embedding_userllm, embedding_userllm.id == UserFiles.embedding_user_llm_id, isouter=True) \
+             .join(user_llm, user_llm.id == UserLLM.llm_id, isouter=True) \
+             .join(dept_llm, dept_llm.id == DeptLLM.llm_id, isouter=True) \
+             .join(embedding_llm, embedding_llm.id == embedding_userllm.llm_id, isouter=True) \
+            .where(ChatBot.id == chatbot_id)
+        
+        chatbot = await session.exec(statement)
+        return chatbot.first()
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e

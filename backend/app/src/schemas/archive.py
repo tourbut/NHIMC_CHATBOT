@@ -5,6 +5,7 @@ from fastapi import UploadFile
 class Usage(SQLModel):
     user_llm_id: uuid.UUID | None = None
     dept_llm_id: uuid.UUID | None = None
+    tm_llm_id: uuid.UUID | None = None
     input_token:int 
     output_token:int
     
@@ -26,7 +27,7 @@ class FileUpload(SQLModel):
     file_ext:str
     file_desc:str | None = None
     embedding_yn:bool = False
-    embedding_model_id:uuid.UUID | None = None
+    embedding_user_llm_id:uuid.UUID | None = None
     collection_id:uuid.UUID | None = None
 
 class FileDetail(SQLModel):

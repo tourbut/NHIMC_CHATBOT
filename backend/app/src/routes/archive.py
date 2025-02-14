@@ -91,7 +91,7 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,
         
         
         db_obj.embedding_yn = True
-        db_obj.embedding_model_id = userllm.llm_id
+        db_obj.embedding_user_llm_id = userllm.id
         db_obj.collection_id = vectorstore.uuid
         
         await archive_crud.update_file(session=session,file=db_obj)

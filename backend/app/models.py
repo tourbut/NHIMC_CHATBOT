@@ -90,7 +90,7 @@ class UserFiles(CommonBase, table=True):
     file_ext:str = Field(nullable=False,description="파일확장자")
     file_desc:str | None = Field(nullable=True,description="파일설명")
     embedding_yn:bool = Field(default=False,nullable=True,description="임베딩여부")
-    embedding_model_id:Optional[uuid.UUID] = Field(foreign_key="llm.id",nullable=True,description="임베딩모델ID")
+    embedding_user_llm_id:Optional[uuid.UUID] = Field(foreign_key="userllm.id",nullable=True,description="임베딩유저모델ID")
     collection_id:Optional[uuid.UUID] = Field(nullable=True,description="컬렉션ID")
 
 class Chats(CommonBase,table=True):
@@ -100,10 +100,12 @@ class Chats(CommonBase,table=True):
     user_llm_id: uuid.UUID | None = Field(foreign_key="userllm.id",nullable=True, description="유저LLMID")
     dept_llm_id: uuid.UUID | None = Field(foreign_key="deptllm.id",nullable=True, description="부서LLMID")
     user_file_id: uuid.UUID | None = Field(foreign_key="userfiles.id",nullable=True, description="유저파일ID")
+    chatbot_id: uuid.UUID | None = Field(foreign_key="chatbot.id",nullable=True, description="챗봇ID")
 
 class Messages(CommonBase,table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
-    chat_id: uuid.UUID = Field(foreign_key="chats.id", description="채팅ID")
+    chat_id: Optional[uuid.UUID] = Field(foreign_key="chats.id", description="채팅ID")
+    chatbot_id: Optional[uuid.UUID] = Field(foreign_key="chatbot.id", description="챗봇ID")
     user_id: uuid.UUID  = Field(foreign_key="user.id", description="유저ID")
     name:str = Field(nullable=False, description="이름")
     content: str = Field(nullable=False, description="내용")
@@ -143,21 +145,35 @@ class CommonCode(CommonBase,table=True):
 class Tools(CommonBase,table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     tool_name: str = Field(nullable=False, description="이름")
-    description: str | None = Field(nullable=True, description="설명")
-    api_url: str = Field(nullable=False, description="API URL")
-    api_key: str = Field(nullable=False, description="API KEY")
-    parameters : str | None = Field(nullable=True, description="파라미터")    
+    description: Optional[str] = Field(nullable=True, description="설명")
+    api_url: Optional[str] = Field(nullable=True,description="API URL")
+    api_key: Optional[str] = Field(nullable=True,description="API KEY")
+    parameters : Optional[str] = Field(nullable=True,description="파라미터")    
     user_id: uuid.UUID = Field(foreign_key="user.id", description="유저ID")
 
+class BotTools(CommonBase,table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
+    chatbot_id: uuid.UUID = Field(foreign_key="chatbot.id", description="챗봇ID")
+    tools_id: uuid.UUID = Field(foreign_key="tools.id", description="도구ID")
+
+class BotDocuments(CommonBase,table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
+    userfile_id: uuid.UUID = Field(foreign_key="userfiles.id", description="유저파일ID")
+    request_dept_id : uuid.UUID = Field(foreign_key="dept.id", description="요청부서ID")
+    is_active: bool = Field(default=True, description="활성화여부")
+    user_id : uuid.UUID = Field(foreign_key="user.id", description="유저ID")
+    
 class ChatBot(CommonBase,table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     bot_name : str = Field(nullable=False, description="챗봇명")
-    description : Optional[str] = Field(nullable=True, description="설명")
-    user_prompt_id: uuid.UUID = Field(foreign_key="userprompt.id", description="유저프롬프트ID")
-    user_llm_id: Optional[uuid.UUID] = Field(foreign_key="userllm.id", description="유저LLMID")
-    dept_llm_id: Optional[uuid.UUID] = Field(foreign_key="deptllm.id", description="부서LLMID")
-    user_file_id: Optional[uuid.UUID] = Field(foreign_key="userfiles.id", description="유저파일ID")
-    tools_id: Optional[uuid.UUID] = Field(foreign_key="tools.id", description="도구ID")
+    description : Optional[str] = Field(nullable=True,description="설명")
+    instruct_prompt: Optional[str] = Field(nullable=True,default=None,description="지시 프롬프트")
+    thought_prompt: Optional[str] = Field(nullable=True,default=None,description="생각 프롬프트")
+    user_llm_id: Optional[uuid.UUID] = Field(foreign_key="userllm.id",nullable=True,default=None, description="유저LLMID")
+    dept_llm_id: Optional[uuid.UUID] = Field(foreign_key="deptllm.id",nullable=True,default=None, description="부서LLMID")
+    user_file_id: Optional[uuid.UUID] = Field(foreign_key="userfiles.id",nullable=True,default=None, description="유저파일ID")
+    bottools_id : Optional[uuid.UUID] = Field(foreign_key="bottools.id",nullable=True,default=None, description="도구ID")
+    is_public: bool = Field(default=False, description="공개여부")
     user_id: uuid.UUID = Field(foreign_key="user.id", description="생성자ID")
     
 #Mining Models

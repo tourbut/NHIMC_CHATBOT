@@ -44,3 +44,38 @@ export async function get_deptllm(params, success_callback, failure_callback) {
     let url = "/chat/get_deptllm/"
     await fastapi('get', url, params,success_callback,failure_callback)
 }
+
+export async function create_chatbot(params, success_callback, failure_callback) {
+    let url = "/chat/create_chatbot/"
+    await fastapi('post', url, params,success_callback,failure_callback)
+}
+
+export async function update_chatbot(params, success_callback, failure_callback) {
+    let url = "/chat/update_chatbot/"
+    await fastapi('put', url, params,success_callback,failure_callback)
+}
+
+export async function get_chatbot_list_by_userid(params, success_callback, failure_callback) {
+    let url = "/chat/get_chatbot_list_by_userid/"
+    await fastapi('get', url, params,success_callback,failure_callback)
+}
+
+export async function get_chatbot_list_by_public(params, success_callback, failure_callback) {
+    let url = "/chat/get_chatbot_list_by_public/"
+    await fastapi('get', url, params,success_callback,failure_callback)
+}
+
+export async function get_chatbot(params, success_callback, failure_callback) {
+    let url = "/chat/get_chatbot/"
+    await fastapi('get', url, params,success_callback,failure_callback)
+}
+
+export async function get_botdocuments(params, success_callback, failure_callback) {
+    let url = "/chat/get_botdocuments/"
+    await fastapi('get', url, params,success_callback,failure_callback)
+}
+
+export async function send_message_bot(params, success_callback, failure_callback,streamCallback) {
+    let url = "/chat/send_message_bot/"
+    await fastapi('stream', url, params,success_callback,failure_callback,streamCallback)
+}

@@ -22,7 +22,11 @@
         console.error('Could not copy text: ', err);
     });
 }
-
+    // 마크다운 옵션 설정
+    marked.setOptions({
+        breaks: true, // 줄바꿈을 <br>로 변환
+        gfm: true // GitHub Flavored Markdown 사용
+    });
 </script>
 
 {#if message.is_user}
@@ -84,7 +88,7 @@
 
 <style>
     .popover_content {
-        max-height: 10rem;
-        overflow: auto;
+        max-height: 15rem;
+        overflow-y: auto;
     }
 </style>
