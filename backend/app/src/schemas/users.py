@@ -1,6 +1,7 @@
 from app.models import *
 from sqlmodel import SQLModel
 import uuid
+from datetime import datetime
 
 class UserCreate(SQLModel):
     empl_no: str
@@ -25,6 +26,8 @@ class Token(SQLModel):
     token_type: str = "bearer"
     dept_cd: str
     dept_nm: str
+    client_ip: str | None = None
+    create_date: datetime = datetime.now()
 
 class TokenPayload(SQLModel):
     sub: uuid.UUID | None = None

@@ -5,9 +5,14 @@
     import { APP_NAME,username,user_token,is_admin,dept_cd } from '$lib/stores';
     import { DarkMode } from 'flowbite-svelte';
     import { page } from '$app/stores';
-    const logout = async () => {
+    import {logout} from '$lib/apis/user';
+    import { goto } from '$app/navigation';
+
+    const onlogout = async () => {
+        logout();
         username.set("");
         user_token.set("");
+        goto('/login')
     }
     let fluid = false;
     let activeParentMenu = "";
@@ -29,17 +34,17 @@
     </NavBrand>
     <NavHamburger  />
     <NavUl {activeUrl}>
-        <NavLi href="/">Home</NavLi>
+        <NavLi href="/">홈</NavLi>
         {#if $username}
-        <NavLi href="/chat">Chat</NavLi>
+        <NavLi href="/chat">채팅</NavLi>
+        <NavLi href="/chatbot">나만의 챗봇생성</NavLi>
         {#if $dept_cd == '41310' || $dept_cd == '10400'}
         <NavLi href="/textminig">텍스트마이닝</NavLi>
         {/if}
         <NavLi class="cursor-pointer {activeParentMenu === 'settings' ? 'active' : ''}" >
-            Settings<ChevronDownOutline class="w-6 h-6 ms-2 text-primary-800 dark:text-white inline" />
+            설정<ChevronDownOutline class="w-6 h-6 ms-2 text-primary-800 dark:text-white inline" />
         </NavLi>
         <Dropdown class="w-44 z-20">
-            <!-- <DropdownItem href="/detail">개인정보</DropdownItem> -->
             <DropdownItem href="/llms">LLM설정</DropdownItem>
             <DropdownItem href="/usage">사용량조회</DropdownItem>
             <DropdownDivider />
@@ -47,7 +52,7 @@
             <DropdownItem href="/admin">Admin</DropdownItem>
             <DropdownItem href="/archive">FileUpload</DropdownItem>
             {/if}
-            <DropdownItem on:click={logout}>Logout</DropdownItem>
+            <DropdownItem on:click={onlogout}>Logout</DropdownItem>
         </Dropdown>
         {/if}
     </NavUl>

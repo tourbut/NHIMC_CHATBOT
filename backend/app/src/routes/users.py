@@ -50,6 +50,9 @@ async def login(request: Request,
         raise HTTPException(status_code=400, detail="비활성화된 계정입니다.")
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    client_ip = request.client.host
+    
     user_token = user_schema.Token(
         id=user.id,
         access_token=await security.create_access_token(str(user.id), expires_delta=access_token_expires),
@@ -57,9 +60,11 @@ async def login(request: Request,
         is_admin=user.is_admin,
         is_active=user.is_active,
         dept_cd=user.dept_cd,
-        dept_nm=user.dept_nm)
+        dept_nm=user.dept_nm,
+        client_ip=client_ip)
     
     redis = request.app.state.redis
+    
     await redis.setex(
         name = f"user:{user.id}",
         time = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # 토큰 만료시간과 동일하게 설정
@@ -68,6 +73,14 @@ async def login(request: Request,
     
     return user_token
 
+@router.post("/logout")
+async def logout(request: Request, current_user: CurrentUser) -> Any:
+    """
+    OAuth2 compatible token logout, remove access token from redis
+    """
+    redis = request.app.state.redis
+    await redis.delete(f"user:{current_user.id}")
+    return {"detail": "Logged out"}
 
 @router.get("/get_user", response_model=user_schema.UserPublic)
 async def get_user(*, session: SessionDep_async, current_user: CurrentUser) -> Any:
