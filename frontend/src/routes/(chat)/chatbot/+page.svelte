@@ -87,13 +87,15 @@
             chatbot_data['user_file_id'] = json.user_file_id
             chatbot_data['bottools_id'] = json.bottools_id
             chatbot_data['is_public'] = json.is_public
+
+            chatbot_id = json.id
         }
 
         let failure_callback = (json_error) => {
             addToast('error',json_error.detail)
         }
 
-
+        
         await get_chatbot(params, success_callback, failure_callback);
 
     }
@@ -151,7 +153,7 @@
             <ChatBotDev bind:chatbot_data={chatbot_data} />
         </div>
         <div class="chat-container">
-            <ChatBotChat bind:chatbot_data={chatbot_data} />
+            <ChatBotChat bind:chatbot_data={chatbot_data} bind:chatbot_id={chatbot_id} />
         </div>
     </div>
     {/if}

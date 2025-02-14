@@ -15,6 +15,7 @@
     let chat_title=''
     let showModal = false;
     let chatbot_list = []
+    let chatbot_id = ''
     let chatbot_data = {
         chat_id: '',
         chatbot_id: '',
@@ -79,6 +80,7 @@
                 chatbot_id: json.chatbot_id,
                 chat_title: chat_title
             }
+            chatbot_id = json.chatbot_id
         }
         let failure_callback = (json_error) => {
             addToast('error',json_error.detail)
@@ -142,7 +144,7 @@
     </div> 
     <div class="chat-container">
         {#if chatbot_data['chat_id']}
-            <ChatBotChat bind:chatbot_data={chatbot_data}/>
+            <ChatBotChat bind:chatbot_data={chatbot_data} bind:chatbot_id={chatbot_id}/>
         {/if}
     </div>
 </div>
