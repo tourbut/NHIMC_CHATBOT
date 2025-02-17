@@ -46,4 +46,8 @@ class ResponseFile(SQLModel):
     file_ext:str
     file_desc:str | None = None
     contents:List[str] = []
-     
+    
+class CreateBotDocument(SQLModel):
+    userfile_id:uuid.UUID 
+    request_dept_id: str
+    is_active: bool = True

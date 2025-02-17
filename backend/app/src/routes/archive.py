@@ -95,7 +95,11 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,
         db_obj.collection_id = vectorstore.uuid
         
         await archive_crud.update_file(session=session,file=db_obj)
-
+        
+        botdocument_in = archive_schema.CreateBotDocument(userfile_id=db_obj.id,
+                                                          request_dept_id=current_user.dept_id)
+        
+        await archive_crud.create_botdocument(session=session,current_user=current_user,document_in=botdocument_in)
         # Return response
         async def get_contents(docs):
             contents = [doc.page_content for doc in docs]
