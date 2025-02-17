@@ -49,5 +49,5 @@ class ResponseFile(SQLModel):
     
 class CreateBotDocument(SQLModel):
     userfile_id:uuid.UUID 
-    request_dept_id: str
+    request_dept_id: uuid.UUID 
     is_active: bool = True
