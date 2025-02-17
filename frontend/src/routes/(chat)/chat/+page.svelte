@@ -144,7 +144,7 @@
                  bind:side_menus={chat_list}/>
     </div> 
     <div class="chat-container">
-        {#if chatbot_data['chat_id']}
+        {#if chat_id}
             <ChatBotChat bind:chatbot_data={chatbot_data} bind:chat_id={chat_id}/>
         {/if}
     </div>
