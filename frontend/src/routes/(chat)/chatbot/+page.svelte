@@ -69,7 +69,6 @@
     }
 
     const onclick = async (id) => {
-        chatbot_id = id
         bot_name = bot_list.find(item => item.items.find(item => item.id == id)).items.find(item => item.id == id).label
 
         let params = {

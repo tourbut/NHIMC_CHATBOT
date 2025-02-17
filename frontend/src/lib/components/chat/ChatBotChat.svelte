@@ -77,7 +77,6 @@
 
         message_list=[]
         let success_callback = (json) => {
-
             message_list = json.map(item => {
                 return {
                     id: uuidv4(),

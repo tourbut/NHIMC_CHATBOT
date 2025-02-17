@@ -69,7 +69,6 @@
     }
 
     const onclick = async (id) => {
-        chat_id = id
         chat_title = chat_list.find(item => item.items.find(item => item.id == id)).items.find(item => item.id == id).label
         let params = {
             chat_id:id
@@ -81,6 +80,7 @@
                 chatbot_id: json.chatbot_id,
                 chat_title: chat_title
             }
+            chat_id = id
             chatbot_id = json.chatbot_id
         }
         let failure_callback = (json_error) => {
