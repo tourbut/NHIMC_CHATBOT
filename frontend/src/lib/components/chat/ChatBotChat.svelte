@@ -17,7 +17,8 @@
 
     let message_list= []
     let user_msg = '';
-    
+    let is_loading = false;
+
     const sendMessage = async () => {
         if (user_msg == '') {
             return;
@@ -50,6 +51,8 @@
                     chatbot_id : chatbot_data['chatbot_id'],
                     input: user_msg,
                     }
+        
+
         let success_callback = (json) => {
             console.log(json)
         }
@@ -74,8 +77,9 @@
 
     async function get_data(gubun,params)
     {        
-
+        is_loading = false
         message_list=[]
+
         let success_callback = (json) => {
             message_list = json.map(item => {
                 return {
@@ -89,6 +93,7 @@
                     is_done: true
                 }
             })
+            is_loading = true
         }
 
         let failure_callback = (json_error) => {
@@ -106,6 +111,7 @@
     $: if (chatbot_id) {
             get_data('chatbot',{id: chatbot_id})
         } 
+
     $: if (chat_id) {
             get_data('chat',{id: chat_id})
         }
@@ -137,9 +143,15 @@
 
     <div class="flex flex-col gap-4">
         <div class="message-container" bind:this={messageListElement}>
-            {#each message_list as message}
-                <Message bind:message={message}/>
-            {/each}
+            {#if !is_loading}
+                <div class="flex items-center justify-center h-full">
+                    <P>메시지를 불러오는 중입니다.</P>
+                </div>
+            {:else}
+                {#each message_list as message}
+                    <Message bind:message={message}/>
+                {/each}
+            {/if}
         </div>  
         <MessageInput bind:message={user_msg} sendMessage={sendMessage}/>
     </div>

@@ -11,6 +11,7 @@ async def get_userllm(*, session: AsyncSession,user_id:uuid.UUID) -> List[chat_s
     try:
         statement = select(literal_column("'user'").label("gubun"),
                            UserLLM.id,
+                           UserLLM.llm_id,
                            LLM.source,
                            LLM.name,
                            LLM.type,
@@ -34,6 +35,7 @@ async def get_deptllm(*, session: AsyncSession,user_id:uuid.UUID) -> List[chat_s
     try:
         statement = select(literal_column("'user'").label("gubun"),
                            DeptLLM.id,
+                           DeptLLM.llm_id,
                            LLM.source,
                            LLM.name,
                            LLM.type,

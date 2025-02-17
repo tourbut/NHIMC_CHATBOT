@@ -11,6 +11,7 @@
 	import ChatBotChat from "$lib/components/chat/ChatBotChat.svelte";
 
     let chat_list = [{category: 'chat', items: []}];
+    let radio_group = 'dept';
 
     let chat_title=''
     let showModal = false;
@@ -59,6 +60,7 @@
                 chat_title: json.title,
                 chatbot_id:json.chatbot_id
             }
+            chat_id=json.id
             chat_list[0].items = [...chat_list[0].items, {id: json.id, label: json.title, herf: '', caption: selected_chatbot ? selected_chatbot.name : ''}];
         }
 
@@ -76,7 +78,7 @@
 
         let success_callback = (json) => {
             chatbot_data = {
-                chat_id :chat_id,
+                chat_id :id,
                 chatbot_id: json.chatbot_id,
                 chat_title: chat_title
             }
@@ -144,7 +146,7 @@
                  bind:side_menus={chat_list}/>
     </div> 
     <div class="chat-container">
-        {#if chat_id}
+        {#if chat_id!='' || chat_id}
             <ChatBotChat bind:chatbot_data={chatbot_data} bind:chat_id={chat_id}/>
         {/if}
     </div>
