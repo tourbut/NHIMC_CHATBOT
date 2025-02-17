@@ -93,7 +93,7 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,
         db_obj.embedding_yn = True
         db_obj.embedding_user_llm_id = userllm.id
         db_obj.collection_id = vectorstore.uuid
-        
+        file_id = db_obj.id
         await archive_crud.update_file(session=session,file=db_obj)
         
         botdocument_in = archive_schema.CreateBotDocument(userfile_id=db_obj.id,
@@ -106,7 +106,7 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,
             return contents
         
         contents = await get_contents(docs)   
-        response = archive_schema.ResponseFile(id=db_obj.id,
+        response = archive_schema.ResponseFile(id=file_id,
                                                file_name=file_meta.file_name,
                                                file_size=file_meta.file_size,
                                                file_ext=file_meta.file_ext,
