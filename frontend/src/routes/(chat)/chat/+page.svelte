@@ -15,6 +15,7 @@
     let chat_title=''
     let showModal = false;
     let chatbot_list = []
+    let chat_id = ''
     let chatbot_id = ''
     let chatbot_data = {
         chat_id: '',
@@ -68,7 +69,7 @@
     }
 
     const onclick = async (id) => {
-        let chat_id = id
+        chat_id = id
         chat_title = chat_list.find(item => item.items.find(item => item.id == id)).items.find(item => item.id == id).label
         let params = {
             chat_id:id
@@ -144,7 +145,7 @@
     </div> 
     <div class="chat-container">
         {#if chatbot_data['chat_id']}
-            <ChatBotChat bind:chatbot_data={chatbot_data} bind:chatbot_id={chatbot_id}/>
+            <ChatBotChat bind:chatbot_data={chatbot_data} bind:chat_id={chat_id}/>
         {/if}
     </div>
 </div>
