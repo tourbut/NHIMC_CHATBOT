@@ -24,6 +24,7 @@ class Token(SQLModel):
     is_active : bool = True
     access_token: str
     token_type: str = "bearer"
+    dept_id: uuid.UUID | None = None
     dept_cd: str
     dept_nm: str
     client_ip: str | None = None
@@ -39,5 +40,6 @@ class GetUserAndDept(SQLModel):
     name: str 
     is_active: bool 
     is_admin: bool
+    dept_id: uuid.UUID
     dept_cd: str
     dept_nm: str

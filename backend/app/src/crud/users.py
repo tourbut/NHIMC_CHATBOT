@@ -11,6 +11,7 @@ async def get_user_by_empl_no(*, session: Session, empl_no: str) -> user_schema.
                        User.password,
                        User.is_admin,
                        User.is_active,
+                       UserDept.dept_id,
                        Dept.dept_cd,
                        Dept.dept_nm).where(User.empl_no == empl_no,
                                            UserDept.user_id == User.id,
@@ -46,7 +47,9 @@ async def authenticate(*, session: Session, empl_no: str, password: str) -> user
                                                  name=db_user.name,
                                                  is_admin=db_user.is_admin,
                                                  is_active=db_user.is_active,
-                                                 dept_cd=dept.dept_cd)
+                                                 dept_id=dept.id,
+                                                 dept_cd=dept.dept_cd,
+                                                 dept_nm=dept.dept_nm)
                 
                 return rtn
             else:

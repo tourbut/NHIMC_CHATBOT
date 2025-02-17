@@ -59,6 +59,7 @@ async def login(request: Request,
         name=user.name,
         is_admin=user.is_admin,
         is_active=user.is_active,
+        dept_id=user.dept_id,
         dept_cd=user.dept_cd,
         dept_nm=user.dept_nm,
         client_ip=client_ip)
