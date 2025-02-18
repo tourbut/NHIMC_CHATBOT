@@ -14,8 +14,8 @@ from operator import itemgetter
 
 from .prompt import (
     create_chatbot_prompt,
-    create_thinking_chatbot,
     create_thinking_prompt,
+    create_thinking_chatbot_prompt,
     get_translate_prompt, 
     get_summary_prompt,
     get_chatbot_prompt,
@@ -326,7 +326,7 @@ def thinking_chatbot_NoDoc_chain(api_key:str,
     return final_chain
 
 
-def chatbot_chain(instruct_prompt:str,
+def thought_chatbot_chain(instruct_prompt:str,
                   thought_prompt:str,
                   api_key:str,
                   source:str,
@@ -369,7 +369,7 @@ def chatbot_chain(instruct_prompt:str,
     think_prompt = create_thinking_prompt(thought_prompt=thought_prompt,
                                           document_meta=document_meta,
                                           pydantic_parser=think_parser)
-    prompt = create_chatbot_prompt(instruct_prompt=instruct_prompt)
+    prompt = create_thinking_chatbot_prompt(instruct_prompt=instruct_prompt)
     
     think_chain = runnable|think_prompt|llm|think_parser
     answer_chain = prompt|llm
@@ -377,7 +377,7 @@ def chatbot_chain(instruct_prompt:str,
     
     def get_thought(output):
         try :
-            return output["thought"].THOUGHT
+            return output.get("thought").THOUGHT
         except Exception as e:
             print(e)
             return "사고 과정 오류"
@@ -385,7 +385,7 @@ def chatbot_chain(instruct_prompt:str,
     def get_document(output):
         if retriever:
             try :
-                thought = output["thought"]
+                thought = output.get("thought")
                 rtn = f"**검색어: {thought.search_msg}**\n"
                 
                 docs = retriever.invoke(thought.search_msg)
@@ -423,8 +423,8 @@ def chatbot_chain(instruct_prompt:str,
         
     def output_formatter(output):
         return {
-            "thought": output["thought"],
-            "answer": output["answer"],
+            "thought": output.get("thought"),
+            "answer": output.get("answer"),
         }
         
     final_chain = (
@@ -439,6 +439,110 @@ def chatbot_chain(instruct_prompt:str,
         }|
         {
             "thought":RunnablePassthrough(),
+            "document":RunnablePassthrough(),
+            "answer":answer_chain
+        }
+        |RunnableLambda(output_formatter)
+        )
+    
+    return final_chain
+
+def chatbot_chain(instruct_prompt:str,
+                  api_key:str,
+                  source:str,
+                  model:str='gpt-4o-mini',
+                  base_url:str='http://localhost:11434',
+                  temperature:float=0.1,
+                  callback_manager=None,
+                  memory=None,
+                  retriever=None,
+                  ):
+    
+    callback_manager = CallbackManager([StdOutCallbackHandler()])
+    
+    if model.startswith('gpt'):
+        llm = ChatOpenAI(model=model,
+                        temperature=temperature,
+                        api_key=api_key,
+                        callback_manager=callback_manager,
+                        stream_usage=True)
+        
+    elif model.startswith('claude'):
+        llm = ChatAnthropic(model=model,
+                            temperature=temperature,
+                            api_key=api_key,
+                            callback_manager=callback_manager)
+    elif source == 'ollama':
+        llm = ChatOllama(model=model,
+                         base_url= base_url,
+                         temperature=temperature,
+                         callback_manager=callback_manager,
+                         )
+    else:
+        raise ValueError(f"Invalid model name: {model}")
+    
+    chat_history = RunnablePassthrough.assign(
+        chat_history=RunnableLambda(memory.load_memory_variables)| itemgetter("chat_history")  # memory_key 와 동일하게 입력합니다.
+        )
+    
+    
+    prompt = create_chatbot_prompt(instruct_prompt=instruct_prompt)
+    
+    answer_chain = prompt|llm
+    rerank_chain = map_rerank_chain(llm)
+    
+    def get_document(output):
+        if retriever:
+            try :
+                search_msg  = output["thought"].search_msg if hasattr(output["thought"],"search_msg") else output["input"]
+                rtn = f"**검색어: {search_msg}**\n"
+                
+                docs = retriever.invoke(search_msg)
+                inputs = []
+                for doc in docs:
+                    inputs.append({"input":search_msg,"context": doc.page_content})
+                
+                results = rerank_chain.batch(inputs,
+                                            config={"max_concurrency": 3},)
+
+                final_idx=[]
+                for result in results:
+                    if result.score >= 8:
+                        final_idx.append(results.index(result))
+                
+                if len(final_idx) == 0:
+                    rtn += "해당 문서 없음"
+                    return rtn
+                else :
+                    rtn += f"**총 문서 수**: {len(final_idx)}\n"
+                    for idx in final_idx:
+                        rtn+=f"---------*Doc No.{idx}*---------\n"
+                        rtn+=f"**검색 문서 적합 점수(10점 만점)**: {results[idx].score}점\n"
+                        rtn+=f"**측정 사유**:{results[idx].evaluation_reasons}\n"
+                        rtn+=f"```검색결과\n"
+                        rtn+=docs[idx].page_content + "\n"
+                        rtn+=f"```\n"
+                
+                return rtn
+            except Exception as e:
+                print(e)
+                return "**문서 검색오류**"
+        else:
+            return ""
+        
+    def output_formatter(output):
+        return {
+            "answer": output.get("answer"),
+            "document": output.get("document"),
+        }
+        
+    final_chain = (
+        RunnableParallel(
+            input = RunnablePassthrough(),
+            chat_history= chat_history,
+            document = RunnableLambda(get_document)
+        )
+        |{
             "document":RunnablePassthrough(),
             "answer":answer_chain
         }

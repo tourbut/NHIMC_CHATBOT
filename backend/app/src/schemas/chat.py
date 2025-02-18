@@ -78,9 +78,9 @@ class CreateMessage(SQLModel):
     chatbot_id: uuid.UUID |None = None
     user_id: uuid.UUID 
     name: str 
-    content: str
-    thought : str = None
-    tools : str = None
+    content: str |None = None
+    thought : str |None = None
+    tools : str |None = None
     is_user: bool
     create_date: datetime = datetime.now()
     update_date: datetime = datetime.now()

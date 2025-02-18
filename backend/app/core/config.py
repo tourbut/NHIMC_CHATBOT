@@ -147,7 +147,10 @@ class Settings(BaseSettings):
     ISIS_DB_USER:str =''
     ISIS_DB_PASSWORD:str =''
     
-    OLLAMA_URL:str =''
+    GLOBAL_EMBEDDING_URL:str =''
+    GLOBAL_EMBEDDING_SOURCE:str ='ollama'
+    GLOBAL_EMBEDDING_MODEL:str ='bge-m3'
+    GLOBAL_EMBEDDING_API:str ='-'
     DEBUG:bool = False
 
 settings = Settings()  # type: ignore

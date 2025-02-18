@@ -14,6 +14,7 @@ from app.core.config import settings
 from app.src.engine.llms.chain import (
     translate_chain,
     summarize_chain,
+    thought_chatbot_chain,
     chatbot_chain,
     thinking_chatbot_chain,
     thinking_chatbot_NoDoc_chain
@@ -31,8 +32,6 @@ from langchain_core.messages import (
 from langchain_community.callbacks import get_openai_callback
 
 router = APIRouter()
-
-REDIS_URL = settings.REDIS_URL
 
 # Function to get or create a RedisChatMessageHistory instance
 def get_redis_history(session_id: str,redis_client) -> BaseChatMessageHistory:
@@ -69,10 +68,10 @@ async def send_message(*,session: SessionDep_async, current_user: CurrentUser,ch
     # Get a postgres vectorstore with memory
     memory = pg_vetorstore_with_memory(connection=engine,
                                        collection_name=chat_in.chat_id.hex,
-                                       api_key=embedding.api_key,
-                                       source=embedding.source,
-                                       model=embedding.name,
-                                       base_url=embedding.url,
+                                       api_key=settings.GLOBAL_EMBEDDING_API,
+                                       source=settings.GLOBAL_EMBEDDING_SOURCE,
+                                       model=settings.GLOBAL_EMBEDDING_MODEL,
+                                       base_url=settings.GLOBAL_EMBEDDING_URL,
                                        search_kwargs={"k": 3})
     
     retriever = None
@@ -374,7 +373,9 @@ async def get_documents(*, session: SessionDep_async, current_user: CurrentUser)
 
 @router.put("/delete_chat")
 async def delete_chat(*, session: SessionDep_async, current_user: CurrentUser,chat_in:chat_schema.Update_Chat):
-    history = RedisChatMessageHistory(session_id=chat_in.id.hex, redis_url=REDIS_URL)
+    
+    redis = await redis_client()
+    history = RedisChatMessageHistory(session_id=chat_in.id.hex, redis_client=redis)
     history.clear()
     chat_in.delete_yn = True
     
@@ -459,10 +460,10 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
     # Get a postgres vectorstore with memory
     memory = pg_vetorstore_with_memory(connection=engine,
                                        collection_name=chat_in.chat_id.hex if chat_in.chat_id is not None else chat_in.chatbot_id.hex,
-                                       api_key=embedding.api_key,
-                                       source=embedding.source,
-                                       model=embedding.name,
-                                       base_url=embedding.url,
+                                       api_key=settings.GLOBAL_EMBEDDING_API,
+                                       source=settings.GLOBAL_EMBEDDING_SOURCE,
+                                       model=settings.GLOBAL_EMBEDDING_MODEL,
+                                       base_url=settings.GLOBAL_EMBEDDING_URL,
                                        search_kwargs={"k": 3})
     
     if chabot_data.collection_id is not None:
@@ -496,15 +497,25 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
     messages = []
     messages.append(user_message)
     
-    chain = chatbot_chain(instruct_prompt=chabot_data.instruct_prompt,
-                            thought_prompt=chabot_data.thought_prompt,
-                            api_key=llm.api_key,
-                            source=llm.source,
-                            model=llm.name,
-                            base_url=llm.url,
-                            memory=memory,
-                            document_meta=document_meta,
-                            retriever=retriever,)
+    if chabot_data.thought_prompt:
+        chain = thought_chatbot_chain(instruct_prompt=chabot_data.instruct_prompt,
+                                thought_prompt=chabot_data.thought_prompt,
+                                api_key=llm.api_key,
+                                source=llm.source,
+                                model=llm.name,
+                                base_url=llm.url,
+                                memory=memory,
+                                document_meta=document_meta,
+                                retriever=retriever,)
+    else:
+        chain = chatbot_chain(instruct_prompt=chabot_data.instruct_prompt,
+                                api_key=llm.api_key,
+                                source=llm.source,
+                                model=llm.name,
+                                base_url=llm.url,
+                                memory=memory,
+                                retriever=retriever,)
+        
         
     async def chain_astream(chain,input):
         chunks=[]
@@ -516,9 +527,10 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
             callback_handler = get_openai_callback()
             with callback_handler as cb:
                 async for chunk in chain.astream({'input':input}):
-                    thought = chunk['thought']
-                    answer = chunk['answer']
+                    thought = chunk.get('thought', None)
+                    answer = chunk.get('answer', None)
                     chunks.append(answer)
+                    
                     yield chat_schema.OutMessage(content=answer.content,
                                                 thought=None,
                                                 tools = {'retriever': ''},
@@ -529,9 +541,10 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                 output_token = cb.completion_tokens
         else:
             async for chunk in chain.astream({'input':input}):
-                thought = chunk['thought']
-                answer = chunk['answer']
+                thought = chunk.get('thought', None)
+                answer = chunk.get('answer', None)
                 chunks.append(answer)
+                print(answer.content)
                 yield chat_schema.OutMessage(content=answer.content,
                                             thought=None,
                                             tools = {'retriever': ''},
@@ -557,8 +570,8 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                         chatbot_id=chat_in.chatbot_id,
                         name="바르미",
                         content=response.content,
-                        thought=thought.get('thought', ''),
-                        tools=json.dumps({'retriever': thought.get('document', '') }, ensure_ascii=False),
+                        thought=thought.get('thought', '') if thought else None,
+                        tools=json.dumps({'retriever': thought.get('document', '') if thought else '' }, ensure_ascii=False),
                         is_user=False,
                         create_date=datetime.now(),
                         update_date=datetime.now())

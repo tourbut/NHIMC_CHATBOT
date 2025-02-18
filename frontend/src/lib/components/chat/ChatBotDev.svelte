@@ -23,8 +23,8 @@
     }
 
     let dept_llm_list = []
-    let user_file_list = []
-
+    let user_file_list = [{value:null, name:'문서 없음'}]
+    let is_thought = false
     async function get_data(){
 
         let params = {}
@@ -40,12 +40,15 @@
         }
 
         let documents_success_callback = (json) => {
-            user_file_list = json.map((item) => {
+            
+            let file_list = json.map((item) => {
 
                 let name = item.title + ' (요청: ' + item.request_dept_nm + ')'
 
                 return {value:item.user_file_id, name:name}
             })
+
+            user_file_list = [...user_file_list, ...file_list]
         }
 
         await get_deptllm(params, deptllm_success_callback, failure_callback);
@@ -83,6 +86,10 @@
         get_data();
     });
 
+    $ : if(is_thought==false){
+        chatbot_data['thought_prompt'] = ''
+    }
+
 
 </script>
 <div class="instruct-div-scroll">
@@ -100,13 +107,19 @@
         <div class="fill-space">
         <Combo underline={true} placeholder="모델 선택" ComboMenu={dept_llm_list} bind:selected_name={chatbot_data['dept_llm_id']}/>
         </div>
-    </div>  
+    </div>
     <div class="mt-2">
         <Label class="block mb-2">프롬프트 작성</Label>
+        <div class="mt-2 flex-container">
+            <Label class="mr-2">추론 과정 사용 여부</Label>
+            <Checkbox bind:checked={is_thought} />
+        </div>
+        {#if (is_thought)}
         <div class="mt-2">
             <Label class="block mb-2">· 생각모델 지시문</Label>
             <Textarea class="min-h-[100px] max-h-[150px]" bind:value={chatbot_data['thought_prompt']} placeholder="명령어 입력" />
         </div>
+        {/if}
         <div class="mt-2">
             <Label class="block mb-2">· 지시문</Label>
             <Textarea class="min-h-[100px] max-h-[150px]" bind:value={chatbot_data['instruct_prompt']} placeholder="명령어 입력" />
