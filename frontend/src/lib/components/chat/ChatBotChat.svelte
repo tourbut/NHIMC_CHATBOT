@@ -62,7 +62,6 @@
         }
 
         let streamCallback = (json) => {
-            console.log(json)
             if (json.is_done){
                 message_list[message_list.length-1].thought = json.thought
                 message_list[message_list.length-1].tools = json.tools['retriever']

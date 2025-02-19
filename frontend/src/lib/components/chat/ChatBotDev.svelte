@@ -15,10 +15,10 @@
         description: '',
         instruct_prompt: '',
         thought_prompt: '',
-        user_llm_id: '',
-        dept_llm_id: '',
-        user_file_id: '',
-        bottools_id: '',
+        user_llm_id: null,
+        dept_llm_id: null,
+        user_file_id: null,
+        bottools_id: null,
         is_public: false,
     }
 
@@ -78,7 +78,6 @@
         let failure_callback = (json_error) => {
             addToast('error',json_error.detail)
         }
-        
         await update_chatbot(params, success_callback, failure_callback);
     }
 
