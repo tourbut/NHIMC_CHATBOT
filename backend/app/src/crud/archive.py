@@ -35,6 +35,7 @@ async def get_userllm(*, session: AsyncSession,user_id:uuid.UUID,llm_type:str) -
     statement = select(UserLLM.id,
                        LLM.source,
                        LLM.name,
+                       LLM.url,
                        UserAPIKey.api_key,
                        UserLLM.llm_id).where(UserLLM.user_id == user_id,
                                                    UserLLM.llm_id == LLM.id,

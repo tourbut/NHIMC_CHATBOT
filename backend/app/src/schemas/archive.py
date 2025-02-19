@@ -14,6 +14,7 @@ class GetUserLLM(SQLModel):
     source: str
     name: str
     api_key: str
+    url: str
     llm_id: uuid.UUID
 
 class DeleteFile(SQLModel):
