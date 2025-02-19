@@ -541,7 +541,7 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                 output_token = cb.completion_tokens
         else:
             async for chunk in chain.astream({'input':input}):
-                thought = chunk.get('thought', None)
+                params = chunk.get('params', None)
                 answer = chunk.get('answer', None)
                 chunks.append(answer)
                 print(answer.content)
@@ -570,8 +570,8 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                         chatbot_id=chat_in.chatbot_id,
                         name="바르미",
                         content=response.content,
-                        thought=thought.get('thought', '') if thought else None,
-                        tools=json.dumps({'retriever': thought.get('document', '') if thought else '' }, ensure_ascii=False),
+                        thought=params.get('thought', '') if params else None,
+                        tools=json.dumps({'retriever': params.get('document', '') if params else '' }, ensure_ascii=False),
                         is_user=False,
                         create_date=datetime.now(),
                         update_date=datetime.now())

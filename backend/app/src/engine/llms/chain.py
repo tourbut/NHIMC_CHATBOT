@@ -423,7 +423,7 @@ def thought_chatbot_chain(instruct_prompt:str,
         
     def output_formatter(output):
         return {
-            "thought": output.get("thought"),
+            "params": output.get("params"),
             "answer": output.get("answer"),
         }
         
@@ -438,8 +438,7 @@ def thought_chatbot_chain(instruct_prompt:str,
             "input" : RunnablePassthrough()
         }|
         {
-            "thought":RunnablePassthrough(),
-            "document":RunnablePassthrough(),
+            "params":RunnablePassthrough(),
             "answer":answer_chain
         }
         |RunnableLambda(output_formatter)
@@ -494,7 +493,7 @@ def chatbot_chain(instruct_prompt:str,
     def get_document(output):
         if retriever:
             try :
-                search_msg  = output["thought"].search_msg if hasattr(output["thought"],"search_msg") else output["input"]
+                search_msg  = output.get("thought",output.get("input"))
                 rtn = f"**검색어: {search_msg}**\n"
                 
                 docs = retriever.invoke(search_msg)
@@ -507,7 +506,7 @@ def chatbot_chain(instruct_prompt:str,
 
                 final_idx=[]
                 for result in results:
-                    if result.score >= 8:
+                    if result.score >= 7:
                         final_idx.append(results.index(result))
                 
                 if len(final_idx) == 0:
@@ -533,7 +532,7 @@ def chatbot_chain(instruct_prompt:str,
     def output_formatter(output):
         return {
             "answer": output.get("answer"),
-            "document": output.get("document"),
+            "params": output.get("params"),
         }
         
     final_chain = (
@@ -543,7 +542,7 @@ def chatbot_chain(instruct_prompt:str,
             document = RunnableLambda(get_document)
         )
         |{
-            "document":RunnablePassthrough(),
+            "params":RunnablePassthrough(),
             "answer":answer_chain
         }
         |RunnableLambda(output_formatter)
