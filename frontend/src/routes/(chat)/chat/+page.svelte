@@ -72,6 +72,7 @@
 
     const onclick = async (id) => {
         chat_title = chat_list.find(item => item.items.find(item => item.id == id)).items.find(item => item.id == id).label
+        let bot_name = chat_list.find(item => item.items.find(item => item.id == id)).items.find(item => item.id == id).caption
         let params = {
             chat_id:id
         }
@@ -80,7 +81,8 @@
             chatbot_data = {
                 chat_id :id,
                 chatbot_id: json.chatbot_id,
-                chat_title: chat_title
+                chat_title: chat_title,
+                bot_name: bot_name
             }
             chat_id = id
             chatbot_id = json.chatbot_id

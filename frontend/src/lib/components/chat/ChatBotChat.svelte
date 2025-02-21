@@ -152,7 +152,9 @@
     <div>
         <Navbar rounded color="form" class='px-2 py-3' >
             {#if chatbot_data['chat_title']}
-                <NavBrand>{chatbot_data['chat_title']}</NavBrand>
+                <NavBrand>
+                    {chatbot_data['chat_title']+ '('+chatbot_data['bot_name']+')'}
+                </NavBrand>
             {:else}
                 <NavBrand>{chatbot_data['bot_name']}</NavBrand>
             {/if}
@@ -163,7 +165,7 @@
                     <TrashBinOutline />
                 </button>
                 <Tooltip placement="bottom" >
-                    메시지 삭제
+                    대화내용 삭제
                 </Tooltip>
             </div>
         </Navbar>
