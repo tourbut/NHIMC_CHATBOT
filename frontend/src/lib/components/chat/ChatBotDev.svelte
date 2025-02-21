@@ -20,11 +20,11 @@
         user_file_id: null,
         bottools_id: null,
         is_public: false,
+        is_thought: false,
     }
 
     let dept_llm_list = []
     let user_file_list = [{value:null, name:'문서 없음'}]
-    let is_thought = false
     async function get_data(){
 
         let params = {}
@@ -85,10 +85,9 @@
         get_data();
     });
 
-    $ : if(is_thought==false){
+    $ : if(chatbot_data['is_thought']==false){
         chatbot_data['thought_prompt'] = ''
     }
-
 
 </script>
 <div class="instruct-div-scroll">
@@ -111,9 +110,9 @@
         <Label class="block mb-2">프롬프트 작성</Label>
         <div class="mt-2 flex-container">
             <Label class="mr-2">추론 과정 사용 여부</Label>
-            <Checkbox bind:checked={is_thought} />
+            <Checkbox bind:checked={chatbot_data['is_thought']} />
         </div>
-        {#if (is_thought)}
+        {#if (chatbot_data['is_thought'])}
         <div class="mt-2">
             <Label class="block mb-2">· 생각모델 지시문</Label>
             <Textarea class="min-h-[100px] max-h-[150px]" bind:value={chatbot_data['thought_prompt']} placeholder="명령어 입력" />

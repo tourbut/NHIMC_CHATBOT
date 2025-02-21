@@ -219,3 +219,6 @@ class GetChatbotAllData(SQLModel):
     file_description: str | None = None
     collection_id: uuid.UUID | None = None
     bottools_id: uuid.UUID | None = None
+    
+class ClearMessages(SQLModel):
+    id: uuid.UUID | None = None

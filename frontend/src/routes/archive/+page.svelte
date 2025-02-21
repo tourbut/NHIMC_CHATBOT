@@ -131,7 +131,7 @@
 
       let file_ext = files[0].name.split('.').pop().toLowerCase();
 
-      if (!['txt','TXT','pdf','PDF','xlsx','XLSX','csv','CSV','md'].includes(file_ext)) {
+      if (!['txt','TXT','pdf','PDF','xlsx','XLSX','csv','CSV','md','docx','DOCX'].includes(file_ext)) {
         addToast('warning','지원하지 않는 파일 형식입니다.')
         return
       }

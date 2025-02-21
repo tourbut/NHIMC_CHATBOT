@@ -1,11 +1,11 @@
 <script>
-    import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Dropdown, DropdownItem, DropdownDivider, P } from 'flowbite-svelte';
-    import { ChevronDownOutline } from 'flowbite-svelte-icons';
+    import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Dropdown, DropdownItem, DropdownDivider, P, Button, Tooltip } from 'flowbite-svelte';
+    import { ChevronDownOutline, TrashBinOutline } from 'flowbite-svelte-icons';
     import { v4 as uuidv4 } from 'uuid';
 
     import MessageInput from "$lib/components/common/MessageInput.svelte";
     import Message from "$lib/components/common//Message.svelte";
-    import { send_message_bot, get_messages,get_messages_by_chatbot } from "$lib/apis/chat";
+    import { send_message_bot, get_messages,clear_messages } from "$lib/apis/chat";
     import { addToast } from '$lib/common';
 
     import { username } from '$lib/stores';
@@ -13,6 +13,7 @@
 
     export let chat_id = null
     export let chatbot_id = null
+    let chat_or_chatbot_id = null
     export let chatbot_data = ''
 
     let message_list= []
@@ -66,6 +67,7 @@
                 message_list[message_list.length-1].thought = json.thought
                 message_list[message_list.length-1].tools = json.tools['retriever']
                 message_list[message_list.length-1].msg = typeof json.content === 'object' ? JSON.stringify(json.content) : json.content
+                message_list[message_list.length-1].time = new Date(json.create_date).toLocaleString()
             }
             else{
                 message_list[message_list.length-1].msg = json.content
@@ -99,13 +101,31 @@
         let failure_callback = (json_error) => {
             addToast('error',json_error.detail)
         }
-
+        chat_or_chatbot_id = params.id
         if (gubun=='chatbot'){
-            await get_messages_by_chatbot(params, success_callback, failure_callback)
+            await get_messages(params, success_callback, failure_callback)
         }
         else if(gubun=='chat'){
             await get_messages(params, success_callback, failure_callback)
         }
+    }
+
+    const clearMessages = async () => {
+
+        let params = {
+            id:chat_or_chatbot_id
+        }
+
+        let success_callback = (json) => {
+            message_list = []
+            addToast('info','메시지가 삭제되었습니다.')
+        }
+
+        let failure_callback = (json_error) => {
+            addToast('error',json_error.detail)
+        }
+        
+        await clear_messages(params, success_callback, failure_callback)
     }
 
     $: if (chatbot_id) {
@@ -138,7 +158,15 @@
             {/if}
             <NavUl ulClass="flex flex-col md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:text-sm md:font-medium">
             </NavUl>
-      </Navbar>
+            <div class="ms-auto flex items-center text-gray-500 dark:text-gray-400 sm:order-2">
+                <button on:click={clearMessages}>
+                    <TrashBinOutline />
+                </button>
+                <Tooltip placement="bottom" >
+                    메시지 삭제
+                </Tooltip>
+            </div>
+        </Navbar>
     </div>
 
     <div class="flex flex-col gap-4">

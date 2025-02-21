@@ -2,7 +2,7 @@ from typing import List
 import uuid
 from app.models import *
 from app.src.schemas import chat as chat_schema
-from sqlmodel import or_, select, union_all,union,literal_column
+from sqlmodel import or_,and_, select, union_all,union,literal_column
 from sqlalchemy.orm import aliased
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -158,9 +158,17 @@ async def create_usage(*,session: AsyncSession, usage: chat_schema.Usage) -> Use
 
 async def get_messages(*, session: AsyncSession,current_user: User, id:uuid.UUID) -> List[chat_schema.ReponseMessages]:
     try:
-        statement = select(Messages).where(Messages.chat_id == id,
-                                            Messages.user_id == current_user.id,
-                                            Messages.delete_yn == False).order_by(Messages.create_date)
+        statement = select(Messages).where(
+            or_(
+                Messages.chat_id == id,
+                and_(
+                    Messages.chatbot_id == id,
+                    Messages.chat_id == None
+                )
+            ),
+            Messages.user_id == current_user.id,
+            Messages.delete_yn == False
+        ).order_by(Messages.create_date)
         
         messages = await session.exec(statement)
         return messages.all()
@@ -168,15 +176,34 @@ async def get_messages(*, session: AsyncSession,current_user: User, id:uuid.UUID
         print(e)
         await session.rollback()
         raise e
-    
-async def get_messages_by_chatbot_id(*, session: AsyncSession,current_user: User, id:uuid.UUID) -> List[chat_schema.ReponseMessages]:
+
+async def delete_messages(*, session: AsyncSession, current_user: User, id:uuid.UUID):
     try:
-        statement = select(Messages).where(Messages.chatbot_id == id,
-                                            Messages.user_id == current_user.id,
-                                            Messages.delete_yn == False).order_by(Messages.create_date)
+        statement = select(Messages).where(
+            or_(
+                Messages.chat_id == id,
+                and_(
+                    Messages.chatbot_id == id,
+                    Messages.chat_id == None
+                )
+            ),
+            Messages.user_id == current_user.id,
+            Messages.delete_yn == False)
         
-        messages = await session.exec(statement)
-        return messages.all()
+        tmp_messages = await session.exec(statement)
+        
+        messages = tmp_messages.all()
+        
+        if not messages:
+            return None
+        else:
+            for message in messages.all():
+                message.delete_yn = True
+                session.add(message)
+                
+            await session.commit()
+            await session.refresh(messages)
+            return message
     except Exception as e:
         print(e)
         await session.rollback()

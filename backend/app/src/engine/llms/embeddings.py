@@ -9,7 +9,7 @@ from langchain.storage import LocalFileStore
 from langchain_community.storage import SQLStore, RedisStore
 from langchain.storage._lc_store import create_kv_docstore
 from langchain.retrievers import ParentDocumentRetriever
-from langchain_community.document_loaders import TextLoader, PDFMinerLoader, UnstructuredExcelLoader
+from langchain_community.document_loaders import TextLoader, PDFMinerLoader, UnstructuredExcelLoader,UnstructuredPDFLoader
 from langchain_community.document_loaders.csv_loader import CSVLoader
 from sqlmodel import Session
 import chardet
@@ -74,9 +74,10 @@ async def load_and_split(file_ext:str,file_path: str,
 
 async def embedding_and_store(docs, connection, 
                         collection_name:str, 
-                        api_key:str, 
-                        source:str='openai',
-                        model:str='text-embedding-3-large',
+                        api_key:str=settings.GLOBAL_EMBEDDING_API, 
+                        source:str=settings.GLOBAL_EMBEDDING_SOURCE,
+                        model:str=settings.GLOBAL_EMBEDDING_MODEL,
+                        base_url:str=settings.GLOBAL_EMBEDDING_URL,
                         cache_dir:str='./.cache',
                         collection_metadata:dict={}):
     
@@ -97,7 +98,7 @@ async def embedding_and_store(docs, connection,
     if source == 'openai':
         embeddings = OpenAIEmbeddings(model=model,api_key=api_key)
     elif source == 'ollama':
-        embeddings = OllamaEmbeddings(model=model,base_url=settings.OLLAMA_URL)
+        embeddings = OllamaEmbeddings(model=model,base_url=base_url)
         
     cache_store = LocalFileStore(cache_dir)
     cached_embeddings = CacheBackedEmbeddings.from_bytes_store(embeddings,cache_store)
@@ -142,9 +143,10 @@ async def embedding_and_store(docs, connection,
 async def create_ParentDocument(docs,
                                 connection, 
                                 collection_name:str, 
-                                api_key:str, 
-                                source:str='openai',
-                                model:str='text-embedding-3-large',
+                                api_key:str=settings.GLOBAL_EMBEDDING_API, 
+                                source:str=settings.GLOBAL_EMBEDDING_SOURCE,
+                                model:str=settings.GLOBAL_EMBEDDING_MODEL,
+                                base_url:str=settings.GLOBAL_EMBEDDING_URL,
                                 cache_dir:str='./.cache',
                                 collection_metadata:dict={},
                                 splitter_options:dict={"separators":["\n\n"],"chunk_size":2000,"chunk_overlap":500,
@@ -167,7 +169,7 @@ async def create_ParentDocument(docs,
     if source == 'openai':
         embeddings = OpenAIEmbeddings(model=model,api_key=api_key)
     elif source == 'ollama':
-        embeddings = OllamaEmbeddings(model=model,base_url=settings.OLLAMA_URL)
+        embeddings = OllamaEmbeddings(model=model,base_url=base_url)
         
     cache_store = LocalFileStore(cache_dir)
     cached_embeddings = CacheBackedEmbeddings.from_bytes_store(embeddings,cache_store)
@@ -222,7 +224,6 @@ async def create_ParentDocument(docs,
         parent_splitter=parent_splitter,
         child_splitter=child_splitter,
     )
-    
     
     if async_mode:
         await retriever.aadd_documents(docs, ids=None, add_to_docstore=True)

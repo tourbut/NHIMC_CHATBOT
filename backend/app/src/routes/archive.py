@@ -11,12 +11,15 @@ from app.src.crud import archive as archive_crud
 from app.src.schemas import archive as archive_schema
 
 from app.core.config import settings
+from app.src.utils.preprocess import pdf_to_markdown,xlsx_to_markdown,docx_to_markdown
 from app.src.engine.llms.chain import translate_chain,summarize_chain
-from app.src.engine.llms.embeddings import load_and_split,embedding_and_store, load,create_ParentDocument
+from app.src.engine.llms.embeddings import load_and_split, load,create_ParentDocument
 
 from requests.exceptions import RequestException
+from unstructured.partition.pdf import partition_pdf
 
 from tempfile import NamedTemporaryFile
+from pathlib import Path
 from typing import IO
 
 from fastapi import FastAPI, File, UploadFile,Form
@@ -47,19 +50,31 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,
         
         # Save file and load and split
         path,userdir_path = await save_file(file.file,user_id=current_user.id)
+        file_ext = file.filename.split(".")[-1]
+        if file.filename.split(".")[-1] == "pdf":
+            md = await pdf_to_markdown(path,output_path= path +".md")
+            path = path +".md"
+            file_ext = "md"
+        elif file.filename.split(".")[-1] == "xlsx":
+            md = await xlsx_to_markdown(path,output_path= path +".md")
+            path = path +".md"
+            file_ext = "md"
+        elif file.filename.split(".")[-1] == "docx":
+            md = await docx_to_markdown(path,output_path= path +".md")
+            path = path +".md"
+            file_ext = "md"
         
         file_meta = archive_schema.FileUpload(file_name=file.filename,
                                               file_path=path,
                                               file_size=os.path.getsize(path),
                                               file_type=file.content_type,
                                               file_desc=file_detail.file_desc,
-                                              file_ext=file.filename.split(".")[-1])
+                                              file_ext=file_ext)
         
         db_obj = await archive_crud.create_file(session=session,file=file_meta,user_id=current_user.id)
         
 
-        docs = await load(file_ext=file.filename.split(".")[-1],
-                          file_path=path,)
+        docs = await load(file_ext=file_ext,file_path=path,)
 
         splitter_options = {"separators":file_detail.separators,
                             "chunk_size":file_detail.chunk_size,
@@ -85,6 +100,7 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,
                                                 api_key=userllm.api_key,
                                                 source=userllm.source,
                                                 model=userllm.name,
+                                                base_url=userllm.url,
                                                 cache_dir=f"{userdir_path}/.cache",
                                                 collection_metadata=collection_metadata,
                                                 splitter_options=splitter_options)

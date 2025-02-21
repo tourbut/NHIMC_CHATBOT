@@ -26,11 +26,12 @@
         description: '',
         instruct_prompt: '',
         thought_prompt: '',
-        user_llm_id: '',
-        dept_llm_id: '',
-        user_file_id: '',
-        bottools_id: '',
+        user_llm_id: null,
+        dept_llm_id: null,
+        user_file_id: null,
+        bottools_id: null,
         is_public: false,
+        is_thought: false,
     }
 
     const createChat = async () => {
@@ -86,7 +87,7 @@
             chatbot_data['user_file_id'] = json.user_file_id
             chatbot_data['bottools_id'] = json.bottools_id
             chatbot_data['is_public'] = json.is_public
-
+            chatbot_data['is_thought'] = false ? json.thought_prompt == '' : true
             chatbot_id = json.id
         }
 

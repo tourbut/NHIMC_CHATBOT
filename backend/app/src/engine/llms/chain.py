@@ -363,15 +363,18 @@ def thought_chatbot_chain(instruct_prompt:str,
         raise ValueError(f"Invalid model name: {model}")
     
     runnable = RunnablePassthrough.assign(
-        chat_history=RunnableLambda(memory.load_memory_variables)| itemgetter("chat_history")  # memory_key 와 동일하게 입력합니다.
-        )
+        memory_vars=RunnableLambda(memory.load_memory_variables)
+    ).assign(
+        long_term=lambda x: x["memory_vars"]["long_term"],
+        recent_chat=lambda x: x["memory_vars"]["recent_chat"]
+    )
     
     think_prompt = create_thinking_prompt(thought_prompt=thought_prompt,
                                           document_meta=document_meta,
                                           pydantic_parser=think_parser)
     prompt = create_thinking_chatbot_prompt(instruct_prompt=instruct_prompt)
     
-    think_chain = runnable|think_prompt|llm|think_parser
+    think_chain = think_prompt|llm|think_parser
     answer_chain = prompt|llm
     rerank_chain = map_rerank_chain(llm)
     
@@ -429,9 +432,19 @@ def thought_chatbot_chain(instruct_prompt:str,
         
     final_chain = (
         RunnableParallel(
-            thought = think_chain,
-            input = RunnablePassthrough()
+            input = RunnablePassthrough(),
+            chat_history= runnable,
+            document = RunnableLambda(get_document),
         )
+        |{
+            "input": lambda x: x["input"],
+            "long_term": lambda x: x["chat_history"]["memory_vars"].get("long_term"),
+            "recent_chat": lambda x: x["chat_history"]["memory_vars"].get("recent_chat"),
+            "document": lambda x: x["document"]
+        }|{
+            "input" : RunnablePassthrough(),
+            "thought" : think_chain
+        }
         |{
             "thought":RunnableLambda(get_thought),
             "document":RunnableLambda(get_document),
@@ -480,10 +493,12 @@ def chatbot_chain(instruct_prompt:str,
     else:
         raise ValueError(f"Invalid model name: {model}")
     
-    chat_history = RunnablePassthrough.assign(
-        chat_history=RunnableLambda(memory.load_memory_variables)| itemgetter("chat_history")  # memory_key 와 동일하게 입력합니다.
-        )
-    
+    runnable = RunnablePassthrough.assign(
+        memory_vars=RunnableLambda(memory.load_memory_variables)
+    ).assign(
+        long_term=lambda x: x["memory_vars"]["long_term"],
+        recent_chat=lambda x: x["memory_vars"]["recent_chat"]
+    )
     
     prompt = create_chatbot_prompt(instruct_prompt=instruct_prompt)
     
@@ -535,12 +550,22 @@ def chatbot_chain(instruct_prompt:str,
             "params": output.get("params"),
         }
         
+    def debug(output):
+        print(output)
+        return output
+        
     final_chain = (
         RunnableParallel(
             input = RunnablePassthrough(),
-            chat_history= chat_history,
+            chat_history= runnable,
             document = RunnableLambda(get_document)
         )
+        |{
+            "input": lambda x: x["input"],
+            "long_term": lambda x: x["chat_history"]["memory_vars"].get("long_term"),
+            "recent_chat": lambda x: x["chat_history"]["memory_vars"].get("recent_chat"),
+            "document": lambda x: x["document"]
+        }
         |{
             "params":RunnablePassthrough(),
             "answer":answer_chain

@@ -1,7 +1,7 @@
 from langchain_openai import OpenAIEmbeddings
 from langchain_ollama import OllamaEmbeddings
 from langchain_postgres.vectorstores import PGVector
-from langchain.memory import VectorStoreRetrieverMemory
+from langchain.memory import VectorStoreRetrieverMemory,CombinedMemory,ConversationBufferWindowMemory
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 from langchain.retrievers import ParentDocumentRetriever
@@ -82,9 +82,30 @@ def pg_ParentDocumentRetriever(connection,
     
     return retriever
 
+from typing import Dict, Any
+
+class FilteredCombinedMemory(CombinedMemory):
+    def load_memory_variables(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        # 기본 메모리 변수 로드
+        memory_data = super().load_memory_variables(inputs)
+        
+        # 벡터 스토어에서 가져온 기록
+        vector_history = memory_data.get("long_term", "")
+        # 최근 대화 기록
+        recent_chat = memory_data.get("recent_chat", "")
+        
+        # 벡터 스토어 결과에서 최근 대화 내용 제거
+        for chat in recent_chat.split('\n'):
+            if chat in vector_history:
+                vector_history = vector_history.replace(chat, "")
+                
+        memory_data["long_term"] = vector_history.strip()
+        return memory_data
+
 def pg_vetorstore_with_memory(connection,
                   collection_name:str,
                   api_key:str,
+                  chat_memory = None,
                   source:str='openai',
                   model:str='text-embedding-3-large',
                   base_url:str='http://localhost:11434',
@@ -104,11 +125,53 @@ def pg_vetorstore_with_memory(connection,
                                 base_url=base_url,
                                 async_mode=async_mode
                                 )
+    
     retriever = vectorstore.as_retriever(search_kwargs=search_kwargs)
     
-    memory = VectorStoreRetrieverMemory(retriever=retriever,
-                                        memory_key="chat_history",
+    vector_memory = VectorStoreRetrieverMemory(retriever=retriever,
+                                        memory_key="long_term",
                                         return_messages=True,
                                         return_docs=False,)
+    # 최근 대화 버퍼 메모리 설정
+    buffer_memory = ConversationBufferWindowMemory(
+        k=3,  # 최근 3개의 대화 유지
+        memory_key="recent_chat",
+        chat_memory=chat_memory,
+    )
     
-    return memory
+    combined_memory = FilteredCombinedMemory(
+    memories=[vector_memory, buffer_memory]
+    )
+    
+    return combined_memory
+
+def clear_memory(connection,
+                  collection_name:str,
+                  api_key:str,
+                  source:str='openai',
+                  model:str='text-embedding-3-large',
+                  base_url:str='http://localhost:11434',):
+    
+    try:
+    
+        if type(connection) is Engine:
+            async_mode=False
+        elif type(connection) is AsyncEngine:
+            async_mode=True
+            
+        vectorstore = pg_vetorstore(connection=connection,
+                                    collection_name=collection_name,
+                                    api_key=api_key,
+                                    source=source,
+                                    model=model,
+                                    base_url=base_url,
+                                    async_mode=async_mode
+                                    )
+        
+        vectorstore.delete_collection()[1]
+        
+        return True
+    
+    except Exception as e:
+        print(e)
+        return False
