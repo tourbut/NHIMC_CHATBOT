@@ -197,12 +197,16 @@ async def delete_messages(*, session: AsyncSession, current_user: User, id:uuid.
         if not messages:
             return None
         else:
-            for message in messages.all():
+            for message in messages:
                 message.delete_yn = True
                 session.add(message)
+                await session.flush()
                 
             await session.commit()
-            await session.refresh(messages)
+            
+            for message in messages:
+                await session.refresh(message)
+                
             return message
     except Exception as e:
         print(e)

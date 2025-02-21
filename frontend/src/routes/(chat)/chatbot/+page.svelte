@@ -87,8 +87,13 @@
             chatbot_data['user_file_id'] = json.user_file_id
             chatbot_data['bottools_id'] = json.bottools_id
             chatbot_data['is_public'] = json.is_public
-            chatbot_data['is_thought'] = false ? json.thought_prompt == '' : true
             chatbot_id = json.id
+
+            if (json.thought_prompt == '') {
+                chatbot_data['is_thought'] = false
+            } else {
+                chatbot_data['is_thought'] = true
+            }   
         }
 
         let failure_callback = (json_error) => {

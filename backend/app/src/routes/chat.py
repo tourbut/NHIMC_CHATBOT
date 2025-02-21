@@ -508,7 +508,6 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                 params = chunk.get('params', None)
                 answer = chunk.get('answer', None)
                 chunks.append(answer)
-                print(answer.content)
                 yield chat_schema.OutMessage(content=answer.content,
                                             thought=None,
                                             tools = {'retriever': ''},
