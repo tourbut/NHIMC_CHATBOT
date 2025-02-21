@@ -336,15 +336,26 @@ async def get_documents(*, session: SessionDep_async, current_user: CurrentUser)
 
 @router.put("/delete_chat")
 async def delete_chat(*, session: SessionDep_async, current_user: CurrentUser,chat_in:chat_schema.Update_Chat):
+    try : 
+        history = get_redis_history(chat_in.id.hex,redis_client=await redis_client())
+        await history.aclear()
+        
+        await chat_crud.delete_messages(session=session,current_user=current_user,id=chat_in.id)
+        
+        clear_memory(connection=engine,
+                     collection_name=chat_in.id.hex,
+                     api_key=settings.GLOBAL_EMBEDDING_API,
+                     source=settings.GLOBAL_EMBEDDING_SOURCE,
+                     model=settings.GLOBAL_EMBEDDING_MODEL,
+                     base_url=settings.GLOBAL_EMBEDDING_URL)
+        
+        chat_in.delete_yn = True
     
-    redis = await redis_client()
-    history = RedisChatMessageHistory(session_id=chat_in.id.hex, redis_client=redis)
-    history.clear()
-    
-    chat_in.delete_yn = True
-    
-    chat = await chat_crud.update_chat(session=session,chat=chat_in)
-    return {"message":"Chat deleted successfully"}
+        chat = await chat_crud.update_chat(session=session,chat=chat_in)
+        return {"message":"Chat deleted successfully"}
+    except Exception as e:
+        print(e)
+        return HTTPException(status_code=404,detail="Chat not found")
 
 @router.get("/get_chat",response_model=chat_schema.GetChat)
 async def get_chat(*, session: SessionDep_async, current_user: CurrentUser,chat_id:uuid.UUID):
