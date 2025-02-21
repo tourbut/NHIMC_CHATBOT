@@ -102,6 +102,12 @@ class FilteredCombinedMemory(CombinedMemory):
         memory_data["long_term"] = vector_history.strip()
         return memory_data
 
+class CustomBufferWindowMemory(ConversationBufferWindowMemory):
+    def save_context(self, inputs: Dict[str, Any], outputs: Dict[str, str]) -> None:
+        """Override save_context to skip adding to chat_memory"""
+        # chat_memory에 저장하지 않고 내부 버퍼만 업데이트
+        return None
+
 def pg_vetorstore_with_memory(connection,
                   collection_name:str,
                   api_key:str,
@@ -133,7 +139,7 @@ def pg_vetorstore_with_memory(connection,
                                         return_messages=True,
                                         return_docs=False,)
     # 최근 대화 버퍼 메모리 설정
-    buffer_memory = ConversationBufferWindowMemory(
+    buffer_memory = CustomBufferWindowMemory(
         k=3,  # 최근 3개의 대화 유지
         memory_key="recent_chat",
         chat_memory=chat_memory,
