@@ -72,6 +72,7 @@
                 </Popover>
             </div>
             {/if}
+            <!-- 
             {#if message.msg && message.is_done}
             <button on:click={copyToClipboard} class="absolute right-0 text-gray-900 dark:text-gray-400 m-0.5 hover:bg-gray-200 dark:bg-gray-700  dark:hover:bg-gray-800 rounded-lg py-2 px-2.5 inline-flex items-center justify-center">
                 <span id="default-message" class="inline-flex items-center">
@@ -80,6 +81,7 @@
                 </span>
             </button>
             {/if}
+            -->
         </div>
         <P id={message.id} class="text-sm font-normal py-2.5  prose">{@html marked(message.msg)}</P>
     </div>
