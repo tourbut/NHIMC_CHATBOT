@@ -1,5 +1,4 @@
 <script>
-    import Chat from "$lib/components/chat/Chat.svelte";
     import Sidebar from '$lib/components/common/Sidebar.svelte';
     import { onMount } from 'svelte';
     
@@ -11,7 +10,6 @@
 	import ChatBotChat from "$lib/components/chat/ChatBotChat.svelte";
 
     let chat_list = [{category: 'chat', items: []}];
-    let radio_group = 'dept';
 
     let chat_title=''
     let showModal = false;
