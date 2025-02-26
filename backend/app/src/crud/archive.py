@@ -6,19 +6,24 @@ from app.src.schemas import archive as archive_schema
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-async def get_file_list(*,session: AsyncSession,user_id:uuid.UUID) -> UserFiles:
-    query = select(UserFiles.id,
-                   UserFiles.file_name,
-                   UserFiles.file_size,
-                   UserFiles.file_ext,
-                   UserFiles.file_desc,
-                   ).where(UserFiles.user_id == user_id,
-                           UserFiles.delete_yn == False)
-    files = await session.exec(query)
-    if files is None:
+async def get_file_list(*,session: AsyncSession,user_id:uuid.UUID) -> List[archive_schema.GetFileList]| None:
+    try :
+        query = select(UserFiles.id,
+                    UserFiles.file_name,
+                    UserFiles.file_size,
+                    UserFiles.file_ext,
+                    UserFiles.file_desc,
+                    UserFiles.embedding_yn,
+                    ).where(UserFiles.user_id == user_id,
+                            UserFiles.delete_yn == False)
+        files = await session.exec(query)
+        if files is None:
+            return None
+        else:
+            return files.all()
+    except Exception as e:
+        print(e)
         return None
-    else:
-        return files.all()
 
 async def delete_file(*,session: AsyncSession,user_id:uuid.UUID,file_id:uuid.UUID) -> UserFiles| None:
     file = await session.get(UserFiles, file_id)

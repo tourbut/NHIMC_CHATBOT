@@ -40,3 +40,8 @@ export async function download_file(get_id,file,success_callback, failure_callba
     let url = `/archive/download_file/${get_id}`
     await fastapi_file('download', url, file,success_callback,failure_callback)
 }
+
+export async function get_file_list(params,success_callback, failure_callback) {
+    let url = `/archive/get_file_list/`
+    await fastapi('get', url, params,success_callback,failure_callback)
+}

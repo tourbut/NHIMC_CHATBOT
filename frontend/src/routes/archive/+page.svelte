@@ -1,21 +1,27 @@
 <script>
-    import { Button, Spinner } from "flowbite-svelte";
-    import { Hr} from 'flowbite-svelte';
+    import { Button } from "flowbite-svelte";
     import { Card,Label, NumberInput, Textarea} from 'flowbite-svelte';
     import { Tabs, TabItem, P } from 'flowbite-svelte';
-    import MarkdownViewer from "$lib/components/archive/MarkdownViewer.svelte";
     import { addToast } from '$lib/common';
 
-    import Sidebar from "$lib/components/common/Sidebar.svelte";
+    import Table from '$lib/components/common/Table.svelte';
     import FileUploader from "$lib/components/archive/FileUploader.svelte";
     import { onMount } from 'svelte';
-    import { upload_flies, delete_file, get_file, download_file} from "$lib/apis/archive";
+    import { upload_flies,get_file_list} from "$lib/apis/archive";
 
-    let file_list = []
-    let dataLoaded = false
+    let file_table_head=[
+      {id:0,name:"file_name",type:"string",desc:"파일명"},
+      {id:1,name:"file_size",type:"string",desc:"파일 크기"},
+      {id:2,name:"file_ext",type:"string",desc:"파일 확장자"},
+      {id:3,name:"file_desc",type:"string",desc:"파일 설명"},
+      {id:3,name:"embedding_yn",type:"boolean",desc:"임베딩여부"},
+    ]
+    let file_table_body=[];
+
     let error = {detail:[]}
     let loading = false;
-    let document_content = "Content will be displayed here"
+    let form_data={}
+    let formModal = false;
 
     let files = null;
     let file_value = null;
@@ -37,7 +43,7 @@
 
       let success_callback = (json) => {
         
-        console.log(json)
+        file_table_body = json
       }
 
       let failure_callback = (json_error) => {
@@ -46,81 +52,12 @@
         addToast('error',error.detail)
       }
 
-      //get_archive_list(params,success_callback, failure_callback)
+      get_file_list(params,success_callback, failure_callback)
     }
 
     onMount( () => {
         get_data()
     })
-
-    const onclick_sidebar = async (id) => {
-      
-      if (id =='') {
-        return
-      }
-      
-      let params = {
-        
-      }
-
-      let success_callback = (json) => {
-
-        file.name = json.file_name
-        file.ext = json.file_ext
-        document_content = json.contents.join('\n')
-
-      }
-  
-      let failure_callback = (json_error) => {
-        error = json_error
-        loading = false;
-        addToast('error',error.detail)
-      }
-      await get_file(id,params, success_callback, failure_callback);
-
-    }
-
-    const onclick_more = async (id) =>
-    {
-      if (id =='') {
-        return
-      }
-
-      let params = {
-        id: id
-      }
-
-      let success_callback = (json) => {
-        addToast('info','삭제 완료')
-
-        file_list.forEach(item => {
-          item.items = item.items.filter(item => item.id != id)
-        });
-      }
-
-      let failure_callback = (json_error) => {
-        error = json_error
-        loading = false;
-        addToast('error',error.detail)
-      }
-      await delete_file(params, success_callback, failure_callback);
-    }
-
-    const onclick_download = async() => {
-
-      let success_callback = (json) => {
-        addToast('info','다운로드 완료')
-      }
-
-      let failure_callback = (json_error) => {
-        error = json_error
-        loading = false;
-        addToast('error',error.detail)
-      }
-
-      await download_file(archive_id,file, success_callback, failure_callback);
-
-    }
 
     const file_upload = async () => {
 
@@ -170,63 +107,62 @@
     }
 
 </script>
+<div class="form-tabs">
+  <Tabs>
+    <TabItem open title="모델">
+      <Table btn_id=0 btn_click={onsubmit} table_head={file_table_head} is_plus={false}  
+               bind:table_body={file_table_body} bind:form_data={form_data} 
+               bind:formModal={formModal} />
+    </TabItem>
+    <TabItem title="업로드">
+      <div class="container">
+        <div class="content">
+          <div class="mx-auto p-1 max-w-sm">
+            <Tabs contentClass="">
+              <TabItem open={true}>
+                <span slot="title">파일</span>
+                <Card>
+                  <div>
+                    <Label for="file" class="mb-2">파일 업로드</Label>
+                    <FileUploader bind:files={files} bind:value={file_value} />
+                    <Textarea bind:value={file.description} placeholder="파일 설명" class="mt-2"/>
+                    <div class="flex items-center justify-between">
+                      <Label class="space-y-2 mb-4">
+                        Chunk Size
+                        <NumberInput bind:value={file.chunk_size} class="mt-2"/>
+                      </Label>
+                      <Label class="space-y-2 mb-4">
+                        Chunk Overlap
+                        <NumberInput bind:value={file.chunk_overlap} class="mt-2"/>
+                      </Label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <Label class="space-y-2 mb-4">
+                        Separators
+                        <Textarea bind:value={file.separators} class="mt-2"/>
+                      </Label>
+                      <Label class="space-y-2 mb-4">
+                        Child Chunk Size
+                        <NumberInput bind:value={file.child_chunk_size} class="mt-2"/>
+                      </Label>
+                      <Label class="space-y-2 mb-4">
+                        Child Chunk Overlap
+                        <NumberInput bind:value={file.child_chunk_overlap} class="mt-2"/>
+                      </Label>
+                    </div>
+                    <Button on:click={file_upload}>Upload</Button>
+                  </div>
+                </Card>
+              </TabItem>
+            </Tabs>
+          </div>
+        </div> 
+      </div>
+    </TabItem>
+  </Tabs>
 
-<div class="container">
-  <div>
-    {#if dataLoaded}
-        <Sidebar bind:side_menus={file_list} btn_click={onclick_sidebar} btn_item_more_click={onclick_more}/>
-    {/if}
-  </div>
-  <div class="content">
-    <div class="mx-auto p-1 max-w-sm">
-      <Tabs contentClass="">
-        <TabItem open={true}>
-          <span slot="title">파일</span>
-          <Card>
-            <div>
-              <Label for="file" class="mb-2">파일 업로드</Label>
-              <FileUploader bind:files={files} bind:value={file_value} />
-              <Textarea bind:value={file.description} placeholder="파일 설명" class="mt-2"/>
-              <div class="flex items-center justify-between">
-                <Label class="space-y-2 mb-4">
-                  Chunk Size
-                  <NumberInput bind:value={file.chunk_size} class="mt-2"/>
-                </Label>
-                <Label class="space-y-2 mb-4">
-                  Chunk Overlap
-                  <NumberInput bind:value={file.chunk_overlap} class="mt-2"/>
-                </Label>
-              </div>
-              <div class="flex items-center justify-between">
-                <Label class="space-y-2 mb-4">
-                  Separators
-                  <Textarea bind:value={file.separators} class="mt-2"/>
-                </Label>
-                <Label class="space-y-2 mb-4">
-                  Child Chunk Size
-                  <NumberInput bind:value={file.child_chunk_size} class="mt-2"/>
-                </Label>
-                <Label class="space-y-2 mb-4">
-                  Child Chunk Overlap
-                  <NumberInput bind:value={file.child_chunk_overlap} class="mt-2"/>
-                </Label>
-              </div>
-              <Button on:click={file_upload}>Upload</Button>
-            </div>
-          </Card>
-        </TabItem>
-      </Tabs>
-    </div>
-    
-    <Hr hrClass="h-px my-1 bg-gray-200 border-0 dark:bg-gray-700"/>
-    
-    <div class="form-tabs">
-
-      <MarkdownViewer bind:markdown={document_content} bind:loading={loading} onclick_download={onclick_download}/>
-     
-    </div>  
-  </div> 
 </div>
+
 
 
 <style>

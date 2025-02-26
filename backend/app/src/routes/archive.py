@@ -201,12 +201,11 @@ async def download_file(*, session: SessionDep_async, current_user: CurrentUser,
         print(e)
         raise HTTPException(status_code=404, detail=f"파일 다운로드에 실패하였습니다.")
     
-@router.post("/test/")
-async def create_file(
-    fileb: Annotated[UploadFile, File()],
-    token: Annotated[str, archive_schema.FileDetail],
-):
-    return {
-        "token": token,
-        "fileb_content_type": fileb.content_type,
-    }
+@router.get("/get_file_list/",response_model=List[archive_schema.GetFileList])
+async def get_file_list(*, session: SessionDep_async, current_user: CurrentUser) -> Any:
+    try:
+        files = await archive_crud.get_file_list(session=session,user_id=current_user.id)
+        return files
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=404, detail=f"파일 목록 조회에 실패하였습니다.")

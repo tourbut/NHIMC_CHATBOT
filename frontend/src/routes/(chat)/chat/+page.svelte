@@ -56,9 +56,11 @@
             chatbot_data = {
                 chat_id:json.id,
                 chat_title: json.title,
-                chatbot_id:json.chatbot_id
+                chatbot_id:json.chatbot_id,
+                bot_name: selected_chatbot ? selected_chatbot.name : ''
             }
             chat_id=json.id
+            chatbot_id=json.chatbot_id
             chat_list[0].items = [...chat_list[0].items, {id: json.id, label: json.title, herf: '', caption: selected_chatbot ? selected_chatbot.name : ''}];
         }
 

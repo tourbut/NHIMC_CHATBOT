@@ -52,3 +52,12 @@ class CreateBotDocument(SQLModel):
     userfile_id:uuid.UUID 
     request_dept_id: uuid.UUID 
     is_active: bool = True
+
+class GetFileList(SQLModel):
+    id: uuid.UUID
+    file_name:str
+    file_size:int
+    file_ext:str
+    file_desc:str | None = None
+    embedding_yn:bool = False
+    
