@@ -166,7 +166,7 @@
 
 <Modal bind:open={showModal} size="xs" autoclose={false} outsideclose={true} class="w-full" on:close={() => {form_data={};}}>
     <form class="flex flex-col space-y-3" action="#">
-        <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">텍스트마이닝 개발 생성</h3>
+        <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">챗봇 생성</h3>
         <FloatingLabelInput style="filled" id="floating_filled" name="floating_filled" type="text" bind:value={form_data['bot_name']}>
             {table_head[0].desc}
         </FloatingLabelInput>
