@@ -152,10 +152,10 @@
 
         let failure_callback = (json_error) => {
             addToast('error',json_error.detail)
+
         }
 
         if (is_topic_fix) {
-            console.log('fix')
 
             params['id'] = selected_topic
 

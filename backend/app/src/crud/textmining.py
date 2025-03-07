@@ -24,10 +24,8 @@ async def create_topic(session: AsyncSession, current_user: User, topic_in: text
 async def update_topic(session: AsyncSession, current_user: User, topic_in: textmining_schema.UpdateTopic) -> TmTopic:
     try:
         topic = await session.get(TmTopic, topic_in.id)
-
-        if topic.user_id != current_user.id:
+        if topic.user_id != current_user.id and not current_user.is_admin:
             raise Exception("해당 주제의 생성자만 수정할 수 있습니다.")
-        
         if not topic:
             return None
         else:
@@ -39,6 +37,7 @@ async def update_topic(session: AsyncSession, current_user: User, topic_in: text
             await session.refresh(topic)
 
         return topic
+    
     except Exception as e:
         print(e)
         await session.rollback()

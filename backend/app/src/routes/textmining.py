@@ -24,9 +24,11 @@ async def create_topic(*, session: SessionDep_async, current_user: CurrentUser,t
 
 @router.put("/update_topic",response_model=textmining_schema.UpdateTopic)
 async def update_topic(*, session: SessionDep_async, current_user: CurrentUser,topic_in: textmining_schema.UpdateTopic):
-    topic = await textmining_crud.update_topic(session=session,current_user=current_user,topic_in=topic_in)
-    return topic
-    
+    try:
+        topic = await textmining_crud.update_topic(session=session,current_user=current_user,topic_in=topic_in)
+        return topic
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=e.args[0])    
 
 @router.get("/get_topics",response_model=List[textmining_schema.Get_Out_Topic])
 async def get_topics(*, session: SessionDep_async):
