@@ -28,12 +28,14 @@
         {id:0,name:"id",type:"text",desc:"ID"},
         {id:1,name:"topic_name",type:"text",desc:"주제명"},
         {id:2,name:"contents",type:"text",desc:"설명"},
+        {id:3,name:"sql",type:"text",desc:"추출쿼리"},
     ];
 
     let topic_data={
         id: '',
         topic_name : '',
-        contents:''
+        contents:'',
+        sql:''
     }
 
     let topic_list = []
@@ -77,7 +79,8 @@
         topic_data={
             id: '',
             topic_name : '',
-            contents:''
+            contents:'',
+            sql:''
         }   
 
         schema_data={
@@ -95,7 +98,7 @@
 
         let topic_success_callback = (json) => {
             json.forEach(item => {
-                topic_list = [...topic_list,{value: item.id, name: item.topic_name, contents: item.contents}]
+                topic_list = [...topic_list,{value: item.id, name: item.topic_name, contents: item.contents,sql:item.sql}]
             });
         }
 
@@ -143,7 +146,8 @@
     const btn_create_topic = async () => {
         let params = {
             topic_name: topic_data['topic_name'],
-            contents: topic_data['contents']
+            contents: topic_data['contents'],
+            sql:topic_data['sql']
         }
 
         let failure_callback = (json_error) => {
@@ -159,7 +163,7 @@
                 addToast('info','수정 완료')
                 topic_list = topic_list.map(item => {
                     if (item.value == json.id) {
-                        return {value: json.id, name: json.topic_name, contents: json.contents}
+                        return {value: json.id, name: json.topic_name, contents: json.contents,sql:json.sql}
                     }
                     else {
                         return item
@@ -174,7 +178,7 @@
             let success_callback = (json) => {
                 addToast('info','생성 완료')
                 showTopicModal = false;
-                topic_list = [...topic_list,{value: json.id, name: json.topic_name, contents: json.contents}]
+                topic_list = [...topic_list,{value: json.id, name: json.topic_name, contents: json.contents,sql:json.sql}]
                 selected_topic = json.id
             }
             await create_topic(params, success_callback, failure_callback);
@@ -305,7 +309,7 @@
             is_topic_fix = true;
             showTopicModal = true;
             let tmp_topic = topic_list.find(item => item.value == selected_topic)
-            topic_data = {id: selected_topic, topic_name: tmp_topic.name, contents:tmp_topic.contents}
+            topic_data = {id: selected_topic, topic_name: tmp_topic.name, contents:tmp_topic.contents,sql:tmp_topic.sql}
 
         }
         else if(name == 'schema_fix'){
@@ -349,6 +353,9 @@
             schema_attr_data = schema_list.find(item => item.value == selected_schema).attr   
         }
 
+    }
+    else {
+        schema_attr_data = []
     }
 
     $: if (selected_tmllm) {
@@ -470,6 +477,10 @@
         <Label>
             <P class="block mb-2"> {topic_head[2].desc} </P>
             <Textarea class="min-h-[100px] max-h-[200px]" id="contents" name="contents" bind:value={topic_data['contents']} placeholder="설명 입력" />
+        </Label>
+        <Label>
+            <P class="block mb-2"> {topic_head[3].desc} </P>
+            <Textarea class="min-h-[100px] max-h-[200px]" id="sql" name="sql" bind:value={topic_data['sql']} placeholder="쿼리 입력" />
         </Label>
         <Button name={"btn_new"} type="submit" class="w-full1" on:click={btn_create_topic}>
         {#if is_topic_fix}
