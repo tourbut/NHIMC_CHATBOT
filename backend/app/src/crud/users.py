@@ -67,13 +67,11 @@ async def authenticate(*, session: Session, empl_no: str, password: str) -> user
                 await session.commit()
                 await session.refresh(update_user)
                 
-                if not await verify_password(password, update_user.password):
-                    return None
-                
-                return update_user
+                db_user = await get_user_by_empl_no(session=session, empl_no=empl_no)
                 
     if not await verify_password(password, db_user.password):
         return None
+    
     return db_user
 
 async def create_user(*, session: Session, user_create: user_schema.UserCreate) -> User:
