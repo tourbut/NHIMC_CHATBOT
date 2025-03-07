@@ -59,9 +59,18 @@ async def authenticate(*, session: Session, empl_no: str, password: str) -> user
     else: 
         if isis_user:
             if db_user.password != isis_user[1]:
-                db_user.password = isis_user[1]
+                update_user = await session.get(User, db_user.id)
+                update_dict = {"password": isis_user[1]}
+                update_user.sqlmodel_update(update_dict)
+                update_user.update_date = datetime.now()
+                session.add(update_user)
                 await session.commit()
-                await session.refresh(db_user)
+                await session.refresh(update_user)
+                
+                if not await verify_password(password, update_user.password):
+                    return None
+                
+                return update_user
                 
     if not await verify_password(password, db_user.password):
         return None
