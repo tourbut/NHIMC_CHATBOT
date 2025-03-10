@@ -152,6 +152,7 @@ class Settings(BaseSettings):
     GLOBAL_EMBEDDING_MODEL:str ='bge-m3'
     GLOBAL_EMBEDDING_API:str ='-'
     DEBUG:bool = False
+    LLM_CACHE:bool = False
 
 settings = Settings()  # type: ignore
 print('Debug Mode:',settings.DEBUG)

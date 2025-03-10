@@ -32,15 +32,14 @@ from langchain.globals import set_llm_cache
 from langchain_community.cache import SQLiteCache, SQLAlchemyCache
 
 from ...deps import engine
-set_llm_cache(SQLAlchemyCache(engine))
 
 import langchain
 
 from ....core.config import settings
 langchain.debug = settings.DEBUG
 
-set_llm_cache(SQLiteCache(database_path=".cache.db"))
-
+if settings.LLM_CACHE:
+    set_llm_cache(SQLAlchemyCache(engine))
 
 def translate_chain(api_key:str,
                     model:str='gpt-4o-mini',
