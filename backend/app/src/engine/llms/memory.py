@@ -42,7 +42,8 @@ def pg_ParentDocumentRetriever(connection,
                   base_url:str='http://localhost:11434',
                   async_mode=False,
                   splitter_options:dict={"separators":["\n\n"],"chunk_size":2000,"chunk_overlap":500,
-                                                       "child_chunk_size":200,"child_chunk_overlap":50}):
+                                                       "child_chunk_size":200,"child_chunk_overlap":50},
+                  search_kwargs={"k": 6, "lambda": 0.2}):
     
     vectorstore = pg_vetorstore(connection=connection,
                                 collection_name=collection_name,
@@ -52,6 +53,7 @@ def pg_ParentDocumentRetriever(connection,
                                 base_url=base_url,
                                 async_mode=async_mode
                                 )
+    
     postgre = SQLStore(namespace=collection_name, engine=connection)
     store = create_kv_docstore(postgre)
     
@@ -77,7 +79,7 @@ def pg_ParentDocumentRetriever(connection,
         #search_type="similarity_score_threshold",
         #search_kwargs={"score_threshold": 0.6}
         search_type="mmr",
-        search_kwargs={"k": 6, "lambda": 0.2}
+        search_kwargs=search_kwargs
     )
     
     return retriever

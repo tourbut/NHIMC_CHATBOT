@@ -278,7 +278,8 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                                     model=embedding.name,
                                     base_url=embedding.url,
                                     async_mode=False,
-                                    splitter_options=collection.cmetadata
+                                    splitter_options=collection.cmetadata,
+                                    search_kwargs={"k": 6, "lambda": 0.2}
                                     )
     
     document_meta = "관련 문서 없음" if chabot_data.file_title is None else {'title':chabot_data.file_title,
