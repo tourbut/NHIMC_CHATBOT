@@ -28,18 +28,17 @@ from .prompt import (
 
 from .parser import strparser,think_parser
 
-from langchain.globals import set_llm_cache
-from langchain_community.cache import SQLiteCache, SQLAlchemyCache
-
-from ...deps import engine
-
 import langchain
 
 from ....core.config import settings
 langchain.debug = settings.DEBUG
 
 if settings.LLM_CACHE:
+    from ...deps import engine
+    from langchain.globals import set_llm_cache
+    from langchain_community.cache import SQLiteCache, SQLAlchemyCache
     set_llm_cache(SQLAlchemyCache(engine))
+    print("Using LLM Cache")
 
 def translate_chain(api_key:str,
                     model:str='gpt-4o-mini',
