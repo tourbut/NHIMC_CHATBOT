@@ -1,3 +1,4 @@
+import json
 from typing import List
 import uuid
 from app.models import *
@@ -305,7 +306,7 @@ async def update_chatbot(*, session: AsyncSession, current_user: User, chatbot_i
             if chatbot.user_id != current_user.id:
                 raise Exception("Not Authorized")
             update_dict = chatbot_in.model_dump(exclude_unset=True)
-            chatbot.sqlmodel_update(update_dict)
+            chatbot.sqlmodel_update(update_dict,update={"search_kwargs":json.dumps(chatbot_in.search_kwargs)})
             chatbot.update_date = datetime.now()
             session.add(chatbot)
             await session.commit()
@@ -450,7 +451,9 @@ async def get_chatbot_alldata(*, session: AsyncSession, chatbot_id:uuid.UUID) ->
             UserFiles.file_name.label("file_title"),
             UserFiles.file_desc.label("file_description"),
             UserFiles.collection_id,
-            ChatBot.bottools_id
+            ChatBot.bottools_id,
+            ChatBot.temperature,
+            ChatBot.search_kwargs,
             ).join(UserLLM, UserLLM.id == ChatBot.user_llm_id, isouter=True) \
              .join(DeptLLM, DeptLLM.id == ChatBot.dept_llm_id, isouter=True) \
              .join(UserFiles, UserFiles.id == ChatBot.user_file_id, isouter=True) \

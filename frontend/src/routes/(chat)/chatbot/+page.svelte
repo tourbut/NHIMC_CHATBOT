@@ -20,7 +20,7 @@
     ];
 
     let form_data={}
-    let chatbot_data =  {
+    let chatbot_data = {
         chatbot_id: '',
         bot_name: '',
         description: '',
@@ -32,6 +32,12 @@
         bottools_id: null,
         is_public: false,
         is_thought: false,
+        temperature: 0.5,
+        search_kwargs:{
+                        k: 1,
+                        lambda: 0.2,
+                        retriever_score: 7.0
+                    }
     }
 
     const createChat = async () => {

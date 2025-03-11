@@ -279,7 +279,7 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                                     base_url=embedding.url,
                                     async_mode=False,
                                     splitter_options=collection.cmetadata,
-                                    search_kwargs={"k": 6, "lambda": 0.2}
+                                    search_kwargs=json.loads(chabot_data.search_kwargs) if chabot_data.search_kwargs else None
                                     )
     
     document_meta = "관련 문서 없음" if chabot_data.file_title is None else {'title':chabot_data.file_title,
@@ -298,16 +298,19 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
     
     if chabot_data.thought_prompt:
         chain = thought_chatbot_chain(instruct_prompt=chabot_data.instruct_prompt,
-                                thought_prompt=chabot_data.thought_prompt,
-                                api_key=llm.api_key,
-                                source=llm.source,
-                                model=llm.name,
-                                base_url=llm.url,
-                                memory=memory,
-                                document_meta=document_meta,
-                                retriever=retriever,)
+                                        thought_prompt=chabot_data.thought_prompt,
+                                        temparature=chabot_data.temperature,
+                                        api_key=llm.api_key,
+                                        source=llm.source,
+                                        model=llm.name,
+                                        base_url=llm.url,
+                                        memory=memory,
+                                        document_meta=document_meta,
+                                        retriever=retriever,)
     else:
         chain = chatbot_chain(instruct_prompt=chabot_data.instruct_prompt,
+                                temperature=chabot_data.temperature,
+                                retriever_score=json.loads(chabot_data.search_kwargs)['retriever_score'] if chabot_data.search_kwargs else None,
                                 api_key=llm.api_key,
                                 source=llm.source,
                                 model=llm.name,

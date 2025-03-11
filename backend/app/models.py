@@ -174,7 +174,7 @@ class ChatBot(CommonBase,table=True):
     user_file_id: Optional[uuid.UUID] = Field(foreign_key="userfiles.id",nullable=True,default=None, description="유저파일ID")
     bottools_id : Optional[uuid.UUID] = Field(foreign_key="bottools.id",nullable=True,default=None, description="도구ID")
     is_public: bool = Field(default=False, description="공개여부")
-    temparature: Optional[float] = Field(nullable=True, description="창의성온도")
+    temperature: Optional[float] = Field(nullable=True, description="창의성온도")
     search_kwargs: Optional[str] = Field(nullable=True, description="문서검색 파라미터")
     user_id: uuid.UUID = Field(foreign_key="user.id", description="생성자ID")
     

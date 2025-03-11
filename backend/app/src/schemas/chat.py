@@ -136,7 +136,7 @@ class Create_Out_ChatBot(SQLModel):
     dept_llm_id: uuid.UUID | None = None
     user_file_id: uuid.UUID | None = None
     bottools_id : uuid.UUID | None = None
-    temparature : float | None = None
+    temperature : float | None = None
     search_kwargs : str | None = None
     is_public: bool = False
     user_id: uuid.UUID
@@ -151,8 +151,8 @@ class UpdateChatBot(SQLModel):
     dept_llm_id: uuid.UUID | None = None
     user_file_id: uuid.UUID | None = None
     bottools_id : uuid.UUID | None = None
-    temparature : float | None = None
-    search_kwargs : str | None = None
+    temperature : float | None = None
+    search_kwargs : dict | None = None
     is_public: bool = False
 
 class Update_Out_ChatBot(SQLModel):
@@ -165,7 +165,7 @@ class Update_Out_ChatBot(SQLModel):
     dept_llm_id: uuid.UUID | None = None
     user_file_id: uuid.UUID | None = None
     bottools_id : uuid.UUID | None = None
-    temparature : float | None = None
+    temperature : float | None = None
     search_kwargs : str | None = None
     is_public: bool = False
 
@@ -179,7 +179,7 @@ class Get_Out_ChatBot(SQLModel):
     dept_llm_id: uuid.UUID | None = None
     user_file_id: uuid.UUID | None = None
     bottools_id : uuid.UUID | None = None
-    temparature : float | None = None
+    temperature : float | None = None
     search_kwargs : str | None = None
     is_public: bool = False
     user_id: uuid.UUID
@@ -226,7 +226,7 @@ class GetChatbotAllData(SQLModel):
     file_description: str | None = None
     collection_id: uuid.UUID | None = None
     bottools_id: uuid.UUID | None = None
-    temparature : float | None = None
+    temperature : float | None = None
     search_kwargs : str | None = None
     
 class ClearMessages(SQLModel):

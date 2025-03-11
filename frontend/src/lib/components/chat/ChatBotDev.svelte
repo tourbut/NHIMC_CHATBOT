@@ -1,10 +1,9 @@
 <script>
     import { onMount } from 'svelte';
     import { addToast } from '$lib/common';
-    import { FloatingLabelInput, Textarea, Label, Modal, Radio, P, Select, Checkbox} from 'flowbite-svelte';
+    import { FloatingLabelInput, Textarea, Label, Modal, Radio, P, Select, Checkbox, Range} from 'flowbite-svelte';
     import { Input, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Button, Tooltip} from 'flowbite-svelte';
-    import { PlusOutline, EditOutline } from 'flowbite-svelte-icons';
-    
+    import { PlusOutline, EditOutline, ChevronDownOutline } from 'flowbite-svelte-icons';
     import Combo from '$lib/components/common/Combo.svelte';
     import {update_chatbot, get_deptllm, get_botdocuments} from "$lib/apis/chat";
 
@@ -21,10 +20,17 @@
         bottools_id: null,
         is_public: false,
         is_thought: false,
+        temperature: 0.5,
+        search_kwargs:{
+                        k: 1,
+                        lambda: 0.2,
+                        retriever_score: 7.0
+                    }
     }
 
     let dept_llm_list = []
     let user_file_list = [{value:null, name:'문서 없음'}]
+    let is_detail_open = false
     async function get_data(){
 
         let params = {}
@@ -68,6 +74,8 @@
             user_file_id: chatbot_data['user_file_id'],
             bottools_id: chatbot_data['bottools_id'],
             is_public: chatbot_data['is_public'],
+            temperature: chatbot_data['temperature'],
+            search_kwargs: chatbot_data['search_kwargs']
         }
 
         let success_callback = (json) => {
@@ -108,27 +116,49 @@
     </div>
     <div class="mt-2">
         <Label class="block mb-2">프롬프트 작성</Label>
-        <div class="mt-2 flex-container">
+        <div class="mt-2 ml-2 flex-container bg-gray-100 dark:bg-gray-600 rounded-lg p-1">
             <Label class="mr-2">추론 과정 사용 여부</Label>
             <Checkbox bind:checked={chatbot_data['is_thought']} />
         </div>
         {#if (chatbot_data['is_thought'])}
-        <div class="mt-2">
-            <Label class="block mb-2">· 생각모델 지시문</Label>
+        <div class="mt-2 ml-2 bg-gray-100 dark:bg-gray-600 rounded-lg p-1">
+            <Label class="block mb-2">생각모델 지시문</Label>
             <Textarea class="min-h-[100px] max-h-[150px]" bind:value={chatbot_data['thought_prompt']} placeholder="명령어 입력" />
         </div>
         {/if}
-        <div class="mt-2">
-            <Label class="block mb-2">· 지시문</Label>
+        <div class="mt-2 ml-2 bg-gray-100 dark:bg-gray-600 rounded-lg p-1">
+            <Label class="block mb-2">지시문</Label>
             <Textarea class="min-h-[100px] max-h-[150px]" bind:value={chatbot_data['instruct_prompt']} placeholder="명령어 입력" />
         </div>
+    </div>
+    <div class="mt-2">
+        <div class="flex justify-between">
+            <Label class="block mb-0">세부 설정</Label>
+            <button class="" on:click={() => is_detail_open = !is_detail_open} >
+                <ChevronDownOutline class="w-7 h-7 mr-1 text-gray-500" />
+            </button>
+        </div>
+        {#if (is_detail_open)}
+        <div class="mt-2 ml-2 bg-gray-100 dark:bg-gray-600 rounded-lg p-1">
+            <Label class="block mb-2">창의성 정도({chatbot_data['temperature']})</Label>
+            <Range bind:value={chatbot_data['temperature']} min="0.1" max="1.0" step="0.1" size="sm" />
+        </div>
+        <div class="mt-2 ml-2 bg-gray-100 dark:bg-gray-600 rounded-lg p-1">
+            <Label class="block mb-2">문서 검색수({chatbot_data['search_kwargs']['k']})</Label>
+            <Range bind:value={chatbot_data['search_kwargs']['k']} min="1" max="5" step="1" size="sm" />
+        </div>
+        <div class="mt-2 ml-2 bg-gray-100 dark:bg-gray-600 rounded-lg p-1">
+            <Label class="block mb-2">문서 판별점수({chatbot_data['search_kwargs']['retriever_score']})</Label>
+            <Range bind:value={chatbot_data['search_kwargs']['retriever_score']} min="1" max="10" step="0.1" size="sm" />
+        </div>
+        {/if}
     </div>
     <div class="mt-2 flex-container">
         <Label class="mr-2">참고 문서</Label>
         <div class="fill-space">
         <Combo underline={true} placeholder="문서 선택" ComboMenu={user_file_list} bind:selected_name={chatbot_data['user_file_id']}/>
         </div>
-    </div>  
+    </div>
     <div class="mt-2 mb-2 flex-container">
         <Label class="mr-2">공개 여부</Label>
         <Checkbox bind:checked={chatbot_data['is_public']} />

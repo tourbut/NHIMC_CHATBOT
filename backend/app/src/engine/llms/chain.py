@@ -463,6 +463,7 @@ def chatbot_chain(instruct_prompt:str,
                   model:str='gpt-4o-mini',
                   base_url:str='http://localhost:11434',
                   temperature:float=0.1,
+                  retriever_score:float=7,
                   callback_manager=None,
                   memory=None,
                   retriever=None,
@@ -519,7 +520,7 @@ def chatbot_chain(instruct_prompt:str,
 
                 final_idx=[]
                 for result in results:
-                    if result.score >= 7:
+                    if result.score >= retriever_score:
                         final_idx.append(results.index(result))
                 
                 if len(final_idx) == 0:
