@@ -93,6 +93,8 @@
             chatbot_data['user_file_id'] = json.user_file_id
             chatbot_data['bottools_id'] = json.bottools_id
             chatbot_data['is_public'] = json.is_public
+            chatbot_data['temperature'] = json.temperature
+            chatbot_data['search_kwargs'] =JSON.parse(json.search_kwargs)
             chatbot_id = json.id
 
             if (json.thought_prompt == '') {

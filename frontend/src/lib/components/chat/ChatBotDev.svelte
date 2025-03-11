@@ -149,7 +149,7 @@
         </div>
         <div class="mt-2 ml-2 bg-gray-100 dark:bg-gray-600 rounded-lg p-1">
             <Label class="block mb-2">문서 판별점수({chatbot_data['search_kwargs']['retriever_score']})</Label>
-            <Range bind:value={chatbot_data['search_kwargs']['retriever_score']} min="1" max="10" step="0.1" size="sm" />
+            <Range bind:value={chatbot_data['search_kwargs']['retriever_score']} min="0" max="10" step="0.1" size="sm" />
         </div>
         {/if}
     </div>
