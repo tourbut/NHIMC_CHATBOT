@@ -29,7 +29,8 @@
         mining_llm_id:'',
         instruct_prompt:'',
         response_prompt:'',
-        schema_id:''
+        schema_id:'',
+        is_final_extract:false
     }
     const createChat = async () => {
         showModal = true;
@@ -102,6 +103,7 @@
                 instruct_data['instruct_prompt'] = json.instruct_prompt ? json.instruct_prompt : ''
                 instruct_data['response_prompt'] = json.response_prompt ? json.response_prompt : ''
                 instruct_data['schema_id'] = json.output_schema_id ? json.output_schema_id : ''
+                instruct_data['is_final_extract'] = json.is_final_extract ? json.is_final_extract : false
             }
 
             await get_tminstruct(param_instruct, instruct_success_callback, failure_callback);
@@ -115,7 +117,8 @@
                 mining_llm_id:'',
                 instruct_prompt:'',
                 response_prompt:'',
-                schema_id:''
+                schema_id:'',
+                is_final_extract:false
             }
         }
 

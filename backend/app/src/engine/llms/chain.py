@@ -26,7 +26,7 @@ from .prompt import (
     get_thinking_NoDoc_prompt,
     get_thinking_NoDoc_chatbot)
 
-from .parser import strparser,think_parser
+from ..common.parser import strparser,think_parser
 
 import langchain
 

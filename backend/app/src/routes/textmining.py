@@ -11,7 +11,7 @@ from app.src.schemas import textmining as textmining_schema
 from langchain_community.callbacks import get_openai_callback
 from fastapi.responses import StreamingResponse
 
-from app.src.engine.llms.miner import create_chain,chain_astream,chain_invoke
+from app.src.engine.textminig.miner import create_chain,chain_astream,chain_invoke
 from app.core.config import settings
 
 router = APIRouter()
@@ -161,8 +161,23 @@ async def get_tminstruct(*, session: SessionDep_async, current_user: CurrentUser
 @router.put("/update_tminstruct",response_model=textmining_schema.UpdateTmInstruct)
 async def update_tminstruct(*, session: SessionDep_async, current_user: CurrentUser,
                             tminstruct_in: textmining_schema.UpdateTmInstruct):
+    instruct_id = tminstruct_in.id
+    
     tminstruct = await textmining_crud.update_tminstruct(session=session,tminstruct_in=tminstruct_in)
-    return tminstruct
+    
+    tmexecset = await textmining_crud.get_tmexecset_by_instruct_id(session=session,instruct_id=instruct_id)
+    
+    if tminstruct_in.is_final_extract:
+        if tmexecset is None:
+            await textmining_crud.create_tmexecset(session=session,current_user=current_user
+                                               ,tmexecset_in=textmining_schema.CreateTmExecSet(instruct_id=instruct_id))
+        else :
+            await textmining_crud.update_tmexecset(session=session,tmexecset_id=tmexecset.id)
+    else:
+        if tmexecset is not None:
+            await textmining_crud.delete_tmexecset(session=session,tmexecset_id=tmexecset.id)
+    
+    return tminstruct_in
 
 @router.post("/create_tmexecset",response_model=textmining_schema.CreateTmExecSet)
 async def create_tmexecset(*, session: SessionDep_async, current_user: CurrentUser,

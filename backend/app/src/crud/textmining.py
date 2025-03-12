@@ -1,7 +1,7 @@
 from typing import List
 import uuid
 
-from sqlalchemy import literal_column
+from sqlalchemy import exists, literal_column
 from app.models import *
 from app.src.schemas import textmining as textmining_schema
 from sqlmodel import select, union_all
@@ -386,6 +386,8 @@ async def get_tminstruct(session: AsyncSession, tminstruct_id: uuid.UUID):
                             UserPrompt.instruct_prompt,
                             UserPrompt.response_prompt,
                             TmInstruct.output_schema_id,
+                            exists.where(TmExecSet.instruct_id == tminstruct_id,
+                                         TmExecSet.delete_yn==False).label("is_final_extract")
                            ).where(TmInstruct.id == tminstruct_id,
                                    TmInstruct.userprompt_id == UserPrompt.id)
         tminstruct = await session.exec(statement)
@@ -508,6 +510,38 @@ async def create_tmexecset(session: AsyncSession, current_user: User, tmexecset_
         await session.rollback()
         raise e
     
+async def update_tmexecset(session: AsyncSession, tmexecset_id: uuid.UUID) -> TmExecSet:
+    try:
+        tmexecset = await session.get(TmExecSet, tmexecset_id)
+        if not tmexecset:
+            return None
+        else:
+            tmexecset.delete_yn = False
+            session.add(tmexecset)
+            await session.commit()
+            await session.refresh(tmexecset)
+        return tmexecset
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+    
+async def delete_tmexecset(session: AsyncSession, tmexecset_id: uuid.UUID) -> TmExecSet:
+    try:
+        tmexecset = await session.get(TmExecSet, tmexecset_id)
+        if not tmexecset:
+            return None
+        else:
+            tmexecset.delete_yn = True
+            session.add(tmexecset)
+            await session.commit()
+            await session.refresh(tmexecset)
+        return tmexecset
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+    
 async def get_tmexecsets(session: AsyncSession, current_user: User = None) -> List[textmining_schema.Get_Out_TmExecSet]:
     try:
         if current_user is None:
@@ -529,7 +563,16 @@ async def get_tmexecset(session: AsyncSession, tmexecset_id: uuid.UUID) -> textm
     except Exception as e:
         print(e)
         raise e
-    
+
+async def get_tmexecset_by_instruct_id(session: AsyncSession, instruct_id: uuid.UUID) -> textmining_schema.Get_Out_TmExecSet:
+    try:
+        statement = select(TmExecSet).where(TmExecSet.instruct_id == instruct_id)
+        tmexecset = await session.exec(statement)
+        return tmexecset.first()
+    except Exception as e:
+        print(e)
+        raise e
+
 async def create_tmmaster(session: AsyncSession, tmmaster_in: textmining_schema.CreateTmMaster) -> TmMaster:
     try:
         tmmaster = TmMaster.model_validate(tmmaster_in)

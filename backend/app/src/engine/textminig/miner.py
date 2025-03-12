@@ -1,30 +1,29 @@
 from typing import List, Optional
-from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
 from langchain_ollama import ChatOllama
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_core.runnables import RunnableLambda, RunnablePassthrough,RunnableParallel
+from langchain_core.runnables import RunnableParallel
 from langchain.callbacks import StdOutCallbackHandler
 from langchain.callbacks.manager import CallbackManager
 from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
-from langchain.output_parsers import OutputFixingParser
 from pydantic import BaseModel, Field, ValidationError,create_model
 
 from operator import itemgetter
-from .parser import create_dynamic_schema, create_parser
+from ..common.parser import create_dynamic_schema, create_parser
 
 from app.src.schemas import textmining as textmining_schema
-from langchain.globals import set_llm_cache
-from langchain_community.cache import SQLiteCache, SQLAlchemyCache
 from langchain_community.callbacks import get_openai_callback
 
 import langchain
 
 from ....core.config import settings
 langchain.debug = settings.DEBUG
-#set_llm_cache(SQLiteCache(database_path=".cache.db"))
 
+if settings.LLM_CACHE:
+    from ...deps import engine
+    from langchain.globals import set_llm_cache
+    from langchain_community.cache import SQLAlchemyCache
+    set_llm_cache(SQLAlchemyCache(engine))
+    print("Using LLM Cache")
+    
 def create_chain(instruct_detail:textmining_schema.Get_Out_TmInstructDetail,
                  temperature:float=0.3,
                  callback_manager=None,

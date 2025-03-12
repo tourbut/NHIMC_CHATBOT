@@ -19,7 +19,8 @@
         mining_llm_id:'',
         instruct_prompt:'',
         response_prompt:'',
-        schema_id:''
+        schema_id:'',
+        is_final_extract:false
     }
     export let topic_name=''
     let showTopicModal = false;
@@ -271,6 +272,7 @@
             instruct_prompt: instruct_data['instruct_prompt'],
             response_prompt: instruct_data['response_prompt'],
             output_schema_id: instruct_data['schema_id'],
+            is_final_extract: instruct_data['is_final_extract'],
             chat_id: chat_id
         }
 
@@ -436,10 +438,10 @@
                     <TableHeadCell class="text-center">타입</TableHeadCell>
                     <TableHeadCell class="text-center">설명</TableHeadCell>
                 </TableHead>
-                <TableBody>
+                <TableBody >
                 {#each schema_attr_data as row, index}
                     <TableBodyRow>
-                        <TableBodyCell>
+                        <TableBodyCell >
                             {row.attr_name}
                         </TableBodyCell>
                         <TableBodyCell>
@@ -458,7 +460,13 @@
         <Label class="block mb-2">메모</Label>
         <Textarea class="min-h-[50px] max-h-[100px]" bind:value={instruct_data['memo']} placeholder="메모 입력" />
     </div> 
+    <div class="mt-2 mb-2 flex-container">
+        <Label class="mr-2">최종 추출 등록여부</Label>
+        <Checkbox bind:checked={instruct_data['is_final_extract']} />
+    </div>
     <Button type="submit" class="w-full" on:click={btn_create_or_replace_instruct}>지시문 적용</Button>
+    
+
 </div>
 
 <!-- 원문 생성 모달 -->

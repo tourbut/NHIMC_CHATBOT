@@ -152,6 +152,7 @@ class UpdateTmInstruct(SQLModel):
     instruct_prompt: str | None = None
     response_prompt: str | None = None
     output_schema_id: uuid.UUID | None = None
+    is_final_extract: bool | None = None
 
 class Create_Out_TmInstruct(SQLModel):
     instruct_id : uuid.UUID
@@ -165,6 +166,7 @@ class Get_Out_TmInstruct(SQLModel):
     instruct_prompt: str
     response_prompt: str
     output_schema_id: uuid.UUID
+    is_final_extract: bool
     
 class Get_Out_TmInstructDetail(SQLModel):
     id : uuid.UUID
