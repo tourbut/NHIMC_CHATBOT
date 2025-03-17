@@ -83,6 +83,7 @@
         }
 
         let success_callback = (json) => {
+            chatbot_id = json.id
             chatbot_data['chatbot_id'] = json.id
             chatbot_data['bot_name'] = json.bot_name
             chatbot_data['description'] = json.description
@@ -93,14 +94,17 @@
             chatbot_data['user_file_id'] = json.user_file_id
             chatbot_data['bottools_id'] = json.bottools_id
             chatbot_data['is_public'] = json.is_public
-            chatbot_data['temperature'] = json.temperature
-            chatbot_data['search_kwargs'] =JSON.parse(json.search_kwargs)
-            chatbot_id = json.id
+            chatbot_data['temperature'] = json.temperature ? json.temperature : 0.5
+            chatbot_data['search_kwargs'] = JSON.parse(json.search_kwargs) ? JSON.parse(json.search_kwargs) : {
+                        k: 1,
+                        lambda: 0.2,
+                        retriever_score: 7.0
+                    }
             if (json.thought_prompt == '' || json.thought_prompt == null) {
                 chatbot_data['is_thought'] = false
             } else {
                 chatbot_data['is_thought'] = true
-            }   
+            }
         }
 
         let failure_callback = (json_error) => {
