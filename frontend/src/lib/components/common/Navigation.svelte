@@ -36,8 +36,8 @@
     <NavUl {activeUrl}>
         <NavLi href="/">홈</NavLi>
         {#if $username}
-        <NavLi href="/chat">채팅</NavLi>
         <NavLi href="/chatbot">나만의 챗봇생성</NavLi>
+        <NavLi href="/chat">채팅</NavLi>
         {#if $dept_cd == '41310' || $dept_cd == '10400'}
         <NavLi href="/textminig">텍스트마이닝</NavLi>
         {/if}
