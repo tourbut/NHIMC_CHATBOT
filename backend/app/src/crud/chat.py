@@ -285,7 +285,7 @@ async def get_document(*, session: AsyncSession,user_file_id: uuid.UUID) -> chat
   
 
 # ChatBot
-async def create_chatbot(*, session: AsyncSession, current_user: User, chatbot_in: chat_schema.CreateChatBot) -> ChatBot:
+async def create_chatbot(*, session: AsyncSession, current_user: User, chatbot_in: chat_schema.CreateChatBot) -> chat_schema.Create_Out_ChatBot:
     try:
         chatbot = ChatBot.model_validate(chatbot_in,update={"user_id":current_user.id})
         session.add(chatbot)
