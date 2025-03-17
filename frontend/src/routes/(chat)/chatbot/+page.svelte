@@ -96,8 +96,7 @@
             chatbot_data['temperature'] = json.temperature
             chatbot_data['search_kwargs'] =JSON.parse(json.search_kwargs)
             chatbot_id = json.id
-
-            if (json.thought_prompt == '') {
+            if (json.thought_prompt == '' || json.thought_prompt == null) {
                 chatbot_data['is_thought'] = false
             } else {
                 chatbot_data['is_thought'] = true
