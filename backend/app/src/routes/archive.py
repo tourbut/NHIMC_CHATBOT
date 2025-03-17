@@ -12,7 +12,6 @@ from app.src.schemas import archive as archive_schema
 
 from app.core.config import settings
 from app.src.utils.preprocess import pdf_to_markdown,xlsx_to_markdown,docx_to_markdown
-from app.src.engine.llms.chain import translate_chain,summarize_chain
 from app.src.engine.llms.embeddings import load_and_split, load,create_ParentDocument
 
 from requests.exceptions import RequestException

@@ -1,8 +1,9 @@
 from typing import List
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
+from langchain_community.chat_models import ChatPerplexity
+
 from langchain_ollama import ChatOllama
-from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough,RunnableParallel
 from langchain.callbacks import StdOutCallbackHandler
 from langchain.callbacks.manager import CallbackManager
@@ -16,11 +17,6 @@ from .prompt import (
     create_chatbot_prompt,
     create_thinking_prompt,
     create_thinking_chatbot_prompt,
-    get_translate_prompt, 
-    get_summary_prompt,
-    get_chatbot_prompt,
-    get_chatbot_prompt_with_history,
-    get_chatbot_prompt_with_memory,
     get_thinking_prompt,
     get_thinking_chatbot,
     get_thinking_NoDoc_prompt,
@@ -40,45 +36,40 @@ if settings.LLM_CACHE:
     set_llm_cache(SQLAlchemyCache(engine))
     print("Using LLM Cache")
 
-def translate_chain(api_key:str,
-                    model:str='gpt-4o-mini',
-                    temperature:float=0.7):
+def create_llm(source:str,
+               api_key:str,
+               model:str='gpt-4o-mini',
+               base_url:str='http://localhost:11434',
+               temperature:float=0.7,
+               callback_manager=None):
     
-    prompt = get_translate_prompt()
-
-    if model.startswith('gpt'):
+    if source == 'openai':
         llm = ChatOpenAI(model=model,
                         temperature=temperature,
-                        api_key=api_key)
-    elif model.startswith('claude'):
+                        api_key=api_key,
+                        callback_manager=callback_manager,
+                        stream_usage=True)
+        
+    elif source == 'claude':
         llm = ChatAnthropic(model=model,
                             temperature=temperature,
-                            api_key=api_key)
+                            api_key=api_key,
+                            callback_manager=callback_manager)
+    elif source == 'ollama':
+        llm = ChatOllama(model=model,
+                         base_url= base_url,
+                         temperature=temperature,
+                         callback_manager=callback_manager,
+                         )
+    elif source == 'perplexity':
+        llm = ChatPerplexity(model=model,
+                             temperature=temperature,
+                             api_key=api_key,
+                             callback_manager=callback_manager)
     else:
         raise ValueError(f"Invalid model name: {model}")
     
-    chain = prompt|llm
-    return chain
-
-def summarize_chain(api_key:str,
-                    model:str='gpt-4o-mini',
-                    temperature:float=0.7):
-    
-    prompt = get_summary_prompt()
-
-    if model.startswith('gpt'):
-        llm = ChatOpenAI(model=model,
-                        temperature=temperature,
-                        api_key=api_key)
-    elif model.startswith('claude'):
-        llm = ChatAnthropic(model=model,
-                            temperature=temperature,
-                            api_key=api_key)
-    else:
-        raise ValueError(f"Invalid model name: {model}")
-    
-    chain = prompt|llm
-    return chain
+    return llm
 
 def map_rerank_chain(llm):
     
@@ -148,26 +139,12 @@ def thinking_chatbot_chain(api_key:str,
     
     callback_manager = CallbackManager([StdOutCallbackHandler()])
     
-    if model.startswith('gpt'):
-        llm = ChatOpenAI(model=model,
-                        temperature=temperature,
-                        api_key=api_key,
-                        callback_manager=callback_manager,
-                        stream_usage=True)
-        
-    elif model.startswith('claude'):
-        llm = ChatAnthropic(model=model,
-                            temperature=temperature,
-                            api_key=api_key,
-                            callback_manager=callback_manager)
-    elif source == 'ollama':
-        llm = ChatOllama(model=model,
-                         base_url= base_url,
-                         temperature=temperature,
-                         callback_manager=callback_manager,
-                         )
-    else:
-        raise ValueError(f"Invalid model name: {model}")
+    llm = create_llm(source=source,
+                     api_key=api_key,
+                     model=model,
+                     base_url=base_url,
+                     temperature=temperature,
+                     callback_manager=callback_manager)
     
     runnable = RunnablePassthrough.assign(
         chat_history=RunnableLambda(memory.load_memory_variables)| itemgetter("chat_history")  # memory_key 와 동일하게 입력합니다.
@@ -257,26 +234,12 @@ def thinking_chatbot_NoDoc_chain(api_key:str,
     
     callback_manager = CallbackManager([StdOutCallbackHandler()])
     
-    if model.startswith('gpt'):
-        llm = ChatOpenAI(model=model,
-                        temperature=temperature,
-                        api_key=api_key,
-                        callback_manager=callback_manager,
-                        stream_usage=True)
-        
-    elif model.startswith('claude'):
-        llm = ChatAnthropic(model=model,
-                            temperature=temperature,
-                            api_key=api_key,
-                            callback_manager=callback_manager)
-    elif source == 'ollama':
-        llm = ChatOllama(model=model,
-                         base_url= base_url,
-                         temperature=temperature,
-                         callback_manager=callback_manager,
-                         )
-    else:
-        raise ValueError(f"Invalid model name: {model}")
+    llm = create_llm(source=source,
+                     api_key=api_key,
+                     model=model,
+                     base_url=base_url,
+                     temperature=temperature,
+                     callback_manager=callback_manager)
     
     runnable = RunnablePassthrough.assign(
         chat_history=RunnableLambda(memory.load_memory_variables)| itemgetter("chat_history")  # memory_key 와 동일하게 입력합니다.
@@ -323,7 +286,6 @@ def thinking_chatbot_NoDoc_chain(api_key:str,
     
     return final_chain
 
-
 def thought_chatbot_chain(instruct_prompt:str,
                   thought_prompt:str,
                   api_key:str,
@@ -339,26 +301,12 @@ def thought_chatbot_chain(instruct_prompt:str,
     
     callback_manager = CallbackManager([StdOutCallbackHandler()])
     
-    if model.startswith('gpt'):
-        llm = ChatOpenAI(model=model,
-                        temperature=temperature,
-                        api_key=api_key,
-                        callback_manager=callback_manager,
-                        stream_usage=True)
-        
-    elif model.startswith('claude'):
-        llm = ChatAnthropic(model=model,
-                            temperature=temperature,
-                            api_key=api_key,
-                            callback_manager=callback_manager)
-    elif source == 'ollama':
-        llm = ChatOllama(model=model,
-                         base_url= base_url,
-                         temperature=temperature,
-                         callback_manager=callback_manager,
-                         )
-    else:
-        raise ValueError(f"Invalid model name: {model}")
+    llm = create_llm(source=source,
+                     api_key=api_key,
+                     model=model,
+                     base_url=base_url,
+                     temperature=temperature,
+                     callback_manager=callback_manager)
     
     runnable = RunnablePassthrough.assign(
         memory_vars=RunnableLambda(memory.load_memory_variables)
@@ -464,33 +412,18 @@ def chatbot_chain(instruct_prompt:str,
                   base_url:str='http://localhost:11434',
                   temperature:float=0.1,
                   retriever_score:float=7,
-                  callback_manager=None,
+                  callbacks=None,
                   memory=None,
                   retriever=None,
                   ):
     
-    callback_manager = CallbackManager([StdOutCallbackHandler()])
-    
-    if model.startswith('gpt'):
-        llm = ChatOpenAI(model=model,
-                        temperature=temperature,
-                        api_key=api_key,
-                        callback_manager=callback_manager,
-                        stream_usage=True)
-        
-    elif model.startswith('claude'):
-        llm = ChatAnthropic(model=model,
-                            temperature=temperature,
-                            api_key=api_key,
-                            callback_manager=callback_manager)
-    elif source == 'ollama':
-        llm = ChatOllama(model=model,
-                         base_url= base_url,
-                         temperature=temperature,
-                         callback_manager=callback_manager,
-                         )
-    else:
-        raise ValueError(f"Invalid model name: {model}")
+    callback_manager = CallbackManager(callbacks)
+    llm = create_llm(source=source,
+                     api_key=api_key,
+                     model=model,
+                     base_url=base_url,
+                     temperature=temperature,
+                     callback_manager=callback_manager)
     
     runnable = RunnablePassthrough.assign(
         memory_vars=RunnableLambda(memory.load_memory_variables)

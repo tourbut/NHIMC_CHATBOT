@@ -1,6 +1,6 @@
 import uuid
 import json
-from typing import Any,List
+from typing import Any, Generator,List
 
 from fastapi import APIRouter, HTTPException, Request
 
@@ -22,7 +22,8 @@ from langchain_core.messages import (
     AIMessage,
     HumanMessage,
 )
-from langchain_community.callbacks import get_openai_callback
+
+from ..engine.llms.callbacks import MyCallback, get_my_callback,get_openai_callback,token_counter_callback
 
 router = APIRouter()
 
@@ -308,6 +309,8 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                                         document_meta=document_meta,
                                         retriever=retriever,)
     else:
+        callbacks = [token_counter_callback()]
+        
         chain = chatbot_chain(instruct_prompt=chabot_data.instruct_prompt,
                                 temperature=chabot_data.temperature,
                                 retriever_score=json.loads(chabot_data.search_kwargs)['retriever_score'] if chabot_data.search_kwargs else None,
@@ -316,10 +319,11 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                                 model=llm.name,
                                 base_url=llm.url,
                                 memory=memory,
-                                retriever=retriever,)
+                                retriever=retriever,
+                                callbacks=callbacks)
         
         
-    async def chain_astream(chain,input):
+    async def chain_astream(chain,callbacks,input):
         chunks=[]
         params = None
         input_token=0
@@ -342,10 +346,12 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                 input_token = cb.prompt_tokens
                 output_token = cb.completion_tokens
         else:
+            
             async for chunk in chain.astream({'input':input}):
                 params = chunk.get('params', None)
                 answer = chunk.get('answer', None)
                 chunks.append(answer)
+                
                 yield chat_schema.OutMessage(content=answer.content,
                                             thought=None,
                                             tools = {'retriever': ''},
@@ -415,4 +421,4 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                                      is_done=True).model_dump_json()
         yield final_response + '\n'
         
-    return StreamingResponse(chain_astream(chain,chat_in.input),media_type='application/json')
+    return StreamingResponse(chain_astream(chain,callbacks,chat_in.input),media_type='application/json')
