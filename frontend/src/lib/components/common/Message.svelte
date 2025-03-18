@@ -41,9 +41,9 @@
 </div>
 {:else}
 <div class="flex items-start gap-2.5">
-    {#if message.name == '바르미'}
+    {#if message.name.includes('바르미')}
         <Avatar src="/바르미_상반신.png" size="sm"/>
-    {:else if message.name == '미드미'}
+    {:else if message.name.includes('미드미')}
         <Avatar src="/미드미_상반신.png" size="sm"/>
     {:else}
         <Avatar src="/바르미_상반신.png" size="sm"/>
