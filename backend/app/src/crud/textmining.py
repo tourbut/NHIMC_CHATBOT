@@ -1,10 +1,10 @@
 from typing import List
 import uuid
 
-from sqlalchemy import exists, literal_column
+from sqlalchemy import literal_column
 from app.models import *
 from app.src.schemas import textmining as textmining_schema
-from sqlmodel import select, union_all
+from sqlmodel import select, union_all, exists
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 async def create_topic(session: AsyncSession, current_user: User, topic_in: textmining_schema.CreateTopic) -> TmTopic:
@@ -386,7 +386,7 @@ async def get_tminstruct(session: AsyncSession, tminstruct_id: uuid.UUID):
                             UserPrompt.instruct_prompt,
                             UserPrompt.response_prompt,
                             TmInstruct.output_schema_id,
-                            exists.where(TmExecSet.instruct_id == tminstruct_id,
+                            exists().where(TmExecSet.instruct_id == tminstruct_id,
                                          TmExecSet.delete_yn==False).label("is_final_extract")
                            ).where(TmInstruct.id == tminstruct_id,
                                    TmInstruct.userprompt_id == UserPrompt.id)
