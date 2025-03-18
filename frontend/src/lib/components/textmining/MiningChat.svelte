@@ -52,6 +52,7 @@
                     }
 
         let success_callback = (json) => {
+            message_list[message_list.length-1].name = json.name
             message_list[message_list.length-1].msg = json.content
             message_list[message_list.length-1].thought = json.full_prompt
             message_list[message_list.length-1].is_done = true

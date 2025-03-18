@@ -241,10 +241,10 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,t
         
         messages = []
         messages.append(user_message)
-        
+        instruct_detail.mining_llm_name
         bot_message = textmining_schema.CreateTmMessages(user_id=current_user.id,
                                                         chat_id=tmchat_in.chat_id,
-                                                        name="미드미",
+                                                        name="미드미(by "+instruct_detail.mining_llm_name+")",
                                                         content=out_message,
                                                         full_prompt=prompt.text,
                                                         is_user=False,
@@ -258,11 +258,12 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,t
         
         await textmining_crud.create_tmmessages(session=session,current_user=current_user,tmmessages_in=messages,usage=usage)
                 
-        rtn = textmining_schema.OutMessage(content=out_message,
-                                        full_prompt=prompt.text,
-                                            input_token=token[0],
-                                            output_token=token[1],
-                                            is_done=True)
+        rtn = textmining_schema.OutMessage(name=bot_message.name,
+                                           content=bot_message.content,
+                                           full_prompt=bot_message.full_prompt,
+                                           input_token=token[0],
+                                           output_token=token[1],
+                                           is_done=True)
         return rtn
     except Exception as e:
         print(e)

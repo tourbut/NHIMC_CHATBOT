@@ -199,6 +199,7 @@ class SendMessage(SQLModel):
     input: str
 
 class OutMessage(SQLModel):
+    name: str
     content: str
     full_prompt: str | None = None
     input_token: int | None = None
