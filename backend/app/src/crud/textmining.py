@@ -100,7 +100,7 @@ async def get_llm(*, session: AsyncSession) -> List[textmining_schema.Get_Out_Tm
                            LLM.type,
                            LLM.name,
                            LLM.description,
-                           LLM.url).where(LLM.active_yn == True,LLM.type == "llm")
+                           LLM.url).where(LLM.active_yn == True,LLM.type == "llm",LLM.is_active == True)
         llm = await session.exec(statement)
         if not llm:
             return None
@@ -120,8 +120,7 @@ async def get_tmllm(session: AsyncSession) -> List[textmining_schema.Get_Out_TmL
                            LLM.name,
                            LLM.description,
                            LLM.url,
-                           TmLLM.active_yn).where(TmLLM.delete_yn == False,
-                                          TmLLM.llm_id == LLM.id)
+                           TmLLM.active_yn).where(TmLLM.delete_yn == False,TmLLM.llm_id == LLM.id,LLM.is_active == True)
         tmllms = await session.exec(statement)
         return tmllms.all()
     except Exception as e:
@@ -398,7 +397,7 @@ async def get_tminstruct(session: AsyncSession, tminstruct_id: uuid.UUID):
 
 async def get_tminstruct_detail(session: AsyncSession, current_user: User, instruct_id: uuid.UUID) -> textmining_schema.Get_Out_TmInstructDetail:
     try:
-        statement1 = select( TmInstruct.id,
+        statement1 = select(TmInstruct.id,
                             TmInstruct.title,
                             TmInstruct.memo,
                             TmInstruct.topic_id,
@@ -564,6 +563,43 @@ async def get_tmexecset(session: AsyncSession, tmexecset_id: uuid.UUID) -> textm
         print(e)
         raise e
 
+async def get_mining_info(session: AsyncSession, tmexecset_id: uuid.UUID) -> textmining_schema.Get_Out_TmInstructDetail:
+    try:
+        statement1 = select(TmInstruct.id,
+                            TmInstruct.title,
+                            TmInstruct.memo,
+                            TmInstruct.topic_id,
+                            TmTopic.topic_name,
+                            TmTopic.sql,
+                            TmInstruct.mining_llm_id,
+                            LLM.name.label("mining_llm_name"),
+                            LLM.url.label("mining_llm_url"),
+                            UserPrompt.instruct_prompt,
+                            UserPrompt.response_prompt,
+                            TmInstruct.output_schema_id,
+                            TmOutputSchema.schema_name.label("output_schema_name"),
+                            TmOutputSchema.schema_desc.label("output_schema_desc"),
+                           ).where(TmExecSet.id == tmexecset_id,
+                                   TmInstruct.id == TmExecSet.instruct_id,
+                                   TmInstruct.topic_id == TmTopic.id,
+                                   TmInstruct.mining_llm_id == TmLLM.id,
+                                   TmLLM.llm_id == LLM.id,
+                                   TmInstruct.userprompt_id == UserPrompt.id,
+                                   TmInstruct.output_schema_id == TmOutputSchema.id)
+        tminstruct = await session.exec(statement1)
+        result1 = tminstruct.first()
+        
+        statement2 = select(TmOutputSchemaAttr).where(TmOutputSchemaAttr.schema_id == result1.output_schema_id,
+                                                      TmOutputSchemaAttr.delete_yn == False)
+        tmoutputschemaattrs = await session.exec(statement2)
+
+        rtn = textmining_schema.Get_Out_TmInstructDetail.model_validate(result1,update={'output_schema_attr':tmoutputschemaattrs.all()})
+                
+        return rtn
+    except Exception as e:
+        print(e)
+        raise e
+
 async def get_tmexecset_by_instruct_id(session: AsyncSession, instruct_id: uuid.UUID) -> textmining_schema.Get_Out_TmExecSet:
     try:
         statement = select(TmExecSet).where(TmExecSet.instruct_id == instruct_id)
@@ -602,7 +638,21 @@ async def get_tmmaster(session: AsyncSession, tmmaster_id: uuid.UUID) -> textmin
     except Exception as e:
         print(e)
         raise e
-
+    
+async def create_tmdatalist(session: AsyncSession, tmdatalist_in: List[textmining_schema.CreateTmData]) -> List[textmining_schema.CreateTmData]:
+    try:
+        # 모든 객체를 먼저 생성
+        tmdata_objs = [TmData.model_validate(tmdata_in) for tmdata_in in tmdatalist_in]
+        
+        session.add_all(tmdata_objs)
+        await session.commit()
+            
+        return tmdata_objs
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+    
 async def create_tmdata(session: AsyncSession, tmdata_in: textmining_schema.CreateTmData) -> TmData:
     try:
         tmdata = TmData.model_validate(tmdata_in)
@@ -623,6 +673,18 @@ async def get_tmdata(session: AsyncSession, master_id: uuid.UUID) -> List[textmi
     except Exception as e:
         print(e)
         raise e
+
+async def create_tmresultlist(session: AsyncSession, tmresult_in: List[textmining_schema.CreateTmResult]) -> List[textmining_schema.CreateTmResult]:
+    try:
+        tmresult_obj = [TmResult.model_validate(tmresult_in) for tmresult_in in tmresult_in]
+        session.add_all(tmresult_obj)
+        await session.commit()
+        return tmresult_obj
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+
     
 async def create_tmresult(session: AsyncSession, tmresult_in: textmining_schema.CreateTmResult) -> TmResult:
     try:

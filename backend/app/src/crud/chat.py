@@ -21,7 +21,8 @@ async def get_userllm(*, session: AsyncSession,user_id:uuid.UUID) -> List[chat_s
                                                     UserLLM.llm_id == LLM.id,
                                                     UserLLM.api_id == UserAPIKey.id,
                                                     UserLLM.active_yn == True,
-                                                    LLM.type == "llm")
+                                                    LLM.type == "llm",
+                                                    LLM.is_active == True)
         userllm = await session.exec(statement)
         if not userllm:
             return None
@@ -46,7 +47,8 @@ async def get_deptllm(*, session: AsyncSession,user_id:uuid.UUID) -> List[chat_s
                                                     DeptLLM.llm_id == LLM.id,
                                                     DeptLLM.api_id == DeptAPIKey.id,
                                                     DeptLLM.active_yn == True,
-                                                    LLM.type == "llm")
+                                                    LLM.type == "llm",
+                                                    LLM.is_active == True)
         userllm = await session.exec(statement)
         if not userllm:
             return None
@@ -71,7 +73,8 @@ async def get_llm(*, session: AsyncSession,user_id:uuid.UUID) -> List[chat_schem
                             UserAPIKey.api_key.label("api_key")).where(UserLLM.user_id == user_id,
                                                         UserLLM.llm_id == LLM.id,
                                                         UserLLM.api_id ==UserAPIKey.id,
-                                                        UserLLM.active_yn == True)
+                                                        UserLLM.active_yn == True,
+                                                        LLM.is_active == True)
 
         statement2 = select(literal_column("'dept'").label("gubun"),
                             DeptLLM.id.label("llm_id"),
@@ -84,7 +87,8 @@ async def get_llm(*, session: AsyncSession,user_id:uuid.UUID) -> List[chat_schem
                                                         DeptLLM.dept_id == UserDept.dept_id,
                                                         DeptLLM.llm_id == LLM.id,
                                                         DeptLLM.api_id ==DeptAPIKey.id,
-                                                        DeptLLM.active_yn == True)
+                                                        DeptLLM.active_yn == True,
+                                                        LLM.is_active == True)
         
         statement = union_all(statement1, statement2)
                             
