@@ -245,16 +245,20 @@ class TmMaster(CommonBase,table=True):
     exec_set_id: uuid.UUID = Field(foreign_key="tmexecset.id")
     status : str = Field(nullable=False, description="상태")
     start_date : datetime = Field(nullable=False, description="시작일시")
-    end_date : datetime = Field(nullable=False, description="종료일시")
+    end_date : Optional[datetime] = Field(nullable=True, description="종료일시")
 
 class TmData(CommonBase,table=True):
     id : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     master_id : uuid.UUID = Field(foreign_key="tmmaster.id")
-    origin_text : str = Field(nullable=False, description="원문")
+    origin_key : str = Field(nullable=False, description="원본 Key")
+    origin_text : Optional[str] = Field(nullable=True, description="원문")
 
 class TmResult(CommonBase,table=True):
     master_id : uuid.UUID = Field(foreign_key="tmmaster.id", primary_key=True)
     data_id : uuid.UUID = Field(foreign_key="tmdata.id", primary_key=True)
     seq : int = Field(primary_key=True)
+    item_seq : int = Field(primary_key=True)
     item_nm : str = Field(nullable=False, description="항목명")
-    item_value : str = Field(nullable=False, description="항목값")
+    item_value : Optional[str] = Field(nullable=True, description="항목값")
+    
+    

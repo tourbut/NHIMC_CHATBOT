@@ -154,5 +154,12 @@ class Settings(BaseSettings):
     DEBUG:bool = False
     LLM_CACHE:bool = False
 
+    SYBASE_SERVER_IP:str = ''
+    SYBASE_SERVER_PORT:str = ''
+    SYBASE_SERVER_NAME:str = ''
+    SYBASE_USER:str = ''
+    SYBASE_PASSWORD:str = ''
+    
+
 settings = Settings()  # type: ignore
 print('Debug Mode:',settings.DEBUG)

@@ -73,6 +73,23 @@ services:
     depends_on:
       - backend
 
+  minig_batch:
+    container_name: mining_batch
+    build:
+      context: .
+      dockerfile: backend/mining_Dockerfile
+    env_file: 
+      - prd.env
+    environment:
+      TZ: "Asia/Seoul"  # timezone 설정 부분
+    ports:
+      - 8000:8000
+    volumes:
+      - ./backend/app/:/app/app
+      - ./backend/logs:/app/logs
+    networks:
+      - nhimcchat-public
+
 volumes:
   nhimcchat-db-data:
 

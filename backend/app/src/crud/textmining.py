@@ -621,6 +621,24 @@ async def create_tmmaster(session: AsyncSession, tmmaster_in: textmining_schema.
         await session.rollback()
         raise e
     
+async def update_tmmaster(session: AsyncSession, tmmaster_in: textmining_schema.UpdateTmMaster) -> TmMaster:
+    try:
+        tmmaster = await session.get(TmMaster, tmmaster_in.id)
+        if not tmmaster:
+            return None
+        else:
+            update_dict = tmmaster_in.model_dump(exclude_unset=True)
+            tmmaster.sqlmodel_update(update_dict)
+            tmmaster.update_date = datetime.now()
+            session.add(tmmaster)
+            await session.commit()
+            await session.refresh(tmmaster)
+        return tmmaster
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+     
 async def get_tmmasters(session: AsyncSession) -> List[textmining_schema.Get_Out_TmMaster]:
     try:
         statement = select(TmMaster).where(TmMaster.delete_yn == False)
@@ -639,13 +657,15 @@ async def get_tmmaster(session: AsyncSession, tmmaster_id: uuid.UUID) -> textmin
         print(e)
         raise e
     
-async def create_tmdatalist(session: AsyncSession, tmdatalist_in: List[textmining_schema.CreateTmData]) -> List[textmining_schema.CreateTmData]:
+async def create_tmdatalist(session: AsyncSession, tmdatalist_in: List[textmining_schema.CreateTmData]) -> List[TmData]:
     try:
         # 모든 객체를 먼저 생성
         tmdata_objs = [TmData.model_validate(tmdata_in) for tmdata_in in tmdatalist_in]
         
         session.add_all(tmdata_objs)
         await session.commit()
+        for obj in tmdata_objs:
+            await session.refresh(obj)
             
         return tmdata_objs
     except Exception as e:

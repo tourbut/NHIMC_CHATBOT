@@ -1,0 +1,53 @@
+FROM ubuntu:24.04
+
+WORKDIR /app/
+
+LABEL maintainer="scshin88 <204415>"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Seoul
+
+# 기본 패키지 및 Java 설치
+RUN apt-get update && apt-get install -y \
+    cron \
+    tzdata \
+    locales \
+    python3 \
+    python3-pip \
+    && apt-get update \
+    && apt-get install -y openjdk-8-jdk \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# 로케일 설정
+RUN localedef -i ko_KR -c -f UTF-8 -A /usr/share/locale/locale.alias ko_KR.UTF-8
+ENV LANG ko_KR.UTF-8
+ENV LC_ALL ko_KR.UTF-8
+
+# Python 가상환경 설정
+RUN apt-get update && apt-get install -y python3-venv
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Python 의존성 설치
+COPY ./backend/requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+
+# Java 환경 설정
+COPY ./backend/jconn4.jar /usr/local/lib/jconn4.jar
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
+ENV PATH $JAVA_HOME/bin:$PATH
+ENV CLASSPATH $CLASSPATH:/usr/local/lib/jconn4.jar
+
+# 애플리케이션 파일 복사
+COPY ./backend/mining_run.sh /app/mining_run.sh
+COPY ./backend/mining_run.py /app/mining_run.py
+RUN chmod +x /app/mining_run.sh
+
+# 크론탭 설정
+COPY ./backend/config/crontab /etc/cron.d/app-cron
+RUN chmod 0644 /etc/cron.d/app-cron
+RUN crontab /etc/cron.d/app-cron
+
+# 실행
+CMD ["cron", "-f"]

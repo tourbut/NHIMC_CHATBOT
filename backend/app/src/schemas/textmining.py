@@ -174,6 +174,7 @@ class Get_Out_TmInstructDetail(SQLModel):
     memo: str
     topic_id: uuid.UUID
     topic_name : str
+    sql:str
     mining_llm_id: uuid.UUID
     mining_llm_name : str
     mining_llm_url : str
@@ -232,10 +233,17 @@ class Get_Out_TmExecSet(SQLModel):
 
 class CreateTmMaster(SQLModel):
     exec_set_id: uuid.UUID
-    status : str
-    start_date : datetime | None = None
+    status : str ="W" # W: 대기, P: 진행, C: 완료, E: 에러
+    start_date : datetime = datetime.now()
     end_date : datetime | None = None
-
+    
+class UpdateTmMaster(SQLModel):
+    id: uuid.UUID
+    exec_set_id: uuid.UUID
+    status : str ="W" # W: 대기, P: 진행, C: 완료, E: 에러
+    start_date : datetime = datetime.now()
+    end_date : datetime | None = None
+    
 class Get_Out_TmMaster(SQLModel):
     id : uuid.UUID
     exec_set_id: uuid.UUID
@@ -245,6 +253,7 @@ class Get_Out_TmMaster(SQLModel):
     
 class CreateTmData(SQLModel):
     master_id : uuid.UUID
+    origin_key : str
     origin_text : str
 
 class Get_Out_TmData(SQLModel):
@@ -256,8 +265,9 @@ class CreateTmResult(SQLModel):
     master_id : uuid.UUID
     data_id : uuid.UUID
     seq : int
-    item_nm : str
-    item_value : str
+    item_seq : int
+    item_nm : str | None = None
+    item_value : str | None = None
 
 class Get_Out_TmResult(SQLModel):
     master_id : uuid.UUID
