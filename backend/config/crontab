@@ -1,1 +1,1 @@
-40 15 * * * /app/mining_run.sh
+00 18 * * * /app/mining_run.sh > /app/logs/mining_run_$(date +\%Y-\%m-\%d).log 2>&1

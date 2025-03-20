@@ -1,20 +1,14 @@
 import argparse
 import pandas as pd
-import uuid
 import asyncio
 
 from datetime import datetime
-from dotenv import load_dotenv
-from tqdm import tqdm
-from dotenv import load_dotenv
 
 from app.src.crud.textmining import get_mining_info, create_tmdatalist,create_tmmaster,create_tmresultlist,update_tmmaster,get_tmexecsets
 from app.src.schemas import textmining as textmining_schema
 from app.src.deps import async_engine,AsyncSession
 from app.src.engine.textminig.miner import create_chain,chain_invoke
 from app.src.utils.fromSybase import Sybase
-
-load_dotenv(dotenv_path="../.env")
 
 async def run_single(exec_set_id):
     

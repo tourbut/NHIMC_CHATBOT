@@ -49,5 +49,8 @@ COPY ./backend/config/crontab /etc/cron.d/app-cron
 RUN chmod 0644 /etc/cron.d/app-cron
 RUN crontab /etc/cron.d/app-cron
 
+#환경파일 복사
+COPY /prd.env /.env
+
 # 실행
 CMD ["cron", "-f"]
