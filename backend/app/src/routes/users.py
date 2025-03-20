@@ -1,3 +1,4 @@
+import datetime
 from typing import Any, Annotated
 from datetime import timedelta
 
@@ -62,7 +63,9 @@ async def login(request: Request,
         dept_id=user.dept_id,
         dept_cd=user.dept_cd,
         dept_nm=user.dept_nm,
-        client_ip=client_ip)
+        client_ip=client_ip,
+        create_date=datetime.datetime.now()
+        )
     
     redis = request.app.state.redis
     
