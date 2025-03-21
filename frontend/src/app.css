@@ -4,6 +4,9 @@
 
 
 @layer components {
+    .form-page {
+      @apply container mx-auto;
+    }
     .form-tabs {
       @apply container mx-auto p-4 max-w-5xl;
     }

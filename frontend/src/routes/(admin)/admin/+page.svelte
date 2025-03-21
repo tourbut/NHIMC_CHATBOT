@@ -23,14 +23,14 @@
     let api_table_head=[
       {id:0,name:"dept_id",type:"combo",desc:"부서명",combo:[]},
       {id:1,name:"api_name",type:"string",desc:"API명"},
-      {id:2,name:"api_key",type:"string",desc:"Key"},
+      {id:2,name:"api_key",type:"password",desc:"Key"},
       {id:3,name:"active_yn",type:"boolean",desc:"활성화여부"},
     ];
     
     let llm_table_head=[
       {id:0,name:"dept_id",type:"combo",desc:"부서명",combo:[]},
       {id:1,name:"llm_id",type:"combo",desc:"모델",combo:[]},
-      {id:2,name:"api_id",type:"combo",desc:"Key",combo:[]},
+      {id:2,name:"api_id",type:"combo_password",desc:"Key",combo:[]},
       {id:3,name:"active_yn",type:"boolean",desc:"활성화여부"},
     ]
 
@@ -197,7 +197,7 @@
     }
 
 </script>
-<div class="form-tabs">
+<div class="form-page">
     <Tabs>
       <TabItem open title="모델">
         <Table btn_id=0 btn_click={onsubmit} table_head={table_head} is_editable={true}  

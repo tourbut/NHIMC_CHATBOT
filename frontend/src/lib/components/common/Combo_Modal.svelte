@@ -30,6 +30,10 @@
             <Label class="text-gray-500 dark:text-gray-400 mt-4">
                 {head.desc} <Combo is_dropcombo={false} ComboMenu={head.combo} bind:selected_name={form_data[head.name]} />
             </Label>
+            {:else if (head.type === 'combo_password')}
+            <Label class="text-gray-500 dark:text-gray-400 mt-4">
+                {head.desc} <Combo is_dropcombo={false} ComboMenu={head.combo} bind:selected_name={form_data[head.name]} />
+            </Label>
             {:else}
                 <FloatingLabelInput style="filled" id="floating_filled" name="floating_filled" type="text" bind:value={form_data[head.name]}>
                     {head.desc}
