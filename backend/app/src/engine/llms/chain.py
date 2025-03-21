@@ -502,7 +502,7 @@ def chatbot_chain(instruct_prompt:str,
             "params":RunnablePassthrough(),
             "answer":answer_chain
         }
-        |RunnableLambda(output_formatter)
+        # |RunnableLambda(output_formatter)
         )
     
     return final_chain

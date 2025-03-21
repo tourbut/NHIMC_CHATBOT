@@ -325,42 +325,39 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
         
     async def chain_astream(chain,callbacks,input):
         chunks=[]
+        thought=None
+        document=None
         params = None
         input_token=0
         output_token=0
         
-        if llm.source == "openai":
-            callback_handler = get_openai_callback()
-            with callback_handler as cb:
-                async for chunk in chain.astream({'input':input}):
-                    params = chunk.get('params', None)
-                    answer = chunk.get('answer', None)
-                    chunks.append(answer)
-                    
-                    yield chat_schema.OutMessage(content=answer.content,
-                                                thought=None,
-                                                tools = {'retriever': ''},
-                                                input_token=None,
-                                                output_token=None,
-                                                is_done=False).model_dump_json() + '\n'
-                input_token = cb.prompt_tokens
-                output_token = cb.completion_tokens
-        else:
-            
+        
+        callback_handler = get_openai_callback()
+        
+        with callback_handler as cb:
+            streaming_msg =""
             async for chunk in chain.astream({'input':input}):
-                params = chunk.get('params', None)
+            
+                params = chunk.get('params', params)
+                thought = chunk.get('params', params).get('thought', thought) if chunk.get('params', params) else thought
+                document = chunk.get('params', params).get('document', document) if chunk.get('params', params) else document
+                
                 answer = chunk.get('answer', None)
+                if answer is None:
+                    continue
+                
                 chunks.append(answer)
                 
-                yield chat_schema.OutMessage(content=answer.content,
+                streaming_msg+=answer.content
+                yield chat_schema.OutMessage(content=streaming_msg,
                                             thought=None,
                                             tools = {'retriever': ''},
                                             input_token=None,
                                             output_token=None,
                                             is_done=False).model_dump_json() + '\n'
-            
-            input_token = chunks[0].usage_metadata['input_tokens']
-            output_token = chunks[0].usage_metadata['output_tokens']
+
+            input_token = cb.prompt_tokens
+            output_token = cb.completion_tokens
             
         response=chunks[0]
         
@@ -377,8 +374,8 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                         chatbot_id=chat_in.chatbot_id,
                         name="바르미",
                         content=response.content,
-                        thought=params.get('thought', '') if params else None,
-                        tools=json.dumps({'retriever': params.get('document', '') if params else '' }, ensure_ascii=False),
+                        thought=thought if thought else None,
+                        tools=json.dumps({'retriever': document if document else '' }, ensure_ascii=False),
                         is_user=False,
                         create_date=datetime.now(),
                         update_date=datetime.now())
