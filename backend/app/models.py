@@ -246,6 +246,7 @@ class TmMaster(CommonBase,table=True):
     status : str = Field(nullable=False, description="상태")
     start_date : datetime = Field(nullable=False, description="시작일시")
     end_date : Optional[datetime] = Field(nullable=True, description="종료일시")
+    comments : Optional[str] = Field(nullable=True, description="코멘트")
 
 class TmData(CommonBase,table=True):
     id : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")

@@ -236,6 +236,7 @@ class CreateTmMaster(SQLModel):
     status : str ="W" # W: 대기, P: 진행, C: 완료, E: 에러
     start_date : datetime = datetime.now()
     end_date : datetime | None = None
+    comments : str | None = None
     
 class UpdateTmMaster(SQLModel):
     id: uuid.UUID
@@ -243,6 +244,7 @@ class UpdateTmMaster(SQLModel):
     status : str ="W" # W: 대기, P: 진행, C: 완료, E: 에러
     start_date : datetime = datetime.now()
     end_date : datetime | None = None
+    comments : str | None = None
     
 class Get_Out_TmMaster(SQLModel):
     id : uuid.UUID
