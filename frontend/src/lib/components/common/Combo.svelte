@@ -1,17 +1,17 @@
 <script>
-    import { Select, Dropdown, DropdownItem } from 'flowbite-svelte';
+    import { Select, Dropdown, DropdownItem, Tooltip } from 'flowbite-svelte';
     import { ChevronDownOutline } from 'flowbite-svelte-icons';
-
+    
     let selected_item="선택하세요.";
-
+    let desc = ""
     export let ComboMenu = [
-      { drop_value:'us',value: 'CA', name: 'Californiass' },
-      { drop_value:'us',value: 'TX', name: 'Texas' },
-      { drop_value:'us',value: 'WH', name: 'Washinghton' },
-      { drop_value:'ca',value: 'FL', name: 'Florida' },
-      { drop_value:'ca',value: 'VG', name: 'Virginia' },
-      { drop_value:'fr',value: 'GE', name: 'Georgia' },
-      { drop_value:'fr',value: 'MI', name: 'Michigan' }
+      { drop_value:'us',value: 'CA', name: 'Californiass',desc:'캘리포니아' },
+      { drop_value:'us',value: 'TX', name: 'Texas',desc:'' },
+      { drop_value:'us',value: 'WH', name: 'Washinghton',desc:'' },
+      { drop_value:'ca',value: 'FL', name: 'Florida',desc:'' },
+      { drop_value:'ca',value: 'VG', name: 'Virginia',desc:'' },
+      { drop_value:'fr',value: 'GE', name: 'Georgia',desc:'' },
+      { drop_value:'fr',value: 'MI', name: 'Michigan',desc:'' }
     ];
     export let is_dropcombo=false
     export let selected_name
@@ -32,6 +32,10 @@
       selected_name=select_menu[0].value;
     }
 
+    function on_change(items) {
+      desc = items.find(item => item.value === selected_name).desc;
+    }
+
 
   </script>
   
@@ -49,10 +53,13 @@
       </DropdownItem>
       {/each} 
     </Dropdown>
-    <Select underline={underline} placeholder={placeholder} items={select_menu} class="!rounded-s-none" bind:value={selected_name} />
+    <Select underline={underline} placeholder={placeholder} items={select_menu} class="!rounded-s-none" bind:value={selected_name} on:change={on_change(select_menu)} />
   </div>
   {:else}
   <div>
-    <Select underline={underline} placeholder={placeholder} items={ComboMenu} class="!rounded-s-none" bind:value={selected_name}/>
+    <Select underline={underline} placeholder={placeholder} items={ComboMenu} class="!rounded-s-none" bind:value={selected_name} on:change={on_change(ComboMenu)}/>
   </div>
+  {/if}
+  {#if (desc)}
+  <Tooltip placement='bottom' type='auto'>{desc}</Tooltip>
   {/if}

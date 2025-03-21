@@ -29,7 +29,7 @@
     }
 
     let dept_llm_list = []
-    let user_file_list = [{value:null, name:'문서 없음'}]
+    let user_file_list = [{value:null, name:'문서 없음', desc:''}]
     let is_detail_open = false
     async function get_data(){
 
@@ -48,10 +48,9 @@
         let documents_success_callback = (json) => {
             
             let file_list = json.map((item) => {
-
                 let name = item.title + ' (요청: ' + item.request_dept_nm + ')'
 
-                return {value:item.user_file_id, name:name}
+                return {value:item.user_file_id, name:name, desc:item.description}
             })
 
             user_file_list = [...user_file_list, ...file_list]
@@ -96,7 +95,6 @@
     $ : if(chatbot_data['is_thought']==false){
         chatbot_data['thought_prompt'] = ''
     }
-
 </script>
 <div class="instruct-div-scroll">
     <div class="mb-2">
@@ -156,7 +154,7 @@
     <div class="mt-2 flex-container">
         <Label class="mr-2">참고 문서</Label>
         <div class="fill-space">
-        <Combo underline={true} placeholder="문서 선택" ComboMenu={user_file_list} bind:selected_name={chatbot_data['user_file_id']}/>
+            <Combo underline={true} placeholder="문서 선택" ComboMenu={user_file_list} bind:selected_name={chatbot_data['user_file_id']}/>
         </div>
     </div>
     <div class="mt-2 mb-2 flex-container">
