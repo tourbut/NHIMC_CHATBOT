@@ -261,6 +261,7 @@ class CreateTmData(SQLModel):
 class Get_Out_TmData(SQLModel):
     id : uuid.UUID
     master_id : uuid.UUID
+    origin_key : str
     origin_text : str
     
 class CreateTmResult(SQLModel):

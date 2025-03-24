@@ -656,6 +656,15 @@ async def get_tmmaster(session: AsyncSession, tmmaster_id: uuid.UUID) -> textmin
     except Exception as e:
         print(e)
         raise e
+
+async def get_tmmaster_by_exec_set_id(session: AsyncSession, exec_set_id: uuid.UUID) -> List[textmining_schema.Get_Out_TmMaster]:
+    try:
+        statement = select(TmMaster).where(TmMaster.exec_set_id == exec_set_id).order_by(TmMaster.create_date.desc())
+        tmmaster = await session.exec(statement)
+        return tmmaster.all()
+    except Exception as e:
+        print(e)
+        raise e
     
 async def create_tmdatalist(session: AsyncSession, tmdatalist_in: List[textmining_schema.CreateTmData]) -> List[TmData]:
     try:
@@ -687,7 +696,9 @@ async def create_tmdata(session: AsyncSession, tmdata_in: textmining_schema.Crea
 
 async def get_tmdata(session: AsyncSession, master_id: uuid.UUID) -> List[textmining_schema.Get_Out_TmData]:
     try:
-        statement = select(TmData).where(TmData.master_id == master_id)
+        statement = select(TmData).where(TmData.master_id == master_id,
+                                         TmData.id == TmResult.data_id,
+                                         TmResult.master_id == TmData.master_id).distinct()
         tmdata = await session.exec(statement)
         return tmdata.all()
     except Exception as e:

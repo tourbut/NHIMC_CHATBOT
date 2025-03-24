@@ -4,7 +4,7 @@ import asyncio
 
 from datetime import datetime
 
-from app.src.crud.textmining import get_mining_info, create_tmdatalist,create_tmmaster,create_tmresultlist,update_tmmaster,get_tmexecsets
+from app.src.crud.textmining import get_mining_info, create_tmdatalist,create_tmmaster,create_tmresultlist,update_tmmaster,get_tmexecsets,get_tmmaster_by_exec_set_id,get_tmdata
 from app.src.schemas import textmining as textmining_schema
 from app.src.deps import async_engine,AsyncSession
 from app.src.engine.textminig.miner import create_chain,chain_invoke
@@ -74,10 +74,23 @@ async def run_multi():
             print(f"Start Mining: {exec_set_id}")
             
             async with AsyncSession(async_engine) as session:
-                    instruct_detail = await get_mining_info(session=session,tmexecset_id=exec_set_id)
-                    tmmaster_in = textmining_schema.CreateTmMaster(exec_set_id=exec_set_id,status='W')
-                    tmmaster = await create_tmmaster(session=session,tmmaster_in=tmmaster_in)
-            
+                instruct_detail = await get_mining_info(session=session,tmexecset_id=exec_set_id)
+                
+                existing_tmmasters = await get_tmmaster_by_exec_set_id(session=session,exec_set_id=exec_set_id)
+                tmdatalist_keys = []
+                for existing_tmmaster in existing_tmmasters:
+                    LAST_MASTER_ID = existing_tmmaster.id if existing_tmmaster else None
+                    if LAST_MASTER_ID:
+                        tmdata = await get_tmdata(session=session,master_id=LAST_MASTER_ID)
+                        for data in tmdata:
+                            tmdatalist_keys.append(data.origin_key)
+                        print(f"LAST_MASTER_ID: {LAST_MASTER_ID}, Data Count: {len(tmdatalist_keys)}")
+                # tmdatalist_keys 중복제거
+                tmdatalist_keys = list(set(tmdatalist_keys))
+                
+                tmmaster_in = textmining_schema.CreateTmMaster(exec_set_id=exec_set_id,status='W')
+                tmmaster = await create_tmmaster(session=session,tmmaster_in=tmmaster_in)
+                
             MASTER_ID = tmmaster.id
             
             # Data Extraction
@@ -87,11 +100,15 @@ async def run_multi():
             tmp_tmdatalist = []
             
             for i in range(0,len(df_orgin)):
+                if df_orgin.iloc[i]['ORIGIN_KEY'] in tmdatalist_keys:
+                    continue
+                
                 tmdata = textmining_schema.CreateTmData(master_id=MASTER_ID,
                                                         origin_key=df_orgin.iloc[i]['ORIGIN_KEY'],
                                                         origin_text=df_orgin.iloc[i]['ORIGIN_TEXT'],)
                 tmp_tmdatalist.append(tmdata)
                 
+            print(f"Data Extraction: {len(tmp_tmdatalist)}")
             async with AsyncSession(async_engine) as session:
                 tmdatalist = await create_tmdatalist(session=session,tmdatalist_in=tmp_tmdatalist) 
             
@@ -123,7 +140,8 @@ async def run_multi():
             async with AsyncSession(async_engine) as session:
                 if len(tmp_tmresultlist) > 0:
                     tmresultlist = await create_tmresultlist(session=session,tmresult_in=tmp_tmresultlist)
-                tmmaster_update_in = textmining_schema.UpdateTmMaster(id=MASTER_ID,exec_set_id=exec_set_id,status='C',end_date=datetime.now())
+                comments = f"Data Extraction: {len(tmp_tmdatalist)}, Text Mining: {len(tmp_tmresultlist)}"
+                tmmaster_update_in = textmining_schema.UpdateTmMaster(id=MASTER_ID,exec_set_id=exec_set_id,status='C',end_date=datetime.now(),comments=comments)
                 await update_tmmaster(session=session,tmmaster_in=tmmaster_update_in)
                 
     except Exception as e:
