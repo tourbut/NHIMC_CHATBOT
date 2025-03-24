@@ -1,6 +1,7 @@
 #!/bin/bash
 
 echo "===== START  ====="
+echo "START TIME: $(date)"
 
 LOG_FILE="/app/logs/$(date +%Y%m%d).log"
 
