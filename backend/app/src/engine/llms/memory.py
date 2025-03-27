@@ -1,13 +1,17 @@
 from langchain_openai import OpenAIEmbeddings
-from langchain_ollama import OllamaEmbeddings
+from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain_postgres.vectorstores import PGVector
 from langchain.memory import VectorStoreRetrieverMemory,CombinedMemory,ConversationBufferWindowMemory
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
-from langchain.retrievers import ParentDocumentRetriever
+from langchain.retrievers import ParentDocumentRetriever,ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import EmbeddingsFilter,LLMChainFilter,DocumentCompressorPipeline
+from langchain_community.document_transformers.embeddings_redundant_filter import EmbeddingsRedundantFilter
 from langchain.text_splitter import CharacterTextSplitter,RecursiveCharacterTextSplitter 
 from langchain.storage._lc_store import create_kv_docstore
 from langchain_community.storage import SQLStore, RedisStore
+
+from app.core.config import settings
 
 def pg_vetorstore(connection,
                   collection_name:str,
@@ -43,7 +47,8 @@ def pg_ParentDocumentRetriever(connection,
                   async_mode=False,
                   splitter_options:dict={"separators":["\n\n"],"chunk_size":2000,"chunk_overlap":500,
                                                        "child_chunk_size":200,"child_chunk_overlap":50},
-                  search_kwargs={"k": 6, "lambda": 0.2}):
+                  search_kwargs={"k": 6, "lambda": 0.2},
+                  llm=None):
     
     vectorstore = pg_vetorstore(connection=connection,
                                 collection_name=collection_name,
@@ -53,6 +58,7 @@ def pg_ParentDocumentRetriever(connection,
                                 base_url=base_url,
                                 async_mode=async_mode
                                 )
+
     
     postgre = SQLStore(namespace=collection_name, engine=connection)
     store = create_kv_docstore(postgre)
@@ -81,8 +87,25 @@ def pg_ParentDocumentRetriever(connection,
         search_type="mmr",
         search_kwargs=search_kwargs
     )
-    
-    return retriever
+        
+    if llm is not None:
+        compression_pipeline = DocumentCompressorPipeline(
+        transformers=[
+            EmbeddingsRedundantFilter(embeddings=vectorstore.embeddings),
+            #EmbeddingsFilter(embeddings=vectorstore.embeddings, similarity_threshold=0.4),
+            LLMChainFilter.from_llm(llm)
+        ]
+        )
+        
+        compression_retriever = ContextualCompressionRetriever(
+            # 문서 압축기와 리트리버를 사용하여 컨텍스트 압축 리트리버 생성
+            base_compressor=compression_pipeline,
+            base_retriever=retriever,
+        )
+        
+        return compression_retriever
+    else:
+        return retriever
 
 from typing import Dict, Any
 

@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.src.engine.llms.chain import (
     thought_chatbot_chain,
     chatbot_chain,
+    create_llm,
 )
 from app.src.engine.llms.memory import pg_vetorstore_with_memory,pg_ParentDocumentRetriever,clear_memory
 from datetime import datetime
@@ -272,6 +273,13 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
     
     if chabot_data.collection_id is not None:
         collection = await pgvector_crud.get_collection(session=session,collection_id=chabot_data.collection_id)
+        
+        retriever_llm = create_llm(source='ollama',
+                         model=settings.GLOBAL_LLM,
+                         api_key=settings.GLOBAL_LLM_API,
+                         base_url=settings.GLOBAL_LLM_URL,
+                         temperature=0.1,
+                         )
         retriever = pg_ParentDocumentRetriever(connection=engine,
                                     collection_name=collection.name,
                                     api_key=embedding.api_key,
@@ -280,7 +288,7 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                                     base_url=embedding.url,
                                     async_mode=False,
                                     splitter_options=collection.cmetadata,
-                                    search_kwargs=json.loads(chabot_data.search_kwargs) if chabot_data.search_kwargs else None
+                                    search_kwargs={"k": 500, "lambda": 0.3},
                                     )
     
     document_meta = "관련 문서 없음" if chabot_data.file_title is None else {'title':chabot_data.file_title,
@@ -320,8 +328,8 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                                 base_url=llm.url,
                                 memory=memory,
                                 retriever=retriever,
-                                callbacks=callbacks)
-        
+                                callbacks=callbacks,
+                                allow_doc_num=json.loads(chabot_data.search_kwargs)['k'] if chabot_data.search_kwargs else 0)
         
     async def chain_astream(chain,callbacks,input):
         chunks=[]

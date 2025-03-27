@@ -147,10 +147,16 @@ class Settings(BaseSettings):
     ISIS_DB_USER:str =''
     ISIS_DB_PASSWORD:str =''
     
-    GLOBAL_EMBEDDING_URL:str =''
+    GLOBAL_EMBEDDING_URL:str ='http://192.168.1.24:11434'
     GLOBAL_EMBEDDING_SOURCE:str ='ollama'
     GLOBAL_EMBEDDING_MODEL:str ='bge-m3'
     GLOBAL_EMBEDDING_API:str ='-'
+    
+    GLOBAL_LLM_URL:str ='http://192.168.1.24:11434'
+    GLOBAL_LLM_SOURCE:str ='ollama'
+    GLOBAL_LLM:str ='gemma3:12b'
+    GLOBAL_LLM_API:str ='-'
+    
     DEBUG:bool = False
     LLM_CACHE:bool = False
 
