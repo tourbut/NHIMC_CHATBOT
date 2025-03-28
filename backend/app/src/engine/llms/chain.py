@@ -477,6 +477,7 @@ def chatbot_chain(instruct_prompt:str,
                     final_docs = []
                     
                     for idx in final_idx:
+                        content = "--------------------------------------------\n"
                         content += f"**검색 문서 적합 점수(10점 만점)**: {results[idx].score}점\n"
                         content += f"**측정 사유**:{results[idx].evaluation_reasons}\n"
                         content += f"```검색결과\n"
