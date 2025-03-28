@@ -17,7 +17,8 @@ from app.src.crud.textmining import (
     get_topics,
     get_tmmasters,
     get_tmdata_all,
-    get_tmresults_all
+    get_tmresults_all,
+    get_tminstructs_all
 )
 from app.src.schemas import textmining as textmining_schema
 from app.src.deps import async_engine,AsyncSession
@@ -104,11 +105,13 @@ async def run_single(exec_set_id):
         TMEXECSET = await get_tmexecsets(session=session)
         TMDATA = await get_tmdata_all(session=session)
         TMRESULT = await get_tmresults_all(session=session)
+        TMINSTRUCTS = await get_tminstructs_all(session=session)
         df_tmtopics = await to_dataframe(TMTOPICS)
         df_tmmaster = await to_dataframe(TMMASTER)
         df_tmexecset = await to_dataframe(TMEXECSET)
         df_tmdata = await to_dataframe(TMDATA)
         df_tmresult = await to_dataframe(TMRESULT)
+        df_instructs = await to_dataframe(TMINSTRUCTS)
 
         syb_db.truncate_table("TMTOPIC")
         syb_db.bulk_insert(df_tmtopics, 'TMTOPIC', chunksize=BUFFER)
@@ -120,6 +123,8 @@ async def run_single(exec_set_id):
         syb_db.bulk_insert(df_tmdata, 'TMDATA', chunksize=BUFFER)
         syb_db.truncate_table("TMRESULT")
         syb_db.bulk_insert(df_tmresult, 'TMRESULT', chunksize=BUFFER)
+        syb_db.truncate_table("TMINSTRUCTS")
+        syb_db.bulk_insert(df_instructs, 'TMINSTRUCTS', chunksize=BUFFER)
         
         # Sybase 연결 종료
         syb_db.close()
@@ -212,11 +217,13 @@ async def run_multi():
                 TMEXECSET = await get_tmexecsets(session=session)
                 TMDATA = await get_tmdata_all(session=session)
                 TMRESULT = await get_tmresults_all(session=session)
+                TMINSTRUCTS = await get_tminstructs_all(session=session)
                 df_tmtopics = await to_dataframe(TMTOPICS)
                 df_tmmaster = await to_dataframe(TMMASTER)
                 df_tmexecset = await to_dataframe(TMEXECSET)
                 df_tmdata = await to_dataframe(TMDATA)
                 df_tmresult = await to_dataframe(TMRESULT)
+                df_instructs = await to_dataframe(TMINSTRUCTS)
 
                 syb_db.truncate_table("TMTOPIC")
                 syb_db.bulk_insert(df_tmtopics, 'TMTOPIC', chunksize=BUFFER)
@@ -228,6 +235,8 @@ async def run_multi():
                 syb_db.bulk_insert(df_tmdata, 'TMDATA', chunksize=BUFFER)
                 syb_db.truncate_table("TMRESULT")
                 syb_db.bulk_insert(df_tmresult, 'TMRESULT', chunksize=BUFFER)
+                syb_db.truncate_table("TMINSTRUCTS")
+                syb_db.bulk_insert(df_instructs, 'TMINSTRUCTS', chunksize=BUFFER)
                 # Sybase 연결 종료
                 syb_db.close()
                 tmmaster_update_in = textmining_schema.UpdateTmMaster(id=MASTER_ID,exec_set_id=exec_set_id,status='C',end_date=datetime.now(),comments=comments)

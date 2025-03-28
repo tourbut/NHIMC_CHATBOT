@@ -375,6 +375,15 @@ async def get_tminstructs(session: AsyncSession, current_user: User, topic_id : 
         print(e)
         raise e
     
+async def get_tminstructs_all(session: AsyncSession) -> List[TmInstruct]:
+    try:
+        statement = select(TmInstruct).where(TmInstruct.delete_yn == False)
+        tminstructs = await session.exec(statement)
+        return tminstructs.all()
+    except Exception as e:
+        print(e)
+        raise e
+    
 async def get_tminstruct(session: AsyncSession, tminstruct_id: uuid.UUID):
     try:
         statement = select( TmInstruct.id,
