@@ -177,6 +177,7 @@ async def run_multi():
             # Text Mining
             chain = create_chain(instruct_detail=instruct_detail)
             tmp_tmresultlist = []
+            result_cnt = 0
             for input_data in tmdatalist:
                 responses,_,_ = await chain_invoke(chain,input_data.origin_text)
                 seq = 0
@@ -192,7 +193,7 @@ async def run_multi():
                         tmp_tmresultlist.append(tmresult)
                         item_seq+=1
                     seq+=1
-                
+                result_cnt += len(tmp_tmresultlist)
                 if len(tmp_tmresultlist) >= BUFFER:
                     async with AsyncSession(async_engine) as session:
                         await create_tmresultlist(session=session,tmresult_in=tmp_tmresultlist)
@@ -202,7 +203,7 @@ async def run_multi():
             async with AsyncSession(async_engine) as session:
                 if len(tmp_tmresultlist) > 0:
                     tmresultlist = await create_tmresultlist(session=session,tmresult_in=tmp_tmresultlist)
-                comments = f"Data Extraction: {len(tmp_tmdatalist)}, Text Mining: {len(tmp_tmresultlist)}"
+                comments = f"Data Extraction: {len(tmp_tmdatalist)}, Text Mining: {result_cnt}"
                 tmmaster_update_in = textmining_schema.UpdateTmMaster(id=MASTER_ID,exec_set_id=exec_set_id,status='C',end_date=datetime.now(),comments=comments)
                 await update_tmmaster(session=session,tmmaster_in=tmmaster_update_in)
                             
