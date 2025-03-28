@@ -97,8 +97,6 @@ async def run_single(exec_set_id):
     # 결과 저장
     async with AsyncSession(async_engine) as session:
         tmresultlist = await create_tmresultlist(session=session,tmresult_in=tmp_tmresultlist)
-        tmmaster_update_in = textmining_schema.UpdateTmMaster(id=MASTER_ID,exec_set_id=exec_set_id,status='C',end_date=datetime.now())
-        await update_tmmaster(session=session,tmmaster_in=tmmaster_update_in)
         
         # Sybase 적재
         TMMASTER = await get_tmmasters(session=session)
@@ -125,6 +123,8 @@ async def run_single(exec_set_id):
         
         # Sybase 연결 종료
         syb_db.close()
+        tmmaster_update_in = textmining_schema.UpdateTmMaster(id=MASTER_ID,exec_set_id=exec_set_id,status='C',end_date=datetime.now())
+        await update_tmmaster(session=session,tmmaster_in=tmmaster_update_in)
 
 async def run_multi():
     async with AsyncSession(async_engine) as session:
@@ -204,8 +204,6 @@ async def run_multi():
                 if len(tmp_tmresultlist) > 0:
                     tmresultlist = await create_tmresultlist(session=session,tmresult_in=tmp_tmresultlist)
                 comments = f"Data Extraction: {len(tmp_tmdatalist)}, Text Mining: {result_cnt}"
-                tmmaster_update_in = textmining_schema.UpdateTmMaster(id=MASTER_ID,exec_set_id=exec_set_id,status='C',end_date=datetime.now(),comments=comments)
-                await update_tmmaster(session=session,tmmaster_in=tmmaster_update_in)
                             
                 # Sybase 적재
                 TMMASTER = await get_tmmasters(session=session)
@@ -231,6 +229,8 @@ async def run_multi():
                 syb_db.bulk_insert(df_tmresult, 'TMRESULT', chunksize=BUFFER)
                 # Sybase 연결 종료
                 syb_db.close()
+                tmmaster_update_in = textmining_schema.UpdateTmMaster(id=MASTER_ID,exec_set_id=exec_set_id,status='C',end_date=datetime.now(),comments=comments)
+                await update_tmmaster(session=session,tmmaster_in=tmmaster_update_in)
                 
     except Exception as e:
         print(e)
