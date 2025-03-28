@@ -123,8 +123,8 @@ async def run_single(exec_set_id):
         syb_db.bulk_insert(df_tmdata, 'TMDATA', chunksize=BUFFER)
         syb_db.truncate_table("TMRESULT")
         syb_db.bulk_insert(df_tmresult, 'TMRESULT', chunksize=BUFFER)
-        syb_db.truncate_table("TMINSTRUCTS")
-        syb_db.bulk_insert(df_instructs, 'TMINSTRUCTS', chunksize=BUFFER)
+        syb_db.truncate_table("TMINSTRUCT")
+        syb_db.bulk_insert(df_instructs, 'TMINSTRUCT', chunksize=BUFFER)
         
         # Sybase 연결 종료
         syb_db.close()
@@ -235,8 +235,8 @@ async def run_multi():
                 syb_db.bulk_insert(df_tmdata, 'TMDATA', chunksize=BUFFER)
                 syb_db.truncate_table("TMRESULT")
                 syb_db.bulk_insert(df_tmresult, 'TMRESULT', chunksize=BUFFER)
-                syb_db.truncate_table("TMINSTRUCTS")
-                syb_db.bulk_insert(df_instructs, 'TMINSTRUCTS', chunksize=BUFFER)
+                syb_db.truncate_table("TMINSTRUCT")
+                syb_db.bulk_insert(df_instructs, 'TMINSTRUCT', chunksize=BUFFER)
                 # Sybase 연결 종료
                 syb_db.close()
                 tmmaster_update_in = textmining_schema.UpdateTmMaster(id=MASTER_ID,exec_set_id=exec_set_id,status='C',end_date=datetime.now(),comments=comments)
