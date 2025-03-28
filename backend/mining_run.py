@@ -123,6 +123,7 @@ async def run_single(exec_set_id):
         
         # Sybase 연결 종료
         syb_db.close()
+        
         tmmaster_update_in = textmining_schema.UpdateTmMaster(id=MASTER_ID,exec_set_id=exec_set_id,status='C',end_date=datetime.now())
         await update_tmmaster(session=session,tmmaster_in=tmmaster_update_in)
 
