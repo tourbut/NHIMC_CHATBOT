@@ -31,7 +31,13 @@ class Sybase:
         with self.conn.cursor() as cursor:
             cursor.execute(query)
             return self.cursor.fetchall()
-
+    def truncate_table(self, table_name):
+        query = f"TRUNCATE TABLE {table_name}"
+        with self.conn.cursor() as cursor:
+            cursor.execute(query)
+            
+        
+        
     def execute_pandas(self, query):
         with self.conn.cursor() as cursor:
             cursor.execute(query)
@@ -50,5 +56,24 @@ class Sybase:
             print(f"An error occurred: {e}")
             self.conn.rollback()
             
+    def bulk_insert(self,df, table_name, chunksize=100):
+        try:
+            with self.conn.cursor() as cursor:
+                columns = ','.join(df.columns)
+                placeholders = ','.join(['?'] * len(df.columns))
+                
+                for i in range(0, len(df), chunksize):
+                    chunk = df.iloc[i:i+chunksize]
+                    tuples = [tuple(x) for x in chunk.to_numpy()]
+                    query = f"""
+                    INSERT INTO {table_name} ({columns}) 
+                    VALUES ({placeholders})
+                    """
+                    cursor.executemany(query, tuples)
+                self.conn.commit()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            self.conn.rollback()
+    
     def close(self):
         self.conn.close()

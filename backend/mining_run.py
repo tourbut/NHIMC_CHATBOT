@@ -3,8 +3,22 @@ import pandas as pd
 import asyncio
 
 from datetime import datetime
+import uuid
 
-from app.src.crud.textmining import get_mining_info, create_tmdatalist,create_tmmaster,create_tmresultlist,update_tmmaster,get_tmexecsets,get_tmmaster_by_exec_set_id,get_tmdata
+from app.src.crud.textmining import (
+    get_mining_info, 
+    create_tmdatalist,
+    create_tmmaster,
+    create_tmresultlist,
+    update_tmmaster,
+    get_tmexecsets,
+    get_tmmaster_by_exec_set_id,
+    get_tmdata,
+    get_topics,
+    get_tmmasters,
+    get_tmdata_all,
+    get_tmresults_all
+)
 from app.src.schemas import textmining as textmining_schema
 from app.src.deps import async_engine,AsyncSession
 from app.src.engine.textminig.miner import create_chain,chain_invoke
@@ -14,7 +28,29 @@ from app.core.config import settings
 settings.LLM_CACHE = True
 
 BUFFER = 50 # 50개씩 묶어서 처리
+async def to_dataframe(data):
+    """Convert a list of Pydantic models to a pandas DataFrame."""
+    
+    df = pd.DataFrame([item.model_dump() for item in data])
+    
+    for col in df.columns:
+        if isinstance(df[col].iloc[0], datetime):
+            df[col] = df[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+        elif isinstance(df[col].iloc[0], bool):
+            df[col] = df[col].apply(lambda x: 'Y' if x else 'N')
+        elif isinstance(df[col].iloc[0], str):
+            df[col] = df[col].fillna('')
+        elif isinstance(df[col].iloc[0], uuid.UUID):
+            # Convert UUID to string
+            df[col] = df[col].astype(str)
+        else:
+            df[col] = df[col].fillna('')
+            
+    df.reset_index(drop=True)
+    
+    return df
 
+    
 async def run_single(exec_set_id):
     
     async with AsyncSession(async_engine) as session:        
@@ -25,8 +61,8 @@ async def run_single(exec_set_id):
     MASTER_ID = tmmaster.id
     
     # Data Extraction
-    db = Sybase()
-    df_orgin = db.execute_pandas(instruct_detail.sql)
+    syb_db = Sybase()
+    df_orgin = syb_db.execute_pandas(instruct_detail.sql)
     
     tmp_tmdatalist = []
     
@@ -63,6 +99,32 @@ async def run_single(exec_set_id):
         tmresultlist = await create_tmresultlist(session=session,tmresult_in=tmp_tmresultlist)
         tmmaster_update_in = textmining_schema.UpdateTmMaster(id=MASTER_ID,exec_set_id=exec_set_id,status='C',end_date=datetime.now())
         await update_tmmaster(session=session,tmmaster_in=tmmaster_update_in)
+        
+        # Sybase 적재
+        TMMASTER = await get_tmmasters(session=session)
+        TMTOPICS= await get_topics(session=session)
+        TMEXECSET = await get_tmexecsets(session=session)
+        TMDATA = await get_tmdata_all(session=session)
+        TMRESULT = await get_tmresults_all(session=session)
+        df_tmtopics = await to_dataframe(TMTOPICS)
+        df_tmmaster = await to_dataframe(TMMASTER)
+        df_tmexecset = await to_dataframe(TMEXECSET)
+        df_tmdata = await to_dataframe(TMDATA)
+        df_tmresult = await to_dataframe(TMRESULT)
+
+        syb_db.truncate_table("TMTOPIC")
+        syb_db.bulk_insert(df_tmtopics, 'TMTOPIC', chunksize=BUFFER)
+        syb_db.truncate_table("TMMASTER")
+        syb_db.bulk_insert(df_tmmaster, 'TMMASTER', chunksize=BUFFER)
+        syb_db.truncate_table("TMEXECSET")
+        syb_db.bulk_insert(df_tmexecset, 'TMEXECSET', chunksize=BUFFER)
+        syb_db.truncate_table("TMDATA")
+        syb_db.bulk_insert(df_tmdata, 'TMDATA', chunksize=BUFFER)
+        syb_db.truncate_table("TMRESULT")
+        syb_db.bulk_insert(df_tmresult, 'TMRESULT', chunksize=BUFFER)
+        
+        # Sybase 연결 종료
+        syb_db.close()
 
 async def run_multi():
     async with AsyncSession(async_engine) as session:
@@ -94,8 +156,8 @@ async def run_multi():
             MASTER_ID = tmmaster.id
             
             # Data Extraction
-            db = Sybase()
-            df_orgin = db.execute_pandas(instruct_detail.sql)
+            syb_db = Sybase()
+            df_orgin = syb_db.execute_pandas(instruct_detail.sql)
             
             tmp_tmdatalist = []
             
@@ -143,11 +205,38 @@ async def run_multi():
                 comments = f"Data Extraction: {len(tmp_tmdatalist)}, Text Mining: {len(tmp_tmresultlist)}"
                 tmmaster_update_in = textmining_schema.UpdateTmMaster(id=MASTER_ID,exec_set_id=exec_set_id,status='C',end_date=datetime.now(),comments=comments)
                 await update_tmmaster(session=session,tmmaster_in=tmmaster_update_in)
+                            
+                # Sybase 적재
+                TMMASTER = await get_tmmasters(session=session)
+                TMTOPICS= await get_topics(session=session)
+                TMEXECSET = await get_tmexecsets(session=session)
+                TMDATA = await get_tmdata_all(session=session)
+                TMRESULT = await get_tmresults_all(session=session)
+                df_tmtopics = await to_dataframe(TMTOPICS)
+                df_tmmaster = await to_dataframe(TMMASTER)
+                df_tmexecset = await to_dataframe(TMEXECSET)
+                df_tmdata = await to_dataframe(TMDATA)
+                df_tmresult = await to_dataframe(TMRESULT)
+
+                syb_db.truncate_table("TMTOPIC")
+                syb_db.bulk_insert(df_tmtopics, 'TMTOPIC', chunksize=BUFFER)
+                syb_db.truncate_table("TMMASTER")
+                syb_db.bulk_insert(df_tmmaster, 'TMMASTER', chunksize=BUFFER)
+                syb_db.truncate_table("TMEXECSET")
+                syb_db.bulk_insert(df_tmexecset, 'TMEXECSET', chunksize=BUFFER)
+                syb_db.truncate_table("TMDATA")
+                syb_db.bulk_insert(df_tmdata, 'TMDATA', chunksize=BUFFER)
+                syb_db.truncate_table("TMRESULT")
+                syb_db.bulk_insert(df_tmresult, 'TMRESULT', chunksize=BUFFER)
+                # Sybase 연결 종료
+                syb_db.close()
                 
     except Exception as e:
         print(e)
         tmmaster_update_in = textmining_schema.UpdateTmMaster(id=MASTER_ID,exec_set_id=exec_set_id,status='E',end_date=datetime.now(),comments=str(e))
         await update_tmmaster(session=session,tmmaster_in=tmmaster_update_in)
+        # Sybase 연결 종료
+        syb_db.close()
         raise e
     
 if __name__ == "__main__":

@@ -639,7 +639,7 @@ async def update_tmmaster(session: AsyncSession, tmmaster_in: textmining_schema.
         await session.rollback()
         raise e
      
-async def get_tmmasters(session: AsyncSession) -> List[textmining_schema.Get_Out_TmMaster]:
+async def get_tmmasters(session: AsyncSession) -> List[TmMaster]:
     try:
         statement = select(TmMaster).where(TmMaster.delete_yn == False)
         tmmasters = await session.exec(statement)
@@ -704,7 +704,16 @@ async def get_tmdata(session: AsyncSession, master_id: uuid.UUID) -> List[textmi
     except Exception as e:
         print(e)
         raise e
-
+    
+async def get_tmdata_all(session: AsyncSession) -> List[TmData]:
+    try:
+        statement = select(TmData).where(TmData.delete_yn==False)
+        tmdata = await session.exec(statement)
+        return tmdata.all()
+    except Exception as e:
+        print(e)
+        raise e
+    
 async def create_tmresultlist(session: AsyncSession, tmresult_in: List[textmining_schema.CreateTmResult]) -> List[textmining_schema.CreateTmResult]:
     try:
         tmresult_obj = [TmResult.model_validate(tmresult_in) for tmresult_in in tmresult_in]
@@ -737,7 +746,16 @@ async def get_tmresults(session: AsyncSession, master_id: uuid.UUID) -> List[tex
     except Exception as e:
         print(e)
         raise e
-
+    
+async def get_tmresults_all(session: AsyncSession) -> List[TmResult]:
+    try:
+        statement = select(TmResult).where(TmResult.delete_yn==False)
+        tmresults = await session.exec(statement)
+        return tmresults.all()
+    except Exception as e:
+        print(e)
+        raise e
+    
 async def get_tmresult_by_data(session: AsyncSession, master_id: uuid.UUID, data_id: uuid.UUID) -> textmining_schema.Get_Out_TmResult:
     try:
         statement = select(TmResult).where(TmResult.master_id == master_id,
