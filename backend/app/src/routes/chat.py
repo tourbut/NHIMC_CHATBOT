@@ -308,30 +308,30 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
     if chabot_data.thought_prompt:
         chain = thought_chatbot_chain(instruct_prompt=chabot_data.instruct_prompt,
                                         thought_prompt=chabot_data.thought_prompt,
-                                        temparature=chabot_data.temperature,
+                                        temperature=chabot_data.temperature,
                                         api_key=llm.api_key,
                                         source=llm.source,
                                         model=llm.name,
                                         base_url=llm.url,
                                         memory=memory,
                                         document_meta=document_meta,
-                                        retriever=retriever,)
+                                        retriever=retriever,
+                                        retriever_score=json.loads(chabot_data.search_kwargs)['retriever_score'] if chabot_data.search_kwargs else None,
+                                        allow_doc_num=json.loads(chabot_data.search_kwargs)['k'] if chabot_data.search_kwargs else 0)
     else:
-        callbacks = [token_counter_callback()]
-        
+    
         chain = chatbot_chain(instruct_prompt=chabot_data.instruct_prompt,
                                 temperature=chabot_data.temperature,
-                                retriever_score=json.loads(chabot_data.search_kwargs)['retriever_score'] if chabot_data.search_kwargs else None,
                                 api_key=llm.api_key,
                                 source=llm.source,
                                 model=llm.name,
                                 base_url=llm.url,
                                 memory=memory,
                                 retriever=retriever,
-                                callbacks=callbacks,
+                                retriever_score=json.loads(chabot_data.search_kwargs)['retriever_score'] if chabot_data.search_kwargs else None,
                                 allow_doc_num=json.loads(chabot_data.search_kwargs)['k'] if chabot_data.search_kwargs else 0)
         
-    async def chain_astream(chain,callbacks,input):
+    async def chain_astream(chain,input):
         chunks=[]
         thought=None
         document=None
@@ -426,4 +426,4 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                                      is_done=True).model_dump_json()
         yield final_response + '\n'
         
-    return StreamingResponse(chain_astream(chain,callbacks,chat_in.input),media_type='application/json')
+    return StreamingResponse(chain_astream(chain,chat_in.input),media_type='application/json')

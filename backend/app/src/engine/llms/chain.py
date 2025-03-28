@@ -79,35 +79,29 @@ def map_rerank_chain(llm):
         
         score: float = Field(
             ..., 
-            title="점수",
-            description="점수 기준(1.0-10.0)",
+            title="Score",
+            description="Quality score of search results (1.0-10.0)",
             ge=1.0,
             le=10.0
         )
         
         evaluation_reasons: str = Field(
             ...,
-            title="측정 사유",
-            description="점수를 측정한 사유를 30자 이내로 작성",
+            title="Evaluation Reasons",
+            description="Specific reasons for each score given. 100 characters max.",
         )
     
     parser = PydanticOutputParser(pydantic_object=AnswerEvaluation)
 
     prompt_template = """
 <SYSTEM>
-QUESTION과 CONTEXT이 얼마나 적절한지 1.0-10.0 척도로 평가합니다.
-
-[평가기준]
-0.0-1.0: 완전히 무관한 내용
-1.1-2.0: 거의 전부 관련 없는 내용
-2.1-3.0: 매우 미미한 관련성
-3.1-4.0: 약간 관련되지만 대부분 무관함
-4.1-5.0: 부분적으로 관련되지만 매우 불충분함
-5.1-6.0: 어느 정도 관련되지만 불충분함
-6.1-7.0: 대체로 관련되지만 일부 부족함
-7.1-8.0: 매우 관련성 높고 대부분 충분함
-8.1-9.0: 매우 관련성 높고 거의 완벽함
-9.1-10.0: 완벽하게 관련되고 포괄적인 답변
+You are an expert evaluator. Rate how well the context answers the question on a scale of 1.0-10.0:
+1.0~2.9: Completely irrelevant or incorrect
+3.0~4.9: Partially relevant but insufficient
+5.0~6.9: Adequately answers the question
+7.0~8.9: Good answer with minor gaps
+9.0~10.0: Perfect and comprehensive answer
+Respond to Korean.
 </SYSTEM>
 
 <CONTEXT>
@@ -121,7 +115,7 @@ QUESTION과 CONTEXT이 얼마나 적절한지 1.0-10.0 척도로 평가합니다
 <OUTPUT FORMAT>
 {format_instructions}
 </OUTPUT FORMAT>
-    """
+"""
     
     prompt = PromptTemplate(
         template=prompt_template,
@@ -303,6 +297,8 @@ def thought_chatbot_chain(instruct_prompt:str,
                   memory=None,
                   document_meta=None,
                   retriever=None,
+                  retriever_score:float=7,
+                  allow_doc_num:int=3,
                   ):
     
     callback_manager = CallbackManager([StdOutCallbackHandler()])
@@ -340,35 +336,51 @@ def thought_chatbot_chain(instruct_prompt:str,
     def get_document(output):
         if retriever:
             try :
-                thought = output.get("thought")
-                rtn = f"**검색어: {thought.search_msg}**\n"
+                if output.get("thought"):
+                    search_msg  = output.get("thought").search_msg
+                else:
+                    search_msg  = output.get("input")
+                rtn = f"**검색어: {search_msg}**\n"
                 
-                docs = retriever.invoke(thought.search_msg)
+                docs = retriever.invoke(search_msg)
                 inputs = []
                 for doc in docs:
-                    inputs.append({"input":thought.search_msg,"context": doc.page_content})
+                    inputs.append({"input":search_msg,"context": doc.page_content})
                 
-                results = rerank_chain.batch(inputs,
-                                            config={"max_concurrency": 3},)
+                results = rerank_chain.batch(inputs,config={"max_concurrency": 3},)
 
                 final_idx=[]
                 for result in results:
-                    if result.score >= 8:
+                    if result.score >= retriever_score:
                         final_idx.append(results.index(result))
                 
                 if len(final_idx) == 0:
                     rtn += "해당 문서 없음"
                     return rtn
                 else :
-                    rtn += f"**총 문서 수**: {len(final_idx)}\n"
+                    
+                    final_docs = []
+                    
                     for idx in final_idx:
-                        rtn+=f"---------*Doc No.{idx}*---------\n"
-                        rtn+=f"**검색 문서 적합 점수(10점 만점)**: {results[idx].score}점\n"
-                        rtn+=f"**측정 사유**:{results[idx].evaluation_reasons}\n"
-                        rtn+=f"```검색결과\n"
-                        rtn+=docs[idx].page_content + "\n"
-                        rtn+=f"```\n"
-                
+                        content = ""
+                        content += f"**검색 문서 적합 점수(10점 만점)**: {results[idx].score}점\n"
+                        content += f"**측정 사유**:{results[idx].evaluation_reasons}\n"
+                        content += f"```검색결과\n"
+                        content += docs[idx].page_content
+                        content += "```\n"
+                        final_docs.append({"score":results[idx].score,"content":content})
+                    
+                    #score가 높은 순으로 정렬후 allow_doc_num의 갯수 만큼 반환
+                    sorted_docs = sorted(final_docs,key=lambda x: x["score"],reverse=True)
+                    sorted_docs = sorted_docs[:allow_doc_num]
+                    
+                    rtn += f"**총 문서 수**: {len(sorted_docs)}\n"
+                    i=1
+                    for doc in sorted_docs: 
+                        rtn += f"---------*Doc No.{i}*---------\n"
+                        rtn += doc["content"]
+                        i+=1
+                        
                 return rtn
             except Exception as e:
                 print(e)
@@ -386,13 +398,11 @@ def thought_chatbot_chain(instruct_prompt:str,
         RunnableParallel(
             input = RunnablePassthrough(),
             chat_history= runnable,
-            document = RunnableLambda(get_document),
         )
         |{
             "input": lambda x: x["input"],
             "long_term": lambda x: x["chat_history"]["memory_vars"].get("long_term"),
             "recent_chat": lambda x: x["chat_history"]["memory_vars"].get("recent_chat"),
-            "document": lambda x: x["document"]
         }|{
             "input" : RunnablePassthrough(),
             "thought" : think_chain
@@ -417,10 +427,10 @@ def chatbot_chain(instruct_prompt:str,
                   model:str='gpt-4o-mini',
                   base_url:str='http://localhost:11434',
                   temperature:float=0.1,
-                  retriever_score:float=7,
                   callbacks=None,
                   memory=None,
                   retriever=None,
+                  retriever_score:float=7,
                   allow_doc_num:int=3,
                   ):
     
@@ -454,7 +464,11 @@ def chatbot_chain(instruct_prompt:str,
     def get_document(output):
         if retriever:
             try :
-                search_msg  = output.get("thought",output.get("input"))
+                if output.get("thought"):
+                    search_msg  = output.get("thought").search_msg
+                else:
+                    search_msg  = output.get("input")
+                    
                 rtn = f"**검색어: {search_msg}**\n"
                 
                 docs = retriever.invoke(search_msg)
