@@ -301,7 +301,10 @@ def thought_chatbot_chain(instruct_prompt:str,
                   allow_doc_num:int=3,
                   ):
     
-    callback_manager = CallbackManager([StdOutCallbackHandler()])
+    if callbacks is None:
+        callback_manager = CallbackManager([StdOutCallbackHandler()])
+    else:
+        callback_manager = CallbackManager(callbacks)
     
     llm = create_llm(source=source,
                      api_key=api_key,
@@ -433,8 +436,10 @@ def chatbot_chain(instruct_prompt:str,
                   retriever_score:float=7,
                   allow_doc_num:int=3,
                   ):
-    
-    callback_manager = CallbackManager(callbacks)
+    if callbacks is None:
+        callback_manager = CallbackManager([StdOutCallbackHandler()])
+    else:
+        callback_manager = CallbackManager(callbacks)
     llm = create_llm(source=source,
                      api_key=api_key,
                      model=model,
