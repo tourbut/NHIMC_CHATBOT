@@ -185,6 +185,10 @@ async def run_multi():
             tmp_tmresultlist = []
             result_cnt = 0
             for input_data in tmdatalist:
+                
+                #0.1초 대기
+                await asyncio.sleep(0.1)
+                
                 responses,_,_ = await chain_invoke(chain,input_data.origin_text)
                 seq = 0
                 for response in responses:
@@ -204,6 +208,8 @@ async def run_multi():
                     async with AsyncSession(async_engine) as session:
                         await create_tmresultlist(session=session,tmresult_in=tmp_tmresultlist)
                         tmp_tmresultlist = []
+                    
+                    await asyncio.sleep(5) # 5초 대기
             
             # 결과 저장
             async with AsyncSession(async_engine) as session:
