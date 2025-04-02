@@ -161,17 +161,20 @@ def pg_vetorstore_with_memory(connection,
     
     vector_memory = VectorStoreRetrieverMemory(retriever=retriever,
                                         memory_key="long_term",
+                                        input_key="input", # 입력 키 설정
                                         return_messages=True,
                                         return_docs=False,)
     # 최근 대화 버퍼 메모리 설정
     buffer_memory = CustomBufferWindowMemory(
         k=3,  # 최근 3개의 대화 유지
         memory_key="recent_chat",
+        input_key="input", 
         chat_memory=chat_memory,
     )
     
     combined_memory = FilteredCombinedMemory(
-    memories=[vector_memory, buffer_memory]
+    memories=[vector_memory, buffer_memory],
+    input_key="input", 
     )
     
     return combined_memory
