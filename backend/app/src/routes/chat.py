@@ -347,10 +347,19 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
             async for chunk in chain.astream({'input':input}):
             
                 params = chunk.get('params', params)
-                thought = chunk.get('params', params).get('thought', thought) if chunk.get('params', params) else thought
-                document = chunk.get('params', params).get('document', document) if chunk.get('params', params) else document
+                thought = params.get('thought', thought) if params else thought
+                document = params.get('document', document) if params else document
                 
                 answer = chunk.get('answer', None)
+                
+                if document is not None and streaming_msg == "":
+                    yield chat_schema.OutMessage(content=document if type(document) is str else "",
+                                                thought=None,
+                                                tools = {'retriever': ''},
+                                                input_token=None,
+                                                output_token=None,
+                                                create_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                                is_done=False).model_dump_json() + '\n'
                 if answer is None:
                     continue
                 
@@ -362,6 +371,7 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                                             tools = {'retriever': ''},
                                             input_token=None,
                                             output_token=None,
+                                            create_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                             is_done=False).model_dump_json() + '\n'
 
             input_token = cb.prompt_tokens

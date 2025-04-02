@@ -1,10 +1,10 @@
-from typing import List
+from typing import AsyncIterable, AsyncIterator, Dict, Iterator, List
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_community.chat_models import ChatPerplexity
 
 from langchain_ollama import ChatOllama
-from langchain_core.runnables import RunnableLambda, RunnablePassthrough,RunnableParallel
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough,RunnableParallel,RunnableGenerator
 from langchain.callbacks import StdOutCallbackHandler
 from langchain.callbacks.manager import CallbackManager
 from langchain_core.prompts import PromptTemplate
@@ -293,7 +293,7 @@ def thought_chatbot_chain(instruct_prompt:str,
                   model:str='gpt-4o-mini',
                   base_url:str='http://localhost:11434',
                   temperature:float=0.1,
-                  callback_manager=None,
+                  callbacks=None,
                   memory=None,
                   document_meta=None,
                   retriever=None,
@@ -323,6 +323,7 @@ def thought_chatbot_chain(instruct_prompt:str,
     think_prompt = create_thinking_prompt(thought_prompt=thought_prompt,
                                           document_meta=document_meta,
                                           pydantic_parser=think_parser)
+    
     prompt = create_thinking_chatbot_prompt(instruct_prompt=instruct_prompt)
     
     think_chain = think_prompt|llm|think_parser
@@ -336,60 +337,87 @@ def thought_chatbot_chain(instruct_prompt:str,
             print(e)
             return "사고 과정 오류"
     
-    def get_document(output):
+    async def search_docs(output):
         if retriever:
             try :
                 if output.get("thought"):
                     search_msg  = output.get("thought").search_msg
                 else:
                     search_msg  = output.get("input")
-                rtn = f"**검색어: {search_msg}**\n"
-                
+                                    
                 docs = retriever.invoke(search_msg)
-                inputs = []
-                for doc in docs:
-                    inputs.append({"input":search_msg,"context": doc.page_content})
-                
-                results = rerank_chain.batch(inputs,config={"max_concurrency": 3},)
-
-                final_idx=[]
-                for result in results:
-                    if result.score >= retriever_score:
-                        final_idx.append(results.index(result))
-                
-                if len(final_idx) == 0:
-                    rtn += "해당 문서 없음"
-                    return rtn
-                else :
-                    
-                    final_docs = []
-                    
-                    for idx in final_idx:
-                        content = ""
-                        content += f"**검색 문서 적합 점수(10점 만점)**: {results[idx].score}점\n"
-                        content += f"**측정 사유**:{results[idx].evaluation_reasons}\n"
-                        content += f"```검색결과\n"
-                        content += docs[idx].page_content
-                        content += "```\n"
-                        final_docs.append({"score":results[idx].score,"content":content})
-                    
-                    #score가 높은 순으로 정렬후 allow_doc_num의 갯수 만큼 반환
-                    sorted_docs = sorted(final_docs,key=lambda x: x["score"],reverse=True)
-                    sorted_docs = sorted_docs[:allow_doc_num]
-                    
-                    rtn += f"**총 문서 수**: {len(sorted_docs)}\n"
-                    i=1
-                    for doc in sorted_docs: 
-                        rtn += f"---------*Doc No.{i}*---------\n"
-                        rtn += doc["content"]
-                        i+=1
-                        
-                return rtn
+                return docs
             except Exception as e:
                 print(e)
                 return "**문서 검색오류**"
         else:
-            return ""
+            return "해당 문서 없음"
+    
+    async def rerank_document(input: AsyncIterator[Dict]) -> AsyncIterator[str]:
+        search_msg =  ""
+        docs = []
+        
+        async for chunk in input:
+            search_msg =  chunk.get("search_msg",search_msg)
+            docs = chunk.get('docs',docs)
+            
+        result_message = f"**검색어: {search_msg}**\n"
+        
+        if docs != "해당 문서 없음" and len(docs) > 0 and search_msg != "": 
+            try:
+                results = []
+                for idx, doc in enumerate(docs):
+                    tmp_result_message = f"## 검색 문서 평가 중 (문서 순번:{idx})\n"
+                    tmp_result_message += f"```검색결과\n{doc.page_content}```\n" 
+                    yield tmp_result_message
+                    
+                    result = rerank_chain.invoke({"input": search_msg, "context": doc.page_content})
+                    #중간 결과 출력
+                    tmp_result_message += f"**검색어**: {search_msg}\n"
+                    tmp_result_message += f"**검색 문서 적합 점수(10점 만점)**: {result.score}점\n"
+                    tmp_result_message += f"**측정 사유**: {result.evaluation_reasons}\n"
+                    tmp_result_message += f"```검색결과\n{doc.page_content}```\n" 
+                    yield tmp_result_message
+                    
+                    results.append(result)
+                    
+                valid_indices = [i for i, result in enumerate(results) if result.score >= retriever_score]
+
+                if not valid_indices:
+                    result_message += "해당 문서 없음"
+                    yield result_message
+                else:
+                    top_documents = get_top_documents(results, valid_indices, docs, allow_doc_num)
+                    result_message += format_documents(top_documents, len(docs))
+                    yield result_message
+            except Exception as e:
+                yield f"문서 평가 중 오류 발생: {e}"
+        elif docs == "해당 문서 없음":
+            result_message += docs
+            yield result_message
+        else:
+            yield result_message + "해당 문서 없음"
+
+    def get_top_documents(results, valid_indices, docs, allow_doc_num):
+        final_docs = [
+            {
+                "score": results[idx].score,
+                "content": f"--------------------------------------------\n"
+                        f"**검색 문서 적합 점수(10점 만점)**: {results[idx].score}점\n"
+                        f"**측정 사유**: {results[idx].evaluation_reasons}\n"
+                        f"```검색결과\n{docs[idx].page_content}```\n"
+            }
+            for idx in valid_indices
+        ]
+        return sorted(final_docs, key=lambda x: x["score"], reverse=True)[:allow_doc_num]
+
+    def format_documents(top_documents, total_docs):
+        result_message = f"**문서 수**: {len(top_documents)} (총 검색문서: {total_docs})\n"
+        for i, doc in enumerate(top_documents, start=1):
+            result_message += f"---------*Doc No.{i}*---------\n{doc['content']}"
+        return result_message                
+    
+    runnable_document = RunnableGenerator(rerank_document)
         
     def output_formatter(output):
         return {
@@ -412,14 +440,19 @@ def thought_chatbot_chain(instruct_prompt:str,
         }
         |{
             "thought":RunnableLambda(get_thought),
-            "document":RunnableLambda(get_document),
-            "input" : RunnablePassthrough()
+            "docs":search_docs,
+            "input" : RunnablePassthrough(),
+            "search_msg" : lambda x: x["thought"].search_msg
+        }|
+        {
+            "thought": lambda x: x["thought"],
+            "document":runnable_document,
+            "input" : lambda x: x["input"]
         }|
         {
             "params":RunnablePassthrough(),
             "answer":answer_chain
         }
-        |RunnableLambda(output_formatter)
         )
     
     return final_chain
@@ -451,7 +484,7 @@ def chatbot_chain(instruct_prompt:str,
                          model=settings.GLOBAL_LLM,
                          api_key=settings.GLOBAL_LLM_API,
                          base_url=settings.GLOBAL_LLM_URL,
-                         temperature=0.5,
+                         temperature=0.2,
                          )
     
     runnable = RunnablePassthrough.assign(
@@ -465,90 +498,109 @@ def chatbot_chain(instruct_prompt:str,
     
     answer_chain = prompt|llm
     rerank_chain = map_rerank_chain(rerank_llm)
-    
-    def get_document(output):
+        
+    async def search_docs(output):
         if retriever:
             try :
                 if output.get("thought"):
                     search_msg  = output.get("thought").search_msg
                 else:
                     search_msg  = output.get("input")
-                    
-                rtn = f"**검색어: {search_msg}**\n"
-                
+                                    
                 docs = retriever.invoke(search_msg)
-                inputs = []
-                for doc in docs:
-                    inputs.append({"input":search_msg,"context": doc.page_content})
-                
-                results = rerank_chain.batch(inputs,config={"max_concurrency": 3},)
-
-                final_idx=[]
-                for result in results:
-                    if result.score >= retriever_score:
-                        final_idx.append(results.index(result))
-                
-                if len(final_idx) == 0:
-                    rtn += "해당 문서 없음"
-                    return rtn
-                else :
-                    
-                    final_docs = []
-                    
-                    for idx in final_idx:
-                        content = "--------------------------------------------\n"
-                        content += f"**검색 문서 적합 점수(10점 만점)**: {results[idx].score}점\n"
-                        content += f"**측정 사유**:{results[idx].evaluation_reasons}\n"
-                        content += f"```검색결과\n"
-                        content += docs[idx].page_content
-                        content += "```\n"
-                        final_docs.append({"score":results[idx].score,"content":content})
-                    
-                    #score가 높은 순으로 정렬후 allow_doc_num의 갯수 만큼 반환
-                    sorted_docs = sorted(final_docs,key=lambda x: x["score"],reverse=True)
-                    sorted_docs = sorted_docs[:allow_doc_num]
-                    
-                    rtn += f"**총 문서 수**: {len(sorted_docs)}\n"
-                    i=1
-                    for doc in sorted_docs: 
-                        rtn = f"---------*Doc No.{i}*---------\n"
-                        rtn+=doc["content"]
-                        i+=1
-                        
-                return rtn
+                return docs
             except Exception as e:
                 print(e)
                 return "**문서 검색오류**"
         else:
-            return ""
+            return "해당 문서 없음"
+    
+    async def rerank_document(input: AsyncIterator[Dict]) -> AsyncIterator[str]:
+        search_msg =  ""
+        docs = []
         
-    def output_formatter(output):
-        return {
-            "answer": output.get("answer"),
-            "params": output.get("params"),
-        }
+        async for chunk in input:
+            search_msg =  chunk.get("search_msg",search_msg)
+            docs = chunk.get('docs',docs)
+            
+        result_message = f"**검색어: {search_msg}**\n"
         
-    def debug(output):
-        print(output)
-        return output
-        
+        if docs != "해당 문서 없음" and len(docs) > 0 and search_msg != "": 
+            try:
+                results = []
+                
+                for idx, doc in enumerate(docs):
+                    tmp_result_message = f"## 검색 문서 평가 중 (문서 순번:{idx})\n"
+                    tmp_result_message += f"```검색결과\n{doc.page_content}```\n" 
+                    yield tmp_result_message
+                    
+                    result = rerank_chain.invoke({"input": search_msg, "context": doc.page_content})
+                    #중간 결과 출력
+                    tmp_result_message = f"## 검색 문서 평가 중 (문서 순번:{idx})\n"
+                    tmp_result_message += f"**검색어**: {search_msg}\n"
+                    tmp_result_message += f"**검색 문서 적합 점수(10점 만점)**: {result.score}점\n"
+                    tmp_result_message += f"**측정 사유**: {result.evaluation_reasons}\n"
+                    tmp_result_message += f"```검색결과\n{doc.page_content}```\n" 
+                    yield tmp_result_message
+                    
+                    results.append(result)
+                    
+                valid_indices = [i for i, result in enumerate(results) if result.score >= retriever_score]
+
+                if not valid_indices:
+                    result_message += "최종 해당 문서 없음"
+                    yield result_message
+                else:
+                    top_documents = get_top_documents(results, valid_indices, docs, allow_doc_num)
+                    result_message += format_documents(top_documents, len(docs))
+                    yield result_message
+            except Exception as e:
+                yield f"문서 평가 중 오류 발생: {e}"
+        elif docs == "해당 문서 없음":
+            result_message += docs
+            yield result_message
+        else:
+            yield result_message + "해당 문서 없음"
+
+    def get_top_documents(results, valid_indices, docs, allow_doc_num):
+        final_docs = [
+            {
+                "score": results[idx].score,
+                "content": f"--------------------------------------------\n"
+                        f"**검색 문서 적합 점수(10점 만점)**: {results[idx].score}점\n"
+                        f"**측정 사유**: {results[idx].evaluation_reasons}\n"
+                        f"```검색결과\n{docs[idx].page_content}```\n"
+            }
+            for idx in valid_indices
+        ]
+        return sorted(final_docs, key=lambda x: x["score"], reverse=True)[:allow_doc_num]
+
+    def format_documents(top_documents, total_docs):
+        result_message = f"**문서 수**: {len(top_documents)} (총 검색문서: {total_docs})\n"
+        for i, doc in enumerate(top_documents, start=1):
+            result_message += f"---------*Doc No.{i}*---------\n{doc['content']}"
+        return result_message                
+    
+    runnable_document = RunnableGenerator(rerank_document)
+                
+
     final_chain = (
         RunnableParallel(
             input = RunnablePassthrough(),
             chat_history= runnable,
-            document = RunnableLambda(get_document)
+            docs=search_docs,
+            search_msg = lambda x: x["input"]
         )
         |{
             "input": lambda x: x["input"],
             "long_term": lambda x: x["chat_history"]["memory_vars"].get("long_term"),
             "recent_chat": lambda x: x["chat_history"]["memory_vars"].get("recent_chat"),
-            "document": lambda x: x["document"]
+            "document":runnable_document
         }
         |{
             "params":RunnablePassthrough(),
             "answer":answer_chain
         }
-        # |RunnableLambda(output_formatter)
         )
     
     return final_chain
