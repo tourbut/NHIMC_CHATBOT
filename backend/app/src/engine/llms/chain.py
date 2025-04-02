@@ -72,7 +72,7 @@ def create_llm(source:str,
     
     return llm
 
-def map_rerank_chain(llm):
+def map_rerank_chain(llm,document_meta=None):
     
     class AnswerEvaluation(BaseModel):
         """Model for evaluating search result quality"""
@@ -88,21 +88,28 @@ def map_rerank_chain(llm):
         evaluation_reasons: str = Field(
             ...,
             title="Evaluation Reasons",
-            description="Specific reasons for each score given. 100 characters max.",
+            description="Detailed breakdown of scoring components (e.g., +4 for keywords, -1 for irrelevant content).",
         )
     
     parser = PydanticOutputParser(pydantic_object=AnswerEvaluation)
 
     prompt_template = """
 <SYSTEM>
-You are an expert evaluator. Rate how well the context answers the question on a scale of 1.0-10.0:
-1.0~2.9: Completely irrelevant or incorrect
-3.0~4.9: Partially relevant but insufficient
-5.0~6.9: Adequately answers the question
-7.0~8.9: Good answer with minor gaps
-9.0~10.0: Perfect and comprehensive answer
+You are an expert evaluator tasked with assessing how well the provided context answers the given question.
+Your evaluation must be objective and based on the criteria below:
+
+9.0~10.0: Fully answers the question with comprehensive and rich supporting data.
+7.0~8.9: Provides a core answer but lacks additional supporting information.
+5.0~6.9: Relevant but incomplete answer.
+3.0~4.9: Contains only indirect relevance.
+1.0~2.9: Completely irrelevant or incorrect.
+
 Respond to Korean.
 </SYSTEM>
+
+<DOCUMENT_META>
+{document_meta}
+</DOCUMENT_META>
 
 <CONTEXT>
 {context}
@@ -115,12 +122,23 @@ Respond to Korean.
 <OUTPUT FORMAT>
 {format_instructions}
 </OUTPUT FORMAT>
+
+<EVALUATION RULES>
+1. Begin scoring at a base of 5.0 if the context contains any relevant information.
+2. Add up to +4 points for keyword matches between the context and the question.
+3. Add +2 points for specific examples or detailed data provided in the context.
+4. Deduct -1 point for irrelevant content or minor inconsistencies.
+5. Deduct -2 points for major logical errors or lack of structure.
+
+Provide a detailed breakdown of how each scoring component contributed to the final score (e.g., "+4 for keywords, -1 for irrelevant content").
+</EVALUATION RULES>
 """
     
     prompt = PromptTemplate(
         template=prompt_template,
         input_variables=["input", "context"],
-        partial_variables={"format_instructions": parser.get_format_instructions()}
+        partial_variables={"format_instructions": parser.get_format_instructions(),
+                           "document_meta": document_meta},
     )
     
     map_chain = prompt | llm | parser
@@ -312,7 +330,12 @@ def thought_chatbot_chain(instruct_prompt:str,
                      base_url=base_url,
                      temperature=temperature,
                      callback_manager=callback_manager)
-    
+    rerank_llm = create_llm(source='ollama',
+                        model=settings.GLOBAL_LLM,
+                        api_key=settings.GLOBAL_LLM_API,
+                        base_url=settings.GLOBAL_LLM_URL,
+                        temperature=0.2,
+                        )
     runnable = RunnablePassthrough.assign(
         memory_vars=RunnableLambda(memory.load_memory_variables)
     ).assign(
@@ -328,7 +351,7 @@ def thought_chatbot_chain(instruct_prompt:str,
     
     think_chain = think_prompt|llm|think_parser
     answer_chain = prompt|llm
-    rerank_chain = map_rerank_chain(llm)
+    rerank_chain = map_rerank_chain(rerank_llm,document_meta)
     
     def get_thought(output):
         try :
@@ -465,6 +488,7 @@ def chatbot_chain(instruct_prompt:str,
                   temperature:float=0.1,
                   callbacks=None,
                   memory=None,
+                  document_meta=None,
                   retriever=None,
                   retriever_score:float=7,
                   allow_doc_num:int=3,
@@ -497,7 +521,7 @@ def chatbot_chain(instruct_prompt:str,
     prompt = create_chatbot_prompt(instruct_prompt=instruct_prompt)
     
     answer_chain = prompt|llm
-    rerank_chain = map_rerank_chain(rerank_llm)
+    rerank_chain = map_rerank_chain(rerank_llm,document_meta)
         
     async def search_docs(output):
         if retriever:

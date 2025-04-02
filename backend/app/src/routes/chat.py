@@ -327,6 +327,7 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                                 model=llm.name,
                                 base_url=llm.url,
                                 memory=memory,
+                                document_meta=document_meta,
                                 retriever=retriever,
                                 retriever_score=json.loads(chabot_data.search_kwargs)['retriever_score'] if chabot_data.search_kwargs else None,
                                 allow_doc_num=json.loads(chabot_data.search_kwargs)['k'] if chabot_data.search_kwargs else 0)
