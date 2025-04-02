@@ -108,7 +108,7 @@
         }
 
         let failure_callback = (json_error) => {
-            addToast('error',json_error.detail)
+            addToast('error',json_error)
         }
 
         
