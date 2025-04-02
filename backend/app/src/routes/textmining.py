@@ -219,13 +219,11 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,t
         
         chain = create_chain(instruct_detail=instruct_detail)
         
-        user_message = textmining_schema.CreateTmMessages(user_id=current_user.id,
+        user_message = textmining_schema.CreateTmMessages(
                                             chat_id=tmchat_in.chat_id,
                                             name=current_user.name,
                                             content=tmchat_in.input,
-                                            is_user=True,
-                                            create_date=datetime.now(),
-                                            update_date=datetime.now())
+                                            is_user=True)
         
         response,token,prompt = await chain_invoke(chain,tmchat_in.input)
 
@@ -242,14 +240,11 @@ async def send_message(*, session: SessionDep_async, current_user: CurrentUser,t
         messages = []
         messages.append(user_message)
         instruct_detail.mining_llm_name
-        bot_message = textmining_schema.CreateTmMessages(user_id=current_user.id,
-                                                        chat_id=tmchat_in.chat_id,
+        bot_message = textmining_schema.CreateTmMessages(chat_id=tmchat_in.chat_id,
                                                         name="미드미(by "+instruct_detail.mining_llm_name+")",
                                                         content=out_message,
                                                         full_prompt=prompt.text,
-                                                        is_user=False,
-                                                        create_date=datetime.now(),
-                                                        update_date=datetime.now())
+                                                        is_user=False)
         messages.append(bot_message)
         
         usage = textmining_schema.Usage(tm_llm_id=instruct_detail.mining_llm_id,

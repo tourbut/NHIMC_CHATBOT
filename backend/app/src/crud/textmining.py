@@ -411,6 +411,7 @@ async def get_tminstruct_detail(session: AsyncSession, current_user: User, instr
                             TmInstruct.memo,
                             TmInstruct.topic_id,
                             TmTopic.topic_name,
+                            TmTopic.sql,
                             TmInstruct.mining_llm_id,
                             LLM.name.label("mining_llm_name"),
                             LLM.url.label("mining_llm_url"),
