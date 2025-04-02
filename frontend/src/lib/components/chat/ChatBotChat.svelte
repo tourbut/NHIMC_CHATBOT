@@ -99,7 +99,7 @@
         }
 
         let failure_callback = (json_error) => {
-            addToast('error',json_error.detail)
+            addToast('error',json_error)
         }
         chat_or_chatbot_id = params.id
         if (gubun=='chatbot'){
