@@ -216,34 +216,63 @@ async def run_multi():
                 if len(tmp_tmresultlist) > 0:
                     tmresultlist = await create_tmresultlist(session=session,tmresult_in=tmp_tmresultlist)
                 comments = f"Data Extraction: {len(tmp_tmdatalist)}, Text Mining: {result_cnt}"
-                            
+                print(comments)
+                
                 # Sybase 적재
-                TMMASTER = await get_tmmasters(session=session)
-                TMTOPICS= await get_topics(session=session)
-                TMEXECSET = await get_tmexecsets(session=session)
-                TMDATA = await get_tmdata_all(session=session)
-                TMRESULT = await get_tmresults_all(session=session)
-                TMINSTRUCT = await get_tminstructs_all(session=session)
-                df_tmtopics = await to_dataframe(TMTOPICS)
-                df_tmmaster = await to_dataframe(TMMASTER)
-                df_tmexecset = await to_dataframe(TMEXECSET)
-                df_tmdata = await to_dataframe(TMDATA)
-                df_tmresult = await to_dataframe(TMRESULT)
-                df_instruct = await to_dataframe(TMINSTRUCT)
                 
                 INSERT_BUFFER = 1000
-                syb_db.truncate_table("TMTOPIC")
-                syb_db.bulk_insert(df_tmtopics, 'TMTOPIC', chunksize=INSERT_BUFFER)
+                
+                print("Sybase Insert Start")
+                
+                TMMASTER = await get_tmmasters(session=session)
+                df_tmmaster = await to_dataframe(TMMASTER)
+                print(f"TMMASTER: {len(df_tmmaster)}")
+                
+                print("TMMASTER Insert Start")
                 syb_db.truncate_table("TMMASTER")
                 syb_db.bulk_insert(df_tmmaster, 'TMMASTER', chunksize=INSERT_BUFFER)
+                print("TMMASTER Insert End")
+                
+                TMTOPICS= await get_topics(session=session)
+                df_tmtopics = await to_dataframe(TMTOPICS)
+                print(f"TMTOPICS: {len(df_tmtopics)}")
+                print("TMTOPICS Insert Start")
+                syb_db.truncate_table("TMTOPIC")
+                syb_db.bulk_insert(df_tmtopics, 'TMTOPIC', chunksize=INSERT_BUFFER)
+                print("TMTOPICS Insert End")
+                
+                TMEXECSET = await get_tmexecsets(session=session)
+                df_tmexecset = await to_dataframe(TMEXECSET)
+                print(f"TMEXECSET: {len(df_tmexecset)}")
+                print("TMEXECSET Insert Start")
                 syb_db.truncate_table("TMEXECSET")
                 syb_db.bulk_insert(df_tmexecset, 'TMEXECSET', chunksize=INSERT_BUFFER)
-                syb_db.truncate_table("TMDATA")
-                syb_db.bulk_insert(df_tmdata, 'TMDATA', chunksize=INSERT_BUFFER)
-                syb_db.truncate_table("TMRESULT")
-                syb_db.bulk_insert(df_tmresult, 'TMRESULT', chunksize=INSERT_BUFFER)
+                print("TMEXECSET Insert End")
+                
+                TMINSTRUCT = await get_tminstructs_all(session=session)
+                df_instruct = await to_dataframe(TMINSTRUCT)
+                print(f"TMINSTRUCT: {len(df_instruct)}")
+                print("TMINSTRUCT Insert Start")
                 syb_db.truncate_table("TMINSTRUCT")
                 syb_db.bulk_insert(df_instruct, 'TMINSTRUCT', chunksize=INSERT_BUFFER)
+                print("TMINSTRUCT Insert End")
+                
+                TMDATA = await get_tmdata_all(session=session)
+                df_tmdata = await to_dataframe(TMDATA)
+                print(f"TMDATA: {len(df_tmdata)}")
+                print("TMDATA Insert Start")
+                syb_db.truncate_table("TMDATA")
+                syb_db.bulk_insert(df_tmdata, 'TMDATA', chunksize=INSERT_BUFFER)
+                print("TMDATA Insert End")
+                
+                TMRESULT = await get_tmresults_all(session=session)
+                df_tmresult = await to_dataframe(TMRESULT)
+                print(f"TMRESULT: {len(df_tmresult)}")
+                print("TMRESULT Insert Start")
+                syb_db.truncate_table("TMRESULT")
+                syb_db.bulk_insert(df_tmresult, 'TMRESULT', chunksize=INSERT_BUFFER)
+                print("TMRESULT Insert End")
+                
                 # Sybase 연결 종료
                 syb_db.close()
                 tmmaster_update_in = textmining_schema.UpdateTmMaster(id=MASTER_ID,exec_set_id=exec_set_id,status='C',end_date=datetime.now(),comments=comments)
