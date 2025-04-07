@@ -56,12 +56,15 @@ class Sybase:
             print(f"An error occurred: {e}")
             self.conn.rollback()
             
-    def bulk_insert(self,df, table_name, chunksize=100):
+    def bulk_insert(self, df, table_name, chunksize=100):
         try:
+            # NaN/INF 값 처리
+            df = df.replace([float('inf'), float('-inf')], None).fillna(value=None)
+
             with self.conn.cursor() as cursor:
                 columns = ','.join(df.columns)
                 placeholders = ','.join(['?'] * len(df.columns))
-                
+
                 for i in range(0, len(df), chunksize):
                     chunk = df.iloc[i:i+chunksize]
                     tuples = [tuple(x) for x in chunk.to_numpy()]
