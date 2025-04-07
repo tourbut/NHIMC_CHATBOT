@@ -70,7 +70,7 @@ class Sybase:
                     VALUES ({placeholders})
                     """
                     cursor.executemany(query, tuples)
-                self.conn.commit()
+                    self.conn.commit()
         except Exception as e:
             print(f"An error occurred: {e}")
             self.conn.rollback()
