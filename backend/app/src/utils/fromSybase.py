@@ -59,7 +59,7 @@ class Sybase:
     def bulk_insert(self, df, table_name, chunksize=100):
         try:
             # NaN/INF 값 처리
-            df = df.replace([float('inf'), float('-inf')], None).fillna(value='')
+            df = df.fillna(value='')
 
             with self.conn.cursor() as cursor:
                 columns = ','.join(df.columns)
