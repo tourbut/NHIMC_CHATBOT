@@ -9,7 +9,7 @@ from langchain.storage import LocalFileStore
 from langchain_community.storage import SQLStore, RedisStore
 from langchain.storage._lc_store import create_kv_docstore
 from langchain.retrievers import ParentDocumentRetriever
-from langchain_community.document_loaders import TextLoader, PDFMinerLoader, UnstructuredExcelLoader,UnstructuredPDFLoader
+from langchain_community.document_loaders import TextLoader, PDFMinerLoader, UnstructuredExcelLoader,UnstructuredPDFLoader,UnstructuredMarkdownLoader
 from langchain_community.document_loaders.csv_loader import CSVLoader
 from sqlmodel import Session
 import chardet
@@ -18,12 +18,14 @@ from ....core.config import settings
 
 async def load(file_ext:str,file_path: str):
     try :
-        if file_ext in ['txt','md']:
+        if file_ext in ['txt']:
             def detect_encoding(file_path: str) -> str:
                 with open(file_path, 'rb') as f:
                     result = chardet.detect(f.read())
                 return result['encoding']
             loader = TextLoader(file_path,encoding=detect_encoding(file_path))
+        elif file_ext in ['md']:
+            loader = UnstructuredMarkdownLoader(file_path)
         elif file_ext in ['pdf']:
             loader = PDFMinerLoader(file_path)
         elif file_ext in ['csv']:

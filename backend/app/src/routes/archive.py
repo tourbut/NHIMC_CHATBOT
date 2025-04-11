@@ -11,7 +11,7 @@ from app.src.crud import archive as archive_crud
 from app.src.schemas import archive as archive_schema
 
 from app.core.config import settings
-from app.src.utils.preprocess import pdf_to_markdown,xlsx_to_markdown,docx_to_markdown
+from app.src.utils.preprocess import pdf_to_markdown,xlsx_to_markdown,docx_to_markdown,use_markitdown
 from app.src.engine.llms.embeddings import load_and_split, load,create_ParentDocument
 
 from requests.exceptions import RequestException
@@ -43,6 +43,7 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,
                        detail:str = Form(...)) -> archive_schema.ResponseFile:
     try:
         detail_data = json.loads(detail)  # JSON 문자열을 파싱
+        detail_data["separators"] = detail_data["separators"].split(",") if detail_data["separators"] else None
         file_detail = archive_schema.FileDetail(**detail_data)
         # Get userllm
         userllm = await archive_crud.get_userllm(session=session,user_id=current_user.id,llm_type='embedding')
@@ -51,15 +52,15 @@ async def upload_flies(*, session: SessionDep_async, current_user: CurrentUser,
         path,userdir_path = await save_file(file.file,user_id=current_user.id)
         file_ext = file.filename.split(".")[-1]
         if file.filename.split(".")[-1] == "pdf":
-            md = await pdf_to_markdown(path,output_path= path +".md")
+            md = await use_markitdown(path,output_path= path +".md")
             path = path +".md"
             file_ext = "md"
         elif file.filename.split(".")[-1] == "xlsx":
-            md = await xlsx_to_markdown(path,output_path= path +".md")
+            md = await use_markitdown(path,output_path= path +".md")
             path = path +".md"
             file_ext = "md"
         elif file.filename.split(".")[-1] == "docx":
-            md = await docx_to_markdown(path,output_path= path +".md")
+            md = await use_markitdown(path,output_path= path +".md")
             path = path +".md"
             file_ext = "md"
         

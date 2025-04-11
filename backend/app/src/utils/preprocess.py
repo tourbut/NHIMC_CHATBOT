@@ -1,6 +1,7 @@
 from unstructured.partition import pdf,xlsx,docx
 from pathlib import Path
 from bs4 import BeautifulSoup
+from markitdown import MarkItDown
 import re
 
 def html_table_to_markdown(html_content):
@@ -122,7 +123,30 @@ async def docx_to_markdown(input_path: str,output_path: str=None):
         Path(output_path).write_text(''.join(markdown_content), encoding='utf-8')
     else:
         return "".join(markdown_content)      
-    
+
+async def use_markitdown(input_path: str,output_path: str=None):
+    """
+    pip install 'markitdown[all]'
+        PDF
+        PowerPoint
+        Word
+        Excel
+        Images (EXIF metadata and OCR)
+        Audio (EXIF metadata and speech transcription)
+        HTML
+        Text-based formats (CSV, JSON, XML)
+        ZIP files (iterates over contents)
+        Youtube URLs
+        EPubs
+    """
+    md = MarkItDown(enable_plugins=False)
+    result = md.convert(input_path)
+    markdown_content = result.text_content
+    if output_path:
+        Path(output_path).write_text(markdown_content, encoding='utf-8')
+    else:
+        return markdown_content
+
     
 def convert_encoding(in_text:str,encoding:str):
     

@@ -30,7 +30,7 @@
         name: '',
         description: '',
         ext:'',
-        separators:["<*sp*>","\n\n"],
+        separators:"<*sp*>,\n\n",
         chunk_size:1000,
         chunk_overlap:250,
         child_chunk_size:100,
@@ -81,11 +81,11 @@
 
       file.name = files[0].name
       file.ext = file_ext
-
+      console.log(file.separators)
       let params = {
         file_name: file.name,
         file_desc: file.description,
-        separators:["<*sp*>"],
+        separators:file.separators,
         chunk_size:file.chunk_size,
         chunk_overlap:file.chunk_overlap,
         child_chunk_size:file.child_chunk_size,
