@@ -44,7 +44,11 @@ def include_object(object, name, type_, reflected, compare_to):
     if type_ == "table" and name in ("langchain_pg_collection",
                                      "langchain_pg_embedding",
                                      "langchain_key_value_stores",
-                                     "full_llm_cache",):
+                                     "full_llm_cache",
+                                     "checkpoints",
+                                     "checkpoint_writes",
+                                     "checkpoint_migrations",
+                                     "checkpoint_blobs"):
         return False
     else:
         return True

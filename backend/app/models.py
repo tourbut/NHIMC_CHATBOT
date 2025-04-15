@@ -177,20 +177,27 @@ class ChatBot(CommonBase,table=True):
     temperature: Optional[float] = Field(nullable=True,default=None, description="창의성온도")
     search_kwargs: Optional[str] = Field(nullable=True,default=None, description="문서검색 파라미터")
     user_id: uuid.UUID = Field(foreign_key="user.id", description="생성자ID")
-    
+
+class Agent(CommonBase,table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
+    bot_name : str = Field(nullable=False, description="에이전트명")
+    description : Optional[str] = Field(nullable=True,description="설명")
+    instruct_prompt: Optional[str] = Field(nullable=True,default=None,description="지시 프롬프트")
+    user_llm_id: Optional[uuid.UUID] = Field(foreign_key="userllm.id",nullable=True,default=None, description="유저LLMID")
+    dept_llm_id: Optional[uuid.UUID] = Field(foreign_key="deptllm.id",nullable=True,default=None, description="부서LLMID")
+    user_file_id: Optional[uuid.UUID] = Field(foreign_key="userfiles.id",nullable=True,default=None, description="유저파일ID")
+    bottools_id : Optional[uuid.UUID] = Field(foreign_key="bottools.id",nullable=True,default=None, description="도구ID")
+    is_public: bool = Field(default=False, description="공개여부")
+    temperature: Optional[float] = Field(nullable=True,default=None, description="창의성온도")
+    search_kwargs: Optional[str] = Field(nullable=True,default=None, description="문서검색 파라미터")
+    user_id: uuid.UUID = Field(foreign_key="user.id", description="생성자ID")
+
 #Mining Models
 
 class TmLLM(CommonBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     llm_id: uuid.UUID = Field(foreign_key="llm.id", description="LLMID")
     active_yn:bool = Field(default=True, description="활성화여부")
-
-class TmTopic(CommonBase,table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
-    topic_name : str = Field(nullable=False, description="토픽명")
-    contents    : str = Field(nullable=False, description="내용")
-    sql: Optional[str] = Field(nullable=True, description="SQL")
-    user_id    : uuid.UUID = Field(foreign_key="user.id", description="유저ID")
 
 class TmOutputSchema(CommonBase,table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
@@ -207,7 +214,23 @@ class TmOutputSchemaAttr(CommonBase,table=True):
     attr_desc : str = Field(nullable=False, description="속성설명")
     attr_type : str = Field(nullable=False, description="속성타입")
     user_id : uuid.UUID = Field(foreign_key="user.id", description="유저ID")
+    
+class TmMessages(CommonBase,table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
+    chat_id: uuid.UUID = Field(foreign_key="tmchats.id", description="채팅ID")
+    user_id: uuid.UUID = Field(foreign_key="user.id", description="유저ID")
+    name:str = Field(nullable=False, description="이름")
+    content: str = Field(nullable=False, description="내용")
+    full_prompt: Optional[str] = Field(nullable=True, description="풀프롬프트")
+    is_user: bool = Field(nullable=False, description="유저여부")
 
+class TmChats(CommonBase,table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
+    title: str = Field(nullable=False, description="제목")
+    description: Optional[str] = Field(nullable=True, description="설명")
+    user_id: uuid.UUID = Field(foreign_key="user.id", description="유저ID")
+    instruct_id: Optional[uuid.UUID] = Field(foreign_key="tminstruct.id",nullable=True, description="인스트럭션ID")
+    
 class TmInstruct(CommonBase,table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     user_id: uuid.UUID = Field(foreign_key="user.id", description="유저ID")
@@ -218,28 +241,22 @@ class TmInstruct(CommonBase,table=True):
     mining_llm_id: uuid.UUID = Field(foreign_key="tmllm.id", description="마이닝LLMID")
     output_schema_id: uuid.UUID = Field(foreign_key="tmoutputschema.id", description="아웃풋스키마ID")
     is_final: bool = Field(default=False,nullable=True, description="최종 등록여부")
+    load_cplt_yn : Optional[str] = Field(nullable=True,description="로드 완료 여부")
     
-class TmChats(CommonBase,table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
-    title: str = Field(nullable=False, description="제목")
-    description: Optional[str] = Field(nullable=True, description="설명")
-    user_id: uuid.UUID = Field(foreign_key="user.id", description="유저ID")
-    instruct_id: Optional[uuid.UUID] = Field(foreign_key="tminstruct.id",nullable=True, description="인스트럭션ID")
-
-class TmMessages(CommonBase,table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
-    chat_id: uuid.UUID = Field(foreign_key="tmchats.id", description="채팅ID")
-    user_id: uuid.UUID = Field(foreign_key="user.id", description="유저ID")
-    name:str = Field(nullable=False, description="이름")
-    content: str = Field(nullable=False, description="내용")
-    full_prompt: Optional[str] = Field(nullable=True, description="풀프롬프트")
-    is_user: bool = Field(nullable=False, description="유저여부")
-
 class TmExecSet(CommonBase,table=True):
     id : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     instruct_id: uuid.UUID = Field(foreign_key="tminstruct.id")
     user_id: uuid.UUID = Field(foreign_key="user.id")
+    load_cplt_yn : Optional[str] = Field(nullable=True,description="로드 완료 여부")
 
+class TmTopic(CommonBase,table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
+    topic_name : str = Field(nullable=False, description="토픽명")
+    contents    : str = Field(nullable=False, description="내용")
+    sql: Optional[str] = Field(nullable=True, description="SQL")
+    user_id    : uuid.UUID = Field(foreign_key="user.id", description="유저ID")
+    load_cplt_yn : Optional[str] = Field(nullable=True,description="로드 완료 여부")
+    
 class TmMaster(CommonBase,table=True):
     id : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     exec_set_id: uuid.UUID = Field(foreign_key="tmexecset.id")
@@ -247,12 +264,14 @@ class TmMaster(CommonBase,table=True):
     start_date : datetime = Field(nullable=False, description="시작일시")
     end_date : Optional[datetime] = Field(nullable=True, description="종료일시")
     comments : Optional[str] = Field(nullable=True, description="코멘트")
+    load_cplt_yn : Optional[str] = Field(nullable=True,description="로드 완료 여부")
 
 class TmData(CommonBase,table=True):
     id : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     master_id : uuid.UUID = Field(foreign_key="tmmaster.id")
     origin_key : str = Field(nullable=False, description="원본 Key")
     origin_text : Optional[str] = Field(nullable=True, description="원문")
+    load_cplt_yn : Optional[str] = Field(nullable=True,description="로드 완료 여부")
 
 class TmResult(CommonBase,table=True):
     master_id : uuid.UUID = Field(foreign_key="tmmaster.id", primary_key=True)
@@ -261,5 +280,6 @@ class TmResult(CommonBase,table=True):
     item_seq : int = Field(primary_key=True)
     item_nm : str = Field(nullable=False, description="항목명")
     item_value : Optional[str] = Field(nullable=True, description="항목값")
+    load_cplt_yn : Optional[str] = Field(nullable=True,description="로드 완료 여부")
     
     
