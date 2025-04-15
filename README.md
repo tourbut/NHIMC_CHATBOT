@@ -1,23 +1,159 @@
 # NHIMC_CHATBOT
 
-## 주요기능
-- 유저
-    - 회원가입
-    - 채팅방 CRUD
-    - 사용자별 시스템 프롬프트 CRUD
-    - 사용자 시스템 프롬프트 공유기능
-    - 업로드된 파일 조회
-    - 파일 기반 RAG 
-- 관리자
-    - 파일 업로드
-    - 사용자,부서별 사용량 및 API키 관리
-    - 사용 제한 설정
-    - 회원 정보 확인
-    - 채팅 내용 확인
-    - 전체 시스템 프롬프트 관리
+국민건강보험 일산병원 챗봇 시스템
 
+---
 
+## 소개
 
+NHIMC_CHATBOT은 국민건강보험 일산병원을 위한 AI 기반 챗봇 시스템입니다. FastAPI(Python) 백엔드와 SvelteKit(프론트엔드), PostgreSQL, Ollama 등 다양한 기술 스택을 활용하여, 사용자 맞춤형 챗봇, 텍스트 마이닝, 파일 기반 RAG, 관리자 기능 등을 제공합니다.
+
+---
+
+## 폴더 구조
+
+```
+NHIMC_CHATBOT/
+│
+├─ backend/                # 백엔드 FastAPI 서버
+│   ├─ app/
+│   │   ├─ main.py
+│   │   ├─ models.py
+│   │   ├─ alembic/        # DB 마이그레이션
+│   │   ├─ core/           # 설정, 공통 모듈
+│   │   ├─ src/
+│   │   │   ├─ api.py
+│   │   │   ├─ deps.py
+│   │   │   ├─ crud/       # DB CRUD 로직
+│   │   │   ├─ engine/     # LLM, 임베딩, 텍스트마이닝 등
+│   │   │   ├─ routes/     # FastAPI 라우터
+│   │   │   ├─ schemas/    # Pydantic/SQLModel 스키마
+│   │   │   ├─ utils/      # 유틸리티 함수
+│   ├─ config/             # Gunicorn, prestart 등 설정
+│   ├─ files/              # 업로드 파일 저장
+│   ├─ logs/               # 로그 파일
+│   ├─ requirements.txt
+│   ├─ Dockerfile
+│   └─ ...
+│
+├─ frontend/               # 프론트엔드 SvelteKit
+│   ├─ src/
+│   │   ├─ lib/            # 공통 컴포넌트, API 모듈 등
+│   │   ├─ routes/         # 페이지 라우트
+│   │   ├─ app.css, app.html
+│   ├─ static/             # 정적 파일(이미지 등)
+│   ├─ package.json
+│   ├─ tailwind.config.js
+│   ├─ Dockerfile
+│   └─ ...
+│
+├─ db/                     # DB 관련 파일 및 Dockerfile
+├─ script/                 # 초기화 스크립트 등
+├─ tester/                 # 테스트/실험용 코드
+├─ docker-compose.yaml     # 전체 서비스 오케스트레이션
+├─ README.md
+└─ ...
+```
+
+---
+
+## 주요 기능
+
+### 사용자
+- 회원가입 및 인증
+- 채팅방 생성/관리 (CRUD)
+- 사용자별 시스템 프롬프트 관리 및 공유
+- 파일 업로드 및 파일 기반 RAG(문서 기반 질의응답)
+- 텍스트마이닝(지시문, 스키마, 추출, 결과 관리)
+
+### 관리자
+- 전체 파일 업로드 및 관리
+- 사용자/부서별 사용량 및 API키 관리
+- 사용 제한 설정
+- 회원 정보 및 채팅 내용 확인
+- 시스템 프롬프트 및 LLM 관리
+
+---
+
+## 기술 스택
+
+- **Backend**: Python, FastAPI, SQLModel, Alembic, LangChain, Ollama, PostgreSQL
+- **Frontend**: SvelteKit, TailwindCSS, Flowbite, JavaScript
+- **Infra**: Docker, Docker Compose, Nginx
+- **ETC**: Markdown 변환, Embedding, RAG, 텍스트마이닝, LLM 연동
+
+---
+
+## 개발 및 실행
+
+### 1. 개발 환경 준비
+
+- Python 3.11+
+- Node.js 18+
+- Docker, Docker Compose
+
+### 2. 백엔드 실행
+
+```bash
+cd backend
+pip install -r requirements.txt
+# DB 마이그레이션
+alembic upgrade head
+# 서버 실행
+uvicorn app.main:app --reload
+```
+
+### 3. 프론트엔드 실행
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### 4. Docker Compose로 전체 실행
+
+```bash
+docker-compose up --build
+```
+
+---
+
+## 기타
+
+- DB 마이그레이션: `backend/app/alembic/versions/`
+- 환경설정: `.env`, `backend/app/core/config.py`
+- 커스텀 스크립트: `backend/app/config/prestart.sh`
+- 자세한 환경 변수 및 Gunicorn 설정은 README 하단 참고
+
+---
+
+## Gunicorn 및 컨테이너 환경 변수 참고
+
+(아래는 Gunicorn 및 컨테이너 환경 변수 설정 예시입니다. 상세 설명은 기존 README 하단 참고)
+
+- `GUNICORN_CONF`: Gunicorn Python 설정 파일 경로
+- `WORKERS_PER_CORE`: CPU 코어당 워커 수
+- `MAX_WORKERS`: 최대 워커 수
+- `WEB_CONCURRENCY`: 워커 프로세스 수 직접 지정
+- `HOST`, `PORT`, `BIND`: 바인딩 주소 및 포트
+- `LOG_LEVEL`: 로그 레벨
+- `WORKER_CLASS`: 워커 클래스
+- `TIMEOUT`, `KEEP_ALIVE`, `GRACEFUL_TIMEOUT`: 타임아웃 설정
+- `ACCESS_LOG`, `ERROR_LOG`: 로그 파일 경로
+- `GUNICORN_CMD_ARGS`: 추가 Gunicorn 커맨드라인 인자
+- `PRE_START_PATH`: prestart.sh 스크립트 경로
+
+---
+
+## 참고
+
+- [FastAPI 공식문서](https://fastapi.tiangolo.com/)
+- [SvelteKit 공식문서](https://kit.svelte.dev/)
+- [LangChain](https://python.langchain.com/)
+- [Ollama](https://ollama.com/)
+
+---
 
 #### `GUNICORN_CONF`
 
