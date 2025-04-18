@@ -237,6 +237,7 @@ class CreateTmMaster(SQLModel):
     start_date : datetime = datetime.now()
     end_date : datetime | None = None
     comments : str | None = None
+    load_cplt_yn:str = "N" # Y: 완료, N: 미완료
     
 class UpdateTmMaster(SQLModel):
     id: uuid.UUID
