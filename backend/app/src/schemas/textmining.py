@@ -258,6 +258,7 @@ class CreateTmData(SQLModel):
     master_id : uuid.UUID
     origin_key : str
     origin_text : str
+    load_cplt_yn:str = "N" # Y: 완료, N: 미완료
 
 class Get_Out_TmData(SQLModel):
     id : uuid.UUID
@@ -272,6 +273,7 @@ class CreateTmResult(SQLModel):
     item_seq : int
     item_nm : str | None = None
     item_value : str | None = None
+    load_cplt_yn:str = "N" # Y: 완료, N: 미완료
 
 class Get_Out_TmResult(SQLModel):
     master_id : uuid.UUID
