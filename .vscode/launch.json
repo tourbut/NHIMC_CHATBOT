@@ -5,8 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python 디버거: 현재 파일",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/backend"
+            },
+        },
+        {
             "name": "Python : FastAPI",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
             "args": [
@@ -19,12 +29,15 @@
             "envFile": "${workspaceFolder}/.env"
         },
         {
-            "name":"Launch npm dev",
-            "type":"node",
-            "request":"launch",
-            "cwd":"${workspaceFolder}/frontend",
-            "runtimeExecutable":"npm",
-            "runtimeArgs":["run", "dev"]
+            "name": "Launch npm dev",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/frontend",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "dev"
+            ]
         },
     ]
 }
