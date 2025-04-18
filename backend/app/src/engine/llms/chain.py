@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 from operator import itemgetter
 
-from .prompt import (
+from ..common.prompt import (
     create_chatbot_prompt,
     create_thinking_prompt,
     create_thinking_chatbot_prompt,
@@ -41,6 +41,7 @@ def create_llm(source:str,
                model:str='gpt-4o-mini',
                base_url:str='http://localhost:11434',
                temperature:float=0.7,
+               format:str='',
                callback_manager=None):
     
     if source == 'openai':
@@ -60,6 +61,7 @@ def create_llm(source:str,
                          base_url= base_url,
                          temperature=temperature,
                          callback_manager=callback_manager,
+                         format = format,
                          #num_thread=8, # CPU 스레드 수 지정 
                          )
     elif source == 'perplexity':
