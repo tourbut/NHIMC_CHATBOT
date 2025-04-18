@@ -241,13 +241,13 @@ class TmInstruct(CommonBase,table=True):
     mining_llm_id: uuid.UUID = Field(foreign_key="tmllm.id", description="마이닝LLMID")
     output_schema_id: uuid.UUID = Field(foreign_key="tmoutputschema.id", description="아웃풋스키마ID")
     is_final: bool = Field(default=False,nullable=True, description="최종 등록여부")
-    load_cplt_yn : Optional[str] = Field(nullable=True,description="로드 완료 여부")
+    load_cplt_yn : Optional[str] = Field(default='N',nullable=True,description="로드 완료 여부")
     
 class TmExecSet(CommonBase,table=True):
     id : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     instruct_id: uuid.UUID = Field(foreign_key="tminstruct.id")
     user_id: uuid.UUID = Field(foreign_key="user.id")
-    load_cplt_yn : Optional[str] = Field(nullable=True,description="로드 완료 여부")
+    load_cplt_yn : Optional[str] = Field(default='N',nullable=True,description="로드 완료 여부")
 
 class TmTopic(CommonBase,table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
@@ -255,7 +255,7 @@ class TmTopic(CommonBase,table=True):
     contents    : str = Field(nullable=False, description="내용")
     sql: Optional[str] = Field(nullable=True, description="SQL")
     user_id    : uuid.UUID = Field(foreign_key="user.id", description="유저ID")
-    load_cplt_yn : Optional[str] = Field(nullable=True,description="로드 완료 여부")
+    load_cplt_yn : Optional[str] = Field(default='N',nullable=True,description="로드 완료 여부")
     
 class TmMaster(CommonBase,table=True):
     id : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
@@ -264,14 +264,14 @@ class TmMaster(CommonBase,table=True):
     start_date : datetime = Field(nullable=False, description="시작일시")
     end_date : Optional[datetime] = Field(nullable=True, description="종료일시")
     comments : Optional[str] = Field(nullable=True, description="코멘트")
-    load_cplt_yn : Optional[str] = Field(nullable=True,description="로드 완료 여부")
+    load_cplt_yn : Optional[str] = Field(default='N',nullable=True,description="로드 완료 여부")
 
 class TmData(CommonBase,table=True):
     id : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     master_id : uuid.UUID = Field(foreign_key="tmmaster.id")
     origin_key : str = Field(nullable=False, description="원본 Key")
     origin_text : Optional[str] = Field(nullable=True, description="원문")
-    load_cplt_yn : Optional[str] = Field(nullable=True,description="로드 완료 여부")
+    load_cplt_yn : Optional[str] = Field(default='N',nullable=True,description="로드 완료 여부")
 
 class TmResult(CommonBase,table=True):
     master_id : uuid.UUID = Field(foreign_key="tmmaster.id", primary_key=True)
@@ -280,6 +280,6 @@ class TmResult(CommonBase,table=True):
     item_seq : int = Field(primary_key=True)
     item_nm : str = Field(nullable=False, description="항목명")
     item_value : Optional[str] = Field(nullable=True, description="항목값")
-    load_cplt_yn : Optional[str] = Field(nullable=True,description="로드 완료 여부")
+    load_cplt_yn : Optional[str] = Field(default='N',nullable=True,description="로드 완료 여부")
     
     
