@@ -139,7 +139,7 @@ class Create_Out_ChatBot(SQLModel):
     temperature : float | None = None
     search_kwargs : str | None = None
     is_public: bool = False
-    user_id: uuid.UUID
+    is_agent: bool = False
 
 class UpdateChatBot(SQLModel):
     id: uuid.UUID
@@ -154,6 +154,7 @@ class UpdateChatBot(SQLModel):
     temperature : float | None = None
     search_kwargs : dict | None = None
     is_public: bool = False
+    is_agent: bool = False
 
 class Update_Out_ChatBot(SQLModel):
     id: uuid.UUID
@@ -182,6 +183,7 @@ class Get_Out_ChatBot(SQLModel):
     temperature : float | None = None
     search_kwargs : str | None = None
     is_public: bool = False
+    is_agent: bool = False
     user_id: uuid.UUID
 
 class CreateUserPrompt(SQLModel):

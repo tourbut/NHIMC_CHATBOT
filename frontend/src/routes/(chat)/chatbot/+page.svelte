@@ -13,7 +13,7 @@
     let chatbot_id = ''
     let bot_name=''
     let showModal = false;
-    
+    let bot_selector = 'normal'
     let table_head=[
         {id:0,name:"title",type:"text",desc:"챗봇명"},
         {id:1,name:"description",type:"text",desc:"설명"},
@@ -37,7 +37,8 @@
                         k: 1,
                         lambda: 0.2,
                         retriever_score: 7.0
-                    }
+                    },
+        is_agent: false,
     }
 
     const createChat = async () => {
@@ -105,6 +106,15 @@
             } else {
                 chatbot_data['is_thought'] = true
             }
+            chatbot_data['is_agent'] = json.is_agent ? json.is_agent : false
+            
+            if (chatbot_data['is_thought']) {
+                bot_selector = 'thought'
+            } else if (chatbot_data['is_agent']) {
+                bot_selector = 'agent'
+            } else {
+                bot_selector = 'normal'
+            }
         }
 
         let failure_callback = (json_error) => {
@@ -166,7 +176,7 @@
     {#if chatbot_id}
     <div class="flex flex-1">
         <div class="instruct-container">
-            <ChatBotDev bind:chatbot_data={chatbot_data} />
+            <ChatBotDev bind:chatbot_data={chatbot_data} bind:bot_selector={bot_selector} />
         </div>
         <div class="chat-container">
             <ChatBotChat bind:chatbot_data={chatbot_data} bind:chatbot_id={chatbot_id} />

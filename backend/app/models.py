@@ -177,21 +177,8 @@ class ChatBot(CommonBase,table=True):
     temperature: Optional[float] = Field(nullable=True,default=None, description="창의성온도")
     search_kwargs: Optional[str] = Field(nullable=True,default=None, description="문서검색 파라미터")
     user_id: uuid.UUID = Field(foreign_key="user.id", description="생성자ID")
-
-class Agent(CommonBase,table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
-    bot_name : str = Field(nullable=False, description="에이전트명")
-    description : Optional[str] = Field(nullable=True,description="설명")
-    instruct_prompt: Optional[str] = Field(nullable=True,default=None,description="지시 프롬프트")
-    user_llm_id: Optional[uuid.UUID] = Field(foreign_key="userllm.id",nullable=True,default=None, description="유저LLMID")
-    dept_llm_id: Optional[uuid.UUID] = Field(foreign_key="deptllm.id",nullable=True,default=None, description="부서LLMID")
-    user_file_id: Optional[uuid.UUID] = Field(foreign_key="userfiles.id",nullable=True,default=None, description="유저파일ID")
-    bottools_id : Optional[uuid.UUID] = Field(foreign_key="bottools.id",nullable=True,default=None, description="도구ID")
-    is_public: bool = Field(default=False, description="공개여부")
-    temperature: Optional[float] = Field(nullable=True,default=None, description="창의성온도")
-    search_kwargs: Optional[str] = Field(nullable=True,default=None, description="문서검색 파라미터")
-    user_id: uuid.UUID = Field(foreign_key="user.id", description="생성자ID")
-
+    is_agent: Optional[bool] = Field(default=False, description="에이전트여부")
+    
 #Mining Models
 
 class TmLLM(CommonBase, table=True):

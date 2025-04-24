@@ -14,7 +14,9 @@ class GraphState(TypedDict):
         messages (list): 메시지(누적되는 list)
     """
     query: Annotated[str, "문서 검색 쿼리"] 
-    context: Annotated[List[str], "문서 검색 결과"]
+    docs:Annotated[str, "문서 검색 결과"]
+    eval_doc: Annotated[str, "문서 판별 결과"]
+    context: Annotated[List[str], "최종 답변 참고 내용"]
     input: Annotated[str, "입력"]
     refined_input: Annotated[str, "정제된 입력"]
     output: Annotated[str, "출력"]

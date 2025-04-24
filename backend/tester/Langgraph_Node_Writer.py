@@ -82,6 +82,7 @@ if __name__ == "__main__":
     input ="정보보안 담당자 연락처를 업무분장에서 찾아줘."
     
     final_state = graph.invoke({"input": input}, config=config) 
+    
     print(final_state.get('output'))
     
     

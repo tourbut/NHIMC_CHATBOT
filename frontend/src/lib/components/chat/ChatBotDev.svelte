@@ -25,12 +25,16 @@
                         k: 1,
                         lambda: 0.2,
                         retriever_score: 7.0
-                    }
+                    },
+        is_agent: false,
     }
 
     let dept_llm_list = []
     let user_file_list = [{value:null, name:'문서 없음', desc:''}]
     let is_detail_open = false
+
+    export let bot_selector = 'normal'
+
     async function get_data(){
 
         let params = {}
@@ -74,7 +78,8 @@
             bottools_id: chatbot_data['bottools_id'],
             is_public: chatbot_data['is_public'],
             temperature: chatbot_data['temperature'],
-            search_kwargs: chatbot_data['search_kwargs']
+            search_kwargs: chatbot_data['search_kwargs'],
+            is_agent: chatbot_data['is_agent'],
         }
 
         let success_callback = (json) => {
@@ -92,8 +97,18 @@
         get_data();
     });
 
-    $ : if(chatbot_data['is_thought']==false){
+    $ : if(bot_selector == 'normal'){
+        chatbot_data['is_thought'] = false
+        chatbot_data['is_agent'] = false
         chatbot_data['thought_prompt'] = ''
+    }else if(bot_selector == 'thought'){
+        chatbot_data['is_thought'] = true
+        chatbot_data['is_agent'] = false
+    }else if(bot_selector == 'agent'){
+        chatbot_data['is_thought'] = false
+        chatbot_data['is_agent'] = true
+        chatbot_data['thought_prompt'] = ''
+        chatbot_data['instruct_prompt'] = ''
     }
 </script>
 <div class="instruct-div-scroll">
@@ -114,21 +129,25 @@
     </div>
     <div class="mt-2">
         <Label class="block mb-2">프롬프트 작성</Label>
-        <div class="mt-2 ml-2 flex-container bg-gray-100 dark:bg-gray-600 rounded-lg p-1">
-            <Label class="mr-2">추론 과정 사용 여부</Label>
-            <Checkbox bind:checked={chatbot_data['is_thought']} />
-        </div>
-        {#if (chatbot_data['is_thought'])}
-        <div class="mt-2 ml-2 bg-gray-100 dark:bg-gray-600 rounded-lg p-1">
-            <Label class="block mb-2">생각모델 지시문</Label>
-            <Textarea class="min-h-[100px] max-h-[150px]" bind:value={chatbot_data['thought_prompt']} placeholder="명령어 입력" />
-        </div>
+            <ul class="items-center w-full rounded-lg border border-gray-200 sm:flex dark:bg-gray-800 dark:border-gray-600 divide-x rtl:divide-x-reverse divide-gray-200 dark:divide-gray-600">
+                <li class="w-full"><Radio bind:group={bot_selector} class="p-3" value="normal">일반</Radio></li>
+                <li class="w-full"><Radio bind:group={bot_selector} class="p-3" value="thought">추론</Radio></li>
+                <li class="w-full"><Radio bind:group={bot_selector} class="p-3" value="agent">에이전트</Radio></li>
+            </ul>
+        {#if (chatbot_data['is_agent'] == false)}
+            {#if (chatbot_data['is_thought'])}
+            <div class="mt-2 ml-2 bg-gray-100 dark:bg-gray-600 rounded-lg p-1">
+                <Label class="block mb-2">생각모델 지시문</Label>
+                <Textarea class="min-h-[100px] max-h-[150px]" bind:value={chatbot_data['thought_prompt']} placeholder="명령어 입력" />
+            </div>
+            {/if}
+            <div class="mt-2 ml-2 bg-gray-100 dark:bg-gray-600 rounded-lg p-1">
+                <Label class="block mb-2">지시문</Label>
+                <Textarea class="min-h-[100px] max-h-[150px]" bind:value={chatbot_data['instruct_prompt']} placeholder="명령어 입력" />
+            </div>
         {/if}
-        <div class="mt-2 ml-2 bg-gray-100 dark:bg-gray-600 rounded-lg p-1">
-            <Label class="block mb-2">지시문</Label>
-            <Textarea class="min-h-[100px] max-h-[150px]" bind:value={chatbot_data['instruct_prompt']} placeholder="명령어 입력" />
-        </div>
     </div>
+    {#if (chatbot_data['is_agent'] == false)}
     <div class="mt-2">
         <div class="flex justify-between">
             <Label class="block mb-0">세부 설정</Label>
@@ -151,6 +170,7 @@
         </div>
         {/if}
     </div>
+    {/if}
     <div class="mt-2 flex-container">
         <Label class="mr-2">참고 문서</Label>
         <div class="fill-space">

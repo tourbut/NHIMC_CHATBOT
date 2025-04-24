@@ -82,3 +82,25 @@ async def get_current_user(request:Request,session: SessionDep_async, token: Tok
 
 CurrentUser = Annotated[Token, Depends(get_current_user)]
 
+from psycopg_pool import AsyncConnectionPool
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+
+# 기존 SQLAlchemy 엔진에서 연결 문자열 추출
+DB_URI = str(settings.SQLALCHEMY_DATABASE_URI)
+
+# AsyncConnectionPool 생성
+async def get_checkpointer() -> AsyncGenerator[AsyncPostgresSaver, None]:
+    
+    async_pool = AsyncConnectionPool(
+        conninfo=DB_URI,
+        max_size=20,
+        kwargs={"autocommit": True}
+    )
+    
+    checkpointer = AsyncPostgresSaver(async_pool)  # 객체 생성
+    
+    await checkpointer.setup()  # 테이블 생성 필수
+    
+    yield checkpointer  # 생성된 객체를 반환
+
+CheckpointerDep = Annotated[AsyncPostgresSaver, Depends(get_checkpointer)]

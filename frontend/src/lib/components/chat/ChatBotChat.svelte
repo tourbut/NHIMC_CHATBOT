@@ -5,7 +5,7 @@
 
     import MessageInput from "$lib/components/common/MessageInput.svelte";
     import Message from "$lib/components/common//Message.svelte";
-    import { send_message_bot, get_messages,clear_messages } from "$lib/apis/chat";
+    import { send_message_bot,send_message_by_agent, get_messages,clear_messages } from "$lib/apis/chat";
     import { addToast } from '$lib/common';
 
     import { username } from '$lib/stores';
@@ -74,7 +74,11 @@
                 message_list[message_list.length-1].time = new Date(json.create_date).toLocaleString()
             }
         }
-        await send_message_bot(params, success_callback, failure_callback,streamCallback);
+        if (chatbot_data['is_agent']) {
+            await send_message_by_agent(params, success_callback, failure_callback, streamCallback);
+        } else {
+            await send_message_bot(params, success_callback, failure_callback, streamCallback);
+        }
     }
 
     async function get_data(gubun,params)

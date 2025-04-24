@@ -60,7 +60,7 @@ def pg_ParentDocumentRetriever(connection,
                                 )
 
     
-    postgre = SQLStore(namespace=collection_name, engine=connection)
+    postgre = SQLStore(namespace=collection_name, engine=connection,async_mode=async_mode)
     store = create_kv_docstore(postgre)
     
     parent_splitter = RecursiveCharacterTextSplitter(

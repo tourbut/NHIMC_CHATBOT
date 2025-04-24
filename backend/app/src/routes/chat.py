@@ -4,7 +4,7 @@ from typing import Any, Generator,List
 
 from fastapi import APIRouter, HTTPException, Request
 
-from app.src.deps import SessionDep_async,CurrentUser,engine, redis_client
+from app.src.deps import CheckpointerDep, SessionDep_async,CurrentUser,engine, redis_client
 from app.src.crud import chat as chat_crud
 from app.src.schemas import chat as chat_schema
 from app.src.crud import pgvector as pgvector_crud
@@ -24,7 +24,14 @@ from langchain_core.messages import (
     HumanMessage,
 )
 
-from ..engine.llms.callbacks import MyCallback, get_my_callback,get_openai_callback,token_counter_callback
+from app.src.engine.agent.node_graph import (
+    acreate_agent_rag,
+    create_agent_rag,
+    acreate_agent_rag_v2
+)
+from app.src.engine.agent.tools import get_retriever_tool
+from app.src.engine.llms.callbacks import get_openai_callback
+from app.src.utils.graph import draw_graph
 
 router = APIRouter()
 
@@ -259,8 +266,7 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
     
     redis = await redis_client()
     # Get or create a RedisChatMessageHistory instance
-    history = get_redis_history(chat_in.chat_id.hex if chat_in.chat_id is not None else chat_in.chatbot_id.hex
-                                ,redis)
+    history = get_redis_history(chat_in.chat_id.hex if chat_in.chat_id is not None else chat_in.chatbot_id.hex,redis)
     # Get a postgres vectorstore with memory
     memory = pg_vetorstore_with_memory(connection=engine,
                                        collection_name=chat_in.chat_id.hex if chat_in.chat_id is not None else chat_in.chatbot_id.hex,
@@ -398,6 +404,7 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
                         is_user=False,
                         create_date=datetime.now(),
                         update_date=datetime.now())
+        
         messages.append(bot_message)
         
         await chat_crud.create_messages(session=session,messages=messages,usage=usage)
@@ -438,3 +445,172 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
         yield final_response + '\n'
         
     return StreamingResponse(chain_astream(chain,chat_in.input),media_type='application/json')
+
+
+
+
+@router.post("/send_message_by_agent",response_model=chat_schema.OutMessage)
+async def send_message_by_agent(*,checkpointer: CheckpointerDep,session: SessionDep_async, current_user: CurrentUser,chat_in: chat_schema.SendMessageToChatbot):
+    
+    chabot_data = await chat_crud.get_chatbot_alldata(session=session,chatbot_id=chat_in.chatbot_id)
+    all_user_model = await chat_crud.get_llm(session=session,user_id=current_user.id)
+    
+    userllm, deptllm, embedding = None, None, None
+
+    for item in all_user_model:
+        if item.id == chabot_data.userllm_id and item.type == "llm":
+            userllm = item
+        elif item.id == chabot_data.deptllm_id and item.type == "llm":
+            deptllm = item
+        elif item.id == chabot_data.embedding_id and item.type == "embedding":
+            embedding = item
+            
+    llm = userllm if userllm else deptllm
+    
+    retriever = None
+    if chabot_data.collection_id is not None:
+        collection = await pgvector_crud.get_collection(session=session,collection_id=chabot_data.collection_id)
+        
+        retriever = pg_ParentDocumentRetriever(connection=engine,
+                                    collection_name=collection.name,
+                                    api_key=embedding.api_key,
+                                    source=embedding.source,
+                                    model=embedding.name,
+                                    base_url=embedding.url,
+                                    async_mode=False,
+                                    splitter_options=collection.cmetadata,
+                                    search_kwargs={"k": 500, "lambda": 0.3},
+                                    )
+
+    agent_llm = create_llm(source=llm.source,
+                    model=llm.name,
+                    api_key=llm.api_key,
+                    base_url=llm.url,
+                    temperature=0.5,
+                    )
+    
+    json_llm = create_llm(source=llm.source,
+                    model=llm.name,
+                    api_key=llm.api_key,
+                    base_url=llm.url,
+                    format="json",
+                    temperature=0,
+                    )
+    redis = await redis_client()
+    # Get or create a RedisChatMessageHistory instance
+    history = get_redis_history(chat_in.chat_id.hex if chat_in.chat_id is not None else chat_in.chatbot_id.hex,redis)
+    
+    # Get a postgres vectorstore with memory
+    memory = pg_vetorstore_with_memory(connection=engine,
+                                       collection_name=chat_in.chat_id.hex if chat_in.chat_id is not None else chat_in.chatbot_id.hex,
+                                       api_key=settings.GLOBAL_EMBEDDING_API,
+                                       source=settings.GLOBAL_EMBEDDING_SOURCE,
+                                       model=settings.GLOBAL_EMBEDDING_MODEL,
+                                       base_url=settings.GLOBAL_EMBEDDING_URL,
+                                       search_kwargs={"k": 3},
+                                       chat_memory=history)
+    
+    # 메모리 저장소 생성
+    document_meta = "관련 문서 없음" if chabot_data.file_title is None else {'title':chabot_data.file_title,
+                                                              'description':chabot_data.file_description,}
+    document_options = {"document_prompt": "{page_content}",
+                        "document_separator": "<---split--->",
+                        "document_metadata": document_meta
+                        }
+    
+    retriever_tool = get_retriever_tool(
+        retriever=retriever,
+        name="retriever",
+        description=f"Search and return information about {document_meta}.",
+        document_prompt=document_options.get("document_prompt"),
+        document_separator=document_options.get("document_separator")
+    )
+    
+    tools = [retriever_tool] 
+    
+    from langgraph.checkpoint.memory import MemorySaver
+    checkpointer = MemorySaver()
+    graph = acreate_agent_rag_v2(llm=agent_llm,json_llm=json_llm,
+                             tools=tools,checkpointer=checkpointer,
+                             document_options=document_options)
+    
+    from langchain_core.runnables import RunnableConfig
+
+    config = RunnableConfig(
+        recursion_limit=30,  # 최대 10개의 노드까지 방문. 그 이상은 RecursionError 발생
+        configurable={"thread_id": f"user_{chat_in.chat_id}"},  # 스레드 ID 설정
+        stream_mode = "values"
+    )
+    
+    human_message= HumanMessage(content=chat_in.input,
+                                additional_kwargs={
+                                    "user_id":str(current_user.id),
+                                    "name":current_user.name,
+                                    "create_date":datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                    })
+
+    bot_message = chat_schema.CreateMessage(user_id=current_user.id,
+                                             chat_id = chat_in.chat_id,
+                        chatbot_id=chat_in.chatbot_id,
+                        name="바르미",
+                        content="",
+                        thought=None,
+                        tools= json.dumps({'retriever': '' }, ensure_ascii=False),
+                        is_user=False,
+                        create_date=datetime.now(),
+                        update_date=datetime.now())
+    input_token = 0
+    output_token = 0
+    out_message = chat_schema.OutMessage(content=bot_message.content,
+                                     thought=bot_message.thought,
+                                     tools = json.loads(bot_message.tools) if bot_message.tools else {'retriever': ''},
+                                     input_token=0,
+                                     output_token=0,
+                                     create_date=bot_message.create_date.strftime("%Y-%m-%d %H:%M:%S"),
+                                     is_done=True)
+    async def chain_astream(graph,input,config):
+        async for event in graph.astream({"input": input}, config=config):
+            if event.get('agent'):
+                for value in event.values():
+                    if value.get('output'):
+                        out_message.content = value["output"]
+                        input_token = value["messages"][-1].usage_metadata["input_tokens"]
+                        output_token = value["messages"][-1].usage_metadata["output_tokens"]
+                        out_message.input_token = input_token
+                        out_message.output_token = output_token
+                    if value.get('tool_calls'):
+                        tool_calls = value.get('tool_calls')
+                        if tool_calls and isinstance(tool_calls, list) and len(tool_calls) > 0:
+                            args = tool_calls[0].get('args', {})
+                            query = args.get('query')
+                            if query is not None:
+                                out_message.content = f"문서 검색중...\n 검색어: {query}"
+                            else:
+                                out_message.content = ""  # 또는 적절한 기본값  
+            if event.get('retrieve'):
+                for value in event.values():
+                    if value.get('messages'):
+                        content = value.get('messages')[-1].content.replace('\\n','\n')
+                        out_message.content = f"검색결과\n ```\n{content}```"
+            if event.get('rerank'):
+                for value in event.values():
+                    out_message.content = f"문서 판별중\n {value.get('eval_doc')}"
+            if event.get('rewrite'):
+                for value in event.values():
+                    print(value)
+            if event.get('generate'):
+                for value in event.values():
+                    out_message.content = value.get('output')
+                    input_token = value.get('messages')[-1].usage_metadata["input_tokens"]
+                    output_token = value.get('messages')[-1].usage_metadata["output_tokens"]
+                    out_message.tools = {'retriever': "\n\n".join(value.get('context'))}
+                    out_message.input_token = input_token
+                    out_message.output_token = output_token
+                    
+            yield out_message.model_dump_json() + '\n'
+        
+    
+    return StreamingResponse(chain_astream(graph,chat_in.input,config),media_type='application/json')
+        
+
+            

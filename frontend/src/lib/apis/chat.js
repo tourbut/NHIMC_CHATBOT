@@ -80,6 +80,11 @@ export async function send_message_bot(params, success_callback, failure_callbac
     await fastapi('stream', url, params,success_callback,failure_callback,streamCallback)
 }
 
+export async function send_message_by_agent(params, success_callback, failure_callback,streamCallback) {
+    let url = "/chat/send_message_by_agent/"
+    await fastapi('stream', url, params,success_callback,failure_callback,streamCallback)
+}
+
 export async function clear_messages(params, success_callback, failure_callback) {
     let url = "/chat/clear_messages/"
     await fastapi('put', url, params,success_callback,failure_callback)
