@@ -42,6 +42,7 @@ class LLM(CommonBase, table=True):
     output_price: float = Field(nullable=False)
     is_active: bool = Field(default=True)
     url: Optional[str] = Field(nullable=True)
+    is_agent: Optional[bool] = Field(default=False, description="에이전트 지원여부")
 
 class DeptAPIKey(CommonBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")

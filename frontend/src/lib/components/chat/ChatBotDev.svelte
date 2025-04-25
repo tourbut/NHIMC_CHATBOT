@@ -30,6 +30,7 @@
     }
 
     let dept_llm_list = []
+    let filteded_dept_llm_list = []
     let user_file_list = [{value:null, name:'문서 없음', desc:''}]
     let is_detail_open = false
 
@@ -41,7 +42,7 @@
 
         let deptllm_success_callback = (json) => {
             dept_llm_list = json.map((item) => {
-                return {value:item.id, name:item.name}
+                return {value:item.id, name:item.name,is_agent:item.is_agent}
             })
         }
         
@@ -101,14 +102,18 @@
         chatbot_data['is_thought'] = false
         chatbot_data['is_agent'] = false
         chatbot_data['thought_prompt'] = ''
+        filteded_dept_llm_list = dept_llm_list
     }else if(bot_selector == 'thought'){
         chatbot_data['is_thought'] = true
         chatbot_data['is_agent'] = false
+        filteded_dept_llm_list = dept_llm_list
     }else if(bot_selector == 'agent'){
         chatbot_data['is_thought'] = false
         chatbot_data['is_agent'] = true
         chatbot_data['thought_prompt'] = ''
         chatbot_data['instruct_prompt'] = ''
+
+        filteded_dept_llm_list = dept_llm_list.filter(item => item.is_agent == true)
     }
 </script>
 <div class="instruct-div-scroll">
@@ -124,7 +129,7 @@
     <div class="mt-2 flex-container">
         <Label class="mr-2">모델</Label>
         <div class="fill-space">
-        <Combo underline={true} placeholder="모델 선택" ComboMenu={dept_llm_list} bind:selected_name={chatbot_data['dept_llm_id']}/>
+        <Combo underline={true} placeholder="모델 선택" ComboMenu={filteded_dept_llm_list} bind:selected_name={chatbot_data['dept_llm_id']}/>
         </div>
     </div>
     <div class="mt-2">

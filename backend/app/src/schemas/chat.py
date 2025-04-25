@@ -34,6 +34,7 @@ class GetDeptLLM(SQLModel):
     name: str
     api_key: str
     url:str | None
+    is_agent:bool = False
 
 class CreateChat(SQLModel):
     title: str

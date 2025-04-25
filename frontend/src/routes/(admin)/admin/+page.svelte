@@ -16,8 +16,9 @@
       {id:3,name:"description",type:"string",desc:"설명"},
       {id:4,name:"input_price",type:"number",desc:"Input Price"},
       {id:5,name:"output_price",type:"number",desc:"Output Price"},
-      {id:6,name:"url",type:"string",desc:"URL"},
-      {id:7,name:"is_active",type:"boolean",desc:"활성화여부"}
+      {id:6,name:"is_agent",type:"boolean",desc:"Agent 지원"},
+      {id:7,name:"url",type:"string",desc:"URL"},
+      {id:8,name:"is_active",type:"boolean",desc:"활성화여부"}
     ]
 
     let api_table_head=[

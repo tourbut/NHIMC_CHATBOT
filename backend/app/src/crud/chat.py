@@ -42,6 +42,7 @@ async def get_deptllm(*, session: AsyncSession,user_id:uuid.UUID) -> List[chat_s
                            LLM.name,
                            LLM.type,
                            LLM.url,
+                           LLM.is_agent,
                            DeptAPIKey.api_key).where(UserDept.user_id==user_id,
                                                   DeptLLM.dept_id == UserDept.dept_id,
                                                     DeptLLM.llm_id == LLM.id,
