@@ -60,55 +60,54 @@ const fastapi = async (operation, url, params, success_callback, failure_callbac
             if (operation === 'stream' && streamCallback) {
 
                 const reader = response.body.getReader();
-                const decoder = new TextDecoder();
 
                 async function readStream() {
                     let buffer = '';
+                    const decoder = new TextDecoder('utf-8', { stream: true });
+                
                     try {
-                        while (true) {
+                        while(true) {
                             const { done, value } = await reader.read();
-                            if (done) break;
-                
+                            if(done) break;
+                            
                             buffer += decoder.decode(value, { stream: true });
-                
-                            // 여러 개의 JSON 객체가 연속으로 오거나, 쪼개져 올 수 있으므로
-                            let startIdx = 0;
-                            let openBraces = 0;
-                            let inString = false;
-                            for (let i = 0; i < buffer.length; i++) {
-                                const char = buffer[i];
-                                if (char === '"' && buffer[i - 1] !== '\\') {
-                                    inString = !inString;
-                                }
-                                if (!inString) {
-                                    if (char === '{') openBraces++;
-                                    if (char === '}') openBraces--;
-                                }
-                                if (openBraces === 0 && !inString && i > startIdx) {
-                                    const jsonString = buffer.slice(startIdx, i + 1);
+                            
+                            // JSON 파싱 시도
+                            while(buffer.length > 0) {
+                                try {
+                                    // 완전한 JSON 객체 찾기
+                                    const parsed = JSON.parse(buffer);
+                                    streamCallback(parsed);
+                                    buffer = ''; // 버퍼 클리어
+                                    break;
+                                } catch (err) {
+                                    // 불완전한 데이터인 경우 다음 청크 기다림
+                                    const lastBrace = buffer.lastIndexOf('}');
+                                    if(lastBrace === -1) break;
+                                    
                                     try {
-                                        const parsedData = JSON.parse(jsonString);
-                                        streamCallback(parsedData);
-                                    } catch (parseError) {
-                                        console.warn("JSON 파싱 실패:", parseError, jsonString);
+                                        const partial = buffer.substring(0, lastBrace + 1);
+                                        const parsed = JSON.parse(partial);
+                                        streamCallback(parsed);
+                                        buffer = buffer.substring(lastBrace + 1);
+                                    } catch (innerErr) {
+                                        break;
                                     }
-                                    startIdx = i + 1;
                                 }
                             }
-                            // 남은 조각은 buffer에 남겨둠
-                            buffer = buffer.slice(startIdx);
                         }
-                        // 스트림 종료 후 남은 버퍼 처리
-                        if (buffer.trim()) {
+                        
+                        // 남은 데이터 처리
+                        if(buffer) {
                             try {
-                                const parsedData = JSON.parse(buffer);
-                                streamCallback(parsedData);
-                            } catch (parseError) {
-                                console.warn("마지막 JSON 파싱 실패:", parseError, buffer);
+                                const parsed = JSON.parse(buffer);
+                                streamCallback(parsed);
+                            } catch(err) {
+                                console.warn("Final chunk parse error:", err);
                             }
                         }
                     } catch (error) {
-                        console.error("Stream read error:", error);
+                        console.error("Stream error:", error);
                     }
                 }
 
