@@ -13,17 +13,13 @@ FROM nginx:latest
 
 LABEL maintainer="Knowslog <Knowslog01@gmail.com>"
 
-RUN apt-get install tzdata && \
-    locales
-
 RUN apt-get update && \
-    apt-get install -y gettext-base && \
+    apt-get install -y tzdata locales gettext-base && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # 로케일 생성
 RUN localedef -i ko_KR -c -f UTF-8 -A /usr/share/locale/locale.alias ko_KR.UTF-8
-# 환경변수 설정
 ENV LANG ko_KR.UTF-8
 ENV LC_ALL ko_KR.UTF-8
 
