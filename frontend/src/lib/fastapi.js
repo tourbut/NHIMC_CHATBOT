@@ -81,9 +81,12 @@ const fastapi = async (operation, url, params, success_callback, failure_callbac
                 
                         for (const jsonString of jsonStrings) {
                             try {
+                                
                                 const parsedData = JSON.parse(jsonString);
                                 streamCallback(parsedData);
                             } catch (parseError) {
+                                console.log("원 데이터:", text);
+                                console.log("스트리밍 데이터:", jsonString);
                                 console.warn("JSON 파싱 실패:", parseError);
                                 continue;
                             }
