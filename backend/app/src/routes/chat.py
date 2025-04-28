@@ -589,7 +589,8 @@ async def send_message_by_agent(*,checkpointer: CheckpointerDep,session: Session
                                 out_message.content = ""  # 또는 적절한 기본값  
             if event.get('retrieve'):
                 for value in event.values():
-                    pass
+                    content = value.get('messages')[-1].content.replace('\\n','\n')
+                    out_message.content = f"검색결과\n ```\n{content}```"
             if event.get('split_docs'):
                 for value in event.values():
                     out_message.content = f"검색 완료 총 문서 {len(value.get('docs'))}건"

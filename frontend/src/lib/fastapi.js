@@ -63,36 +63,50 @@ const fastapi = async (operation, url, params, success_callback, failure_callbac
                 const decoder = new TextDecoder();
 
                 async function readStream() {
+                    let buffer = '';
                     try {
-                        const { done, value } = await reader.read();
-
-                        if (done) {
-                            return;
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                
+                            buffer += decoder.decode(value, { stream: true });
+                
+                            // 여러 개의 JSON 객체가 연속으로 오거나, 쪼개져 올 수 있으므로
+                            let startIdx = 0;
+                            let openBraces = 0;
+                            let inString = false;
+                            for (let i = 0; i < buffer.length; i++) {
+                                const char = buffer[i];
+                                if (char === '"' && buffer[i - 1] !== '\\') {
+                                    inString = !inString;
+                                }
+                                if (!inString) {
+                                    if (char === '{') openBraces++;
+                                    if (char === '}') openBraces--;
+                                }
+                                if (openBraces === 0 && !inString && i > startIdx) {
+                                    const jsonString = buffer.slice(startIdx, i + 1);
+                                    try {
+                                        const parsedData = JSON.parse(jsonString);
+                                        streamCallback(parsedData);
+                                    } catch (parseError) {
+                                        console.warn("JSON 파싱 실패:", parseError, jsonString);
+                                    }
+                                    startIdx = i + 1;
+                                }
+                            }
+                            // 남은 조각은 buffer에 남겨둠
+                            buffer = buffer.slice(startIdx);
                         }
-                
-                        const text = decoder.decode(value);
-                        
-                        // JSON 데이터가 연속으로 오는 경우 분리 처리
-                        const jsonStrings = text.split('}{').map((str, i, arr) => {
-                            if (i !== 0) str = '{' + str;
-                            if (i !== arr.length - 1) str = str + '}';
-                            return str;
-                        });
-                
-                        for (const jsonString of jsonStrings) {
+                        // 스트림 종료 후 남은 버퍼 처리
+                        if (buffer.trim()) {
                             try {
-                                
-                                const parsedData = JSON.parse(jsonString);
+                                const parsedData = JSON.parse(buffer);
                                 streamCallback(parsedData);
                             } catch (parseError) {
-                                console.log("원 데이터:", text);
-                                console.log("스트리밍 데이터:", jsonString);
-                                console.warn("JSON 파싱 실패:", parseError);
-                                continue;
+                                console.warn("마지막 JSON 파싱 실패:", parseError, buffer);
                             }
                         }
-
-                        await readStream(); // 계속 스트림을 읽음
                     } catch (error) {
                         console.error("Stream read error:", error);
                     }
