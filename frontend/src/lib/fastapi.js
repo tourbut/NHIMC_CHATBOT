@@ -75,9 +75,12 @@ const fastapi = async (operation, url, params, success_callback, failure_callbac
                         try {
                             const parsedData = JSON.parse(buffer);
                             streamCallback(parsedData);
-                            buffer = ""; // 버퍼 초기화
+                            if (parsedData && parsedData.length > 0) {
+                                buffer = ""; // 버퍼 초기화
+                            }
                         } catch (parseError) {
                             console.warn("JSON 파싱 실패:", parseError);
+                            console.log("스트리밍 데이터:", buffer);
                         }
                         
                         await readStream(); // 계속 스트림을 읽음
