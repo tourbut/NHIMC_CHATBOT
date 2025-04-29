@@ -75,7 +75,7 @@ const fastapi = async (operation, url, params, success_callback, failure_callbac
                         try {
                             const parsedData = JSON.parse(buffer);
                             streamCallback(parsedData);
-                            if (parsedData && parsedData.length > 0) {
+                            if (parsedData != "") {
                                 buffer = ""; // 버퍼 초기화
                             }
                         } catch (parseError) {
