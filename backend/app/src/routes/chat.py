@@ -612,7 +612,7 @@ async def send_message_by_agent(*,session: SessionDep_async, current_user: Curre
             yield out_message.model_dump_json() + '\n'
         
     
-    return StreamingResponse(chain_astream(graph,chat_in.input,config),media_type='text/event-stream')
+    return StreamingResponse(chain_astream(graph,chat_in.input,config),media_type='application/x-ndjson')
         
 
             
