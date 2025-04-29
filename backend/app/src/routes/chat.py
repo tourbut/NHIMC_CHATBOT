@@ -450,7 +450,7 @@ async def send_message_bot(*,session: SessionDep_async, current_user: CurrentUse
 
 
 @router.post("/send_message_by_agent",response_model=chat_schema.OutMessage)
-async def send_message_by_agent(*,checkpointer: CheckpointerDep,session: SessionDep_async, current_user: CurrentUser,chat_in: chat_schema.SendMessageToChatbot):
+async def send_message_by_agent(*,session: SessionDep_async, current_user: CurrentUser,chat_in: chat_schema.SendMessageToChatbot):
     
     chabot_data = await chat_crud.get_chatbot_alldata(session=session,chatbot_id=chat_in.chatbot_id)
     all_user_model = await chat_crud.get_llm(session=session,user_id=current_user.id)
@@ -528,10 +528,8 @@ async def send_message_by_agent(*,checkpointer: CheckpointerDep,session: Session
     
     tools = [retriever_tool] 
     
-    from langgraph.checkpoint.memory import MemorySaver
-    checkpointer = MemorySaver()
     graph = acreate_agent_rag_v2(llm=agent_llm,json_llm=json_llm,
-                             tools=tools,checkpointer=checkpointer,
+                             tools=tools,checkpointer=None,
                              document_options=document_options)
     
     from langchain_core.runnables import RunnableConfig
