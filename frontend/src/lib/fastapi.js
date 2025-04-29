@@ -60,54 +60,28 @@ const fastapi = async (operation, url, params, success_callback, failure_callbac
             if (operation === 'stream' && streamCallback) {
 
                 const reader = response.body.getReader();
-
+                const decoder = new TextDecoder();
+                const buffer = "";
                 async function readStream() {
-                    let buffer = '';
-                    const decoder = new TextDecoder('utf-8', { stream: true });
-                
                     try {
-                        while(true) {
-                            const { done, value } = await reader.read();
-                            if(done) break;
-                            
-                            buffer += decoder.decode(value, { stream: true });
-                            
-                            // JSON 파싱 시도
-                            while(buffer.length > 0) {
-                                try {
-                                    // 완전한 JSON 객체 찾기
-                                    const parsed = JSON.parse(buffer);
-                                    streamCallback(parsed);
-                                    buffer = ''; // 버퍼 클리어
-                                    break;
-                                } catch (err) {
-                                    // 불완전한 데이터인 경우 다음 청크 기다림
-                                    const lastBrace = buffer.lastIndexOf('}');
-                                    if(lastBrace === -1) break;
-                                    
-                                    try {
-                                        const partial = buffer.substring(0, lastBrace + 1);
-                                        const parsed = JSON.parse(partial);
-                                        streamCallback(parsed);
-                                        buffer = buffer.substring(lastBrace + 1);
-                                    } catch (innerErr) {
-                                        break;
-                                    }
-                                }
-                            }
+                        const { done, value } = await reader.read();
+
+                        if (done) {
+                            return;
+                        }
+                
+                        const jsonStrings = decoder.decode(value);
+                
+                        try {
+                            const parsedData = JSON.parse(jsonStrings);
+                            streamCallback(parsedData);
+                        } catch (parseError) {
+                            console.warn("JSON 파싱 실패:", parseError);
                         }
                         
-                        // 남은 데이터 처리
-                        if(buffer) {
-                            try {
-                                const parsed = JSON.parse(buffer);
-                                streamCallback(parsed);
-                            } catch(err) {
-                                console.warn("Final chunk parse error:", err);
-                            }
-                        }
+                        await readStream(); // 계속 스트림을 읽음
                     } catch (error) {
-                        console.error("Stream error:", error);
+                        console.error("Stream read error:", error);
                     }
                 }
 
