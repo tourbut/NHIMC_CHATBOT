@@ -4,7 +4,7 @@ from typing import Any, Generator,List
 
 from fastapi import APIRouter, HTTPException, Request
 
-from app.src.deps import CheckpointerDep, SessionDep_async,CurrentUser,engine, redis_client
+from app.src.deps import SessionDep_async,CurrentUser,engine, redis_client
 from app.src.crud import chat as chat_crud
 from app.src.schemas import chat as chat_schema
 from app.src.crud import pgvector as pgvector_crud
