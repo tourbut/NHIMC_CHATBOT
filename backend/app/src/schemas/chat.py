@@ -59,6 +59,7 @@ class GetChat(SQLModel):
     dept_llm_id: uuid.UUID | None = None
     user_file_id: uuid.UUID | None = None
     chatbot_id: uuid.UUID| None  = None
+    is_agent:bool = False
 
 class GetMessages(SQLModel):
     chat_id: str

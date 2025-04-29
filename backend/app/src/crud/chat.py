@@ -230,10 +230,19 @@ async def get_chat_list(*, session: AsyncSession, current_user: User) -> List[ch
         await session.rollback()
         raise e
 
-async def get_chat(*, session: AsyncSession, chat_id:uuid.UUID) -> Chats:
+async def get_chat(*, session: AsyncSession, chat_id:uuid.UUID) -> chat_schema.GetChat:
     try:
-        chat = await session.get(Chats, chat_id)
-        return chat
+        statement = select(Chats.id,
+                           Chats.title,
+                           Chats.user_llm_id,
+                           Chats.dept_llm_id,
+                           Chats.user_file_id,
+                           Chats.chatbot_id,
+                           ChatBot.is_agent).where(Chats.chatbot_id == ChatBot.id,
+                                                   Chats.id==chat_id)
+
+        chat = await session.exec(statement)
+        return chat.first()
     except Exception as e:
         print(e)
         await session.rollback()

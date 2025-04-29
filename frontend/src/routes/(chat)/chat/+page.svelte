@@ -19,7 +19,9 @@
     let chatbot_data = {
         chat_id: '',
         chatbot_id: '',
-        chat_title: ''
+        bot_name: '',
+        chat_title: '',
+        is_agent: false,
     }
     let selected_chatbot={value:0,name:"업무도우미 선택"}
     let table_head=[
@@ -82,7 +84,8 @@
                 chat_id :id,
                 chatbot_id: json.chatbot_id,
                 chat_title: chat_title,
-                bot_name: bot_name
+                bot_name: bot_name,
+                is_agent: json.is_agent
             }
             chat_id = id
             chatbot_id = json.chatbot_id
