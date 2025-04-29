@@ -61,7 +61,7 @@ const fastapi = async (operation, url, params, success_callback, failure_callbac
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-                const buffer = "";
+                let buffer = "";
                 async function readStream() {
                     try {
                         const { done, value } = await reader.read();
@@ -71,10 +71,11 @@ const fastapi = async (operation, url, params, success_callback, failure_callbac
                         }
                 
                         const jsonStrings = decoder.decode(value);
-                
+                        buffer += jsonStrings;
                         try {
-                            const parsedData = JSON.parse(jsonStrings);
+                            const parsedData = JSON.parse(buffer);
                             streamCallback(parsedData);
+                            buffer = ""; // 버퍼 초기화
                         } catch (parseError) {
                             console.warn("JSON 파싱 실패:", parseError);
                         }
