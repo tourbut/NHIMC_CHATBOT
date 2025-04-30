@@ -62,6 +62,10 @@ def create_llm(source:str,
                          temperature=temperature,
                          callback_manager=callback_manager,
                          format = format,
+                         num_predict = 1024,
+                         num_ctx = 1024*10,
+                         timeout = 60,
+                         repeat_penalty=1.5,
                          #num_thread=8, # CPU 스레드 수 지정 
                          )
     elif source == 'perplexity':

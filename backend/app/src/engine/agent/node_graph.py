@@ -610,7 +610,7 @@ def acreate_agent_rag_v2(llm,json_llm,tools,checkpointer,document_options={}):
         # 질문 추출
         input = state.get('input')
         refined_input = state.get('refined_input') # 질문 재작성된 경우
-        context = state.get('context',[]) 
+        eval_docs = state.get('eval_docs',[]) 
         if len(state.get('docs')) == 0:
             return state
         
@@ -629,13 +629,14 @@ def acreate_agent_rag_v2(llm,json_llm,tools,checkpointer,document_options={}):
         eval_doc = f"""**검색 문서 적합 점수**: {total_score} \n"""
         eval_doc += f"""```검색결과\n{doc}\n```\n\n"""
         state['eval_doc'] = eval_doc
-
+        
         if total_score >= 7:
-            if len(context) > 0:
-                context.append(eval_doc)
+            if len(eval_docs) > 0:
+                eval_docs.append({"doc":eval_doc,"total_score":total_score})
             else:
-                context = [eval_doc]
-        state['context'] = context
+                eval_docs = [{"doc":eval_doc,"total_score":total_score}]
+                
+        state['eval_docs'] = eval_docs
         
         return state
 
@@ -648,7 +649,7 @@ def acreate_agent_rag_v2(llm,json_llm,tools,checkpointer,document_options={}):
         if len(state.get('docs')) > 0:
             return "rerank"
         else :
-            if len(state.get('context')) > 0:
+            if len(state.get('eval_docs')) > 0:
                 return "generate"
             else:
                 return "rewrite"
@@ -679,8 +680,17 @@ def acreate_agent_rag_v2(llm,json_llm,tools,checkpointer,document_options={}):
         # 원래 질문 추출
         input = state.get("input")
 
+        eval_docs = state["eval_docs"]
+        
+        # context = {"doc":doc,"total_score":total_score}
+        #total_score 내림차순으로 정렬 후 상위 2개의 doc 출력
+        context = sorted(eval_docs, key=lambda x: x.get('total_score'), reverse=True)
+        context = context[:2]
+        context = [doc.get('doc') for doc in context]
+        context = "\n\n".join(context)
+        state["context"] = context
+        
         # 가장 마지막 메시지 추출
-        context = "\n".join(state["context"])
 
         # RAG 프롬프트 템플릿 가져오기
         prompt = final_generate_prompt()

@@ -346,6 +346,7 @@ def rerank_prompt(parser:PydanticOutputParser):
     system_prompt  = "<SYSTEM>\n"
     system_prompt += "You are an expert evaluator tasked with assessing how well the provided context answers the given question.\n"
     system_prompt += "You Must Respond in Json format.\n"
+    system_prompt += "Evaluate Very rigorously\n"
     system_prompt += "</SYSTEM>"
     system_prompt += "<FORMAT>\n"
     system_prompt += "{format_instructions}\n"

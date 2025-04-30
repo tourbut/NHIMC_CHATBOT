@@ -486,7 +486,7 @@ async def send_message_by_agent(*,session: SessionDep_async, current_user: Curre
                     model=llm.name,
                     api_key=llm.api_key,
                     base_url=llm.url,
-                    temperature=0.5,
+                    temperature=0.7,
                     )
     
     json_llm = create_llm(source=llm.source,
@@ -605,7 +605,7 @@ async def send_message_by_agent(*,session: SessionDep_async, current_user: Curre
                     out_message.content = value.get('output')
                     input_token = value.get('messages')[-1].usage_metadata["input_tokens"]
                     output_token = value.get('messages')[-1].usage_metadata["output_tokens"]
-                    out_message.tools = {'retriever': "\n\n".join(value.get('context'))}
+                    out_message.tools = {'retriever': value.get('context','')}
                     out_message.input_token = input_token
                     out_message.output_token = output_token
                     
