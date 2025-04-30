@@ -1,4 +1,4 @@
-from typing import Dict, TypedDict, Annotated, List
+from typing import Any, Dict, TypedDict, Annotated, List
 from langchain_core.documents import Document
 from langgraph.graph import add_messages
 
@@ -23,6 +23,7 @@ class GraphState(TypedDict):
     output: Annotated[str, "출력"]
     tool_calls: Annotated[List[Dict], "도구 호출"]
     messages: Annotated[list, add_messages] 
+    chat_history: Annotated[Any, " 대화 기록"]
     
 
     

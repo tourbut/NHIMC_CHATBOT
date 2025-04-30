@@ -479,7 +479,7 @@ async def send_message_by_agent(*,session: SessionDep_async, current_user: Curre
                                     base_url=embedding.url,
                                     async_mode=False,
                                     splitter_options=collection.cmetadata,
-                                    search_kwargs={"k": 500, "lambda": 0.3},
+                                    search_kwargs={"k": 10, "lambda": 0.2},
                                     )
 
     agent_llm = create_llm(source=llm.source,
@@ -529,16 +529,10 @@ async def send_message_by_agent(*,session: SessionDep_async, current_user: Curre
     tools = [retriever_tool] 
     
     graph = acreate_agent_rag_v2(llm=agent_llm,json_llm=json_llm,
-                             tools=tools,checkpointer=None,
-                             document_options=document_options)
+                                 memory=memory,tools=tools,checkpointer=None,
+                                 document_options=document_options)
     
     from langchain_core.runnables import RunnableConfig
-
-    config = RunnableConfig(
-        recursion_limit=30,  # 최대 10개의 노드까지 방문. 그 이상은 RecursionError 발생
-        configurable={"thread_id": f"user_{chat_in.chat_id}"},  # 스레드 ID 설정
-        stream_mode = "values"
-    )
     
     human_message= HumanMessage(content=chat_in.input,
                                 additional_kwargs={
@@ -566,49 +560,60 @@ async def send_message_by_agent(*,session: SessionDep_async, current_user: Curre
                                      output_token=0,
                                      create_date=bot_message.create_date.strftime("%Y-%m-%d %H:%M:%S"),
                                      is_done=True)
+    config = RunnableConfig(
+        recursion_limit=30,  # 최대 10개의 노드까지 방문. 그 이상은 RecursionError 발생
+        configurable={"thread_id": f"user_{chat_in.chat_id}"},  # 스레드 ID 설정
+        stream_mode = "updates"
+    )
+    
     async def chain_astream(graph,input,config):
-        async for event in graph.astream({"input": input}, config=config):
-            if event.get('agent'):
-                for value in event.values():
-                    if value.get('output'):
-                        out_message.content = value["output"]
-                        input_token = value["messages"][-1].usage_metadata["input_tokens"]
-                        output_token = value["messages"][-1].usage_metadata["output_tokens"]
+        try :
+            async for event in graph.astream({"input": input}, config=config):
+                if event.get('agent'):
+                    for value in event.values():
+                        if value.get('output'):
+                            out_message.content = value["output"]
+                            input_token = value["messages"][-1].usage_metadata["input_tokens"]
+                            output_token = value["messages"][-1].usage_metadata["output_tokens"]
+                            out_message.input_token = input_token
+                            out_message.output_token = output_token
+                        if value.get('tool_calls'):
+                            tool_calls = value.get('tool_calls')
+                            if tool_calls and isinstance(tool_calls, list) and len(tool_calls) > 0:
+                                args = tool_calls[0].get('args', {})
+                                query = args.get('query')
+                                if query is not None:
+                                    out_message.content = f"문서 검색중...\n 검색어: {query}"
+                                else:
+                                    out_message.content = ""  # 또는 적절한 기본값  
+                if event.get('retrieve'):
+                    for value in event.values():
+                        content = value.get('messages')[-1].content.replace('\\n','\n')
+                        out_message.content = f"검색결과\n ```\n{content}```"
+                if event.get('split_docs'):
+                    for value in event.values():
+                        out_message.content = f"검색 완료 총 문서 {len(value.get('docs'))}건"
+                if event.get('rerank'):
+                    for value in event.values():
+                        out_message.content = f"문서 판별중\n {value.get('eval_doc')}"
+                        if len(value.get('docs')) == 0:
+                            out_message.content = f"최종 답변 작성 중...\n {value.get('eval_doc')}"
+                if event.get('rewrite'):
+                    for value in event.values():
+                        print(value)
+                if event.get('generate'):
+                    for value in event.values():
+                        out_message.content = value.get('output')
+                        input_token = value.get('messages')[-1].usage_metadata["input_tokens"]
+                        output_token = value.get('messages')[-1].usage_metadata["output_tokens"]
+                        out_message.tools = {'retriever': value.get('context','')}
                         out_message.input_token = input_token
                         out_message.output_token = output_token
-                    if value.get('tool_calls'):
-                        tool_calls = value.get('tool_calls')
-                        if tool_calls and isinstance(tool_calls, list) and len(tool_calls) > 0:
-                            args = tool_calls[0].get('args', {})
-                            query = args.get('query')
-                            if query is not None:
-                                out_message.content = f"문서 검색중...\n 검색어: {query}"
-                            else:
-                                out_message.content = ""  # 또는 적절한 기본값  
-            if event.get('retrieve'):
-                for value in event.values():
-                    content = value.get('messages')[-1].content.replace('\\n','\n')
-                    out_message.content = f"검색결과\n ```\n{content}```"
-            if event.get('split_docs'):
-                for value in event.values():
-                    out_message.content = f"검색 완료 총 문서 {len(value.get('docs'))}건"
-            if event.get('rerank'):
-                for value in event.values():
-                    out_message.content = f"문서 판별중\n {value.get('eval_doc')}"
-                    if len(value.get('docs')) == 0:
-                        out_message.content = f"최종 답변 작성 중...\n {value.get('eval_doc')}"
-            if event.get('rewrite'):
-                for value in event.values():
-                    print(value)
-            if event.get('generate'):
-                for value in event.values():
-                    out_message.content = value.get('output')
-                    input_token = value.get('messages')[-1].usage_metadata["input_tokens"]
-                    output_token = value.get('messages')[-1].usage_metadata["output_tokens"]
-                    out_message.tools = {'retriever': value.get('context','')}
-                    out_message.input_token = input_token
-                    out_message.output_token = output_token
-                    
+                        
+                yield out_message.model_dump_json() + '\n'
+        except Exception as e:
+            print(e)
+            out_message.content = "에러가 발생하였습니다. 다시한번 질문해 주세요."
             yield out_message.model_dump_json() + '\n'
         
     

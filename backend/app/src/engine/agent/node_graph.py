@@ -2,6 +2,7 @@ from typing import Literal
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_core.messages import HumanMessage,ToolMessage,AIMessage
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langchain_core.output_parsers import PydanticOutputParser
 
 from app.src.utils.graph import draw_graph
@@ -514,7 +515,7 @@ def acreate_agent_rag(llm,json_llm,tools,checkpointer,document_options={}):
     
     return graph
 
-def acreate_agent_rag_v2(llm,json_llm,tools,checkpointer,document_options={}):
+def acreate_agent_rag_v2(llm,json_llm,memory,tools,checkpointer,document_options={}):
     """
     Create a RAG agent with a state graph.
     The agent will use the provided LLM and tools to perform its tasks.
@@ -707,9 +708,24 @@ def acreate_agent_rag_v2(llm,json_llm,tools,checkpointer,document_options={}):
         state["messages"] = [response]
         return state
     
+    async def memory_load(state:GraphState) -> GraphState:
+        # 메모리 로드
+        if memory is not None:
+            runnable = RunnablePassthrough.assign(
+                memory_vars=RunnableLambda(memory.load_memory_variables)
+            ).assign(
+                long_term=lambda x: x["memory_vars"]["long_term"],
+                recent_chat=lambda x: x["memory_vars"]["recent_chat"]
+            )
+        
+        
+        state["chat_history"] = runnable.invoke(state["input"])
+        return state
+    
     workflow = StateGraph(GraphState)
     
     ## 노드 생성
+    workflow.add_node("memory_load", memory_load)  # 메모리 로드 노드
     workflow.add_node("agent", agent)  # 에이전트 노드
     workflow.add_node("split_docs", split_docs)  # 문서 분리 노드
     workflow.add_node("rerank", rerank)  # 문서 품질 평가 노드
@@ -720,7 +736,8 @@ def acreate_agent_rag_v2(llm,json_llm,tools,checkpointer,document_options={}):
     # Node에 Edge 추가
     
     # 시작점에서 에이전트 노드로 연결(START > agent)
-    workflow.add_edge(START, "agent") 
+    workflow.add_edge(START, "memory_load") 
+    workflow.add_edge("memory_load", "agent")
 
     # 검색 여부 결정을 위한 조건부 엣지 추가
     # 도구가 존재하는 경우 (agent > retrieve)
