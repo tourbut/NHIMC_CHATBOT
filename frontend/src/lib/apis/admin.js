@@ -54,3 +54,18 @@ export async function get_deptusage(params, success_callback, failure_callback) 
     let url = "/admin/get_deptusage/"
     await fastapi('get', url, params,success_callback,failure_callback)
 }
+
+export async function get_systemprompt(params, success_callback, failure_callback) {
+    let url = "/admin/get_systemprompt/"
+    await fastapi('get', url, params,success_callback,failure_callback)
+}
+
+export async function create_systemprompt(params, success_callback, failure_callback) {
+    let url = "/admin/create_systemprompt/"
+    await fastapi('post', url, params,success_callback,failure_callback)
+}
+
+export async function update_systemprompt(params, success_callback, failure_callback) {
+    let url = "/admin/update_systemprompt/"
+    await fastapi('put', url, params,success_callback,failure_callback)
+}

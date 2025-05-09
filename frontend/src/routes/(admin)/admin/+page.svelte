@@ -4,7 +4,8 @@
 
     import { get_llm, get_dept, get_apikey,get_deptllm,get_deptusage,
              create_llm,create_apikey,create_deptllm,
-             update_llm, update_apikey,update_deptllm } from "$lib/apis/admin";
+             update_llm, update_apikey,update_deptllm,
+             create_systemprompt,get_systemprompt,update_systemprompt } from "$lib/apis/admin";
 
     import {get_tmllm,create_tmllm} from "$lib/apis/textmining";
     import { onMount } from 'svelte';
@@ -39,10 +40,19 @@
       {id:0,name:"llm_id",type:"combo",desc:"모델",combo:[]},
       {id:1,name:"active_yn",type:"boolean",desc:"활성화여부"},
     ]
+    
+    let prompt_table_head=[
+      {id:0,name:"work_cd",type:"string",desc:"작업구분"},
+      {id:1,name:"work_detail_cd",type:"string",desc:"작업구분상세"},
+      {id:2,name:"description",type:"string",desc:"설명"},
+      {id:3,name:"contents",type:"textarea",desc:"프롬프트"},
+      {id:4,name:"is_active",type:"boolean",desc:"활성화여부"},
+    ]
 
     let api_table_body=[];
     let llm_table_body=[];
     let tmllm_table_body=[];
+    let prompt_table_body=[];
 
 
     let table_body=[]
@@ -106,7 +116,11 @@
             active_yn:item.active_yn
           }
         }) 
-      } 
+      }
+      
+      let systemprompt_success_callback = (json) => {
+        prompt_table_body = json
+      }
 
       let failure_callback = (json_error) => {
         addToast('error',json_error.detail)
@@ -117,6 +131,7 @@
       await get_apikey(params,api_success_callback, failure_callback)
       await get_deptllm(params,deptllm_success_callback, failure_callback)
       await get_tmllm(params,tmllm_success_callback, failure_callback)
+      await get_systemprompt(params,systemprompt_success_callback, failure_callback)
     }
     
     onMount(async () => {
@@ -189,6 +204,17 @@
           await update_tmllm(params,success_callback, failure_callback)
         }
       }
+      else if (event.target.id == 4) //시스템 프롬프트
+      {
+        if(event.target.name=="btn_new")
+        { 
+          await create_systemprompt(params,success_callback, failure_callback)
+        }
+        else
+        {
+          await update_systemprompt(params,success_callback, failure_callback)
+        }
+      }
     }
 
     //form_data의 dept_id가 변경될때 해당 되는 api_key만 재정렬
@@ -217,6 +243,10 @@
       <TabItem title="텍스트마이닝 모델 설정">
           <Table btn_id=3 btn_click={onsubmit} is_combo_modal={true} is_editable={true} 
                  bind:table_head={tmllm_table_head} bind:table_body={tmllm_table_body} bind:form_data={form_data} bind:formModal={formModal}/>
+      </TabItem> 
+      <TabItem title="시스템 프롬프트 설정">
+          <Table btn_id=4 btn_click={onsubmit} is_editable={true} 
+                 bind:table_head={prompt_table_head} bind:table_body={prompt_table_body} bind:form_data={form_data} bind:formModal={formModal}/>
       </TabItem> 
     </Tabs>
     

@@ -1,5 +1,5 @@
 <script>
-    import { Button, Modal, Label, Input, FloatingLabelInput , Checkbox } from 'flowbite-svelte';
+    import { Button, Modal, Label, Input, FloatingLabelInput , Checkbox, Textarea } from 'flowbite-svelte';
     export let table_head=[
         {id:0,name:"col1",type:"string",desc:"샘플컬럼1"},
         {id:1,name:"col2",type:"boolean",desc:"샘플컬럼2"}
@@ -25,6 +25,10 @@
             {#if (head.type === 'boolean')}
             <Label class="text-gray-500 dark:text-gray-400 mt-4 flex items-center">
                 {head.desc} <Checkbox class="ms-2" bind:checked={form_data[head.name]}  />
+            </Label>
+            {:else if (head.type === 'textarea')}
+            <Label class="text-gray-500 dark:text-gray-400 mt-4">
+                {head.desc} <Textarea type="text" bind:value={form_data[head.name]} rows="4" />
             </Label>
             {:else}
                 <FloatingLabelInput style="filled" id="floating_filled" name="floating_filled" type="text" bind:value={form_data[head.name]}>
