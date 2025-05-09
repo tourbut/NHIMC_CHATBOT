@@ -6,7 +6,6 @@ from typing import Optional
 
 from datetime import datetime
 
-
 class CommonBase(SQLModel):
     create_date: datetime = Field(default=datetime.now())
     update_date: datetime = Field(default=datetime.now())
@@ -124,9 +123,10 @@ class SystemPrompt(CommonBase,table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
     user_id: uuid.UUID = Field(foreign_key="user.id", description="유저ID")
     work_cd: str = Field(nullable=False, description="작업코드")
+    work_detail_cd: str = Field(nullable=False, description="작업상세코드")
     description: str | None = Field(nullable=True, description="설명")
-    instruct_prompt: str | None = Field(nullable=True, description="지시 프롬프트")
-    response_prompt: str | None = Field(nullable=True, description="응답 프롬프트")
+    contents: str | None = Field(nullable=True, description="내용")
+    is_active: bool = Field(default=True, description="활성화여부")
 
 class ClsfCode(CommonBase,table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, description="ID")
